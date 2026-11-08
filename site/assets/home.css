@@ -1227,3 +1227,13 @@ html[data-theme="dark"] .repository-copy{
 .cache-source-row small{
   line-height:1.35;
 }
+
+
+/* Add a second, truthful repository pill row for common payloads. */
+.repository-payload-label{
+  margin-top:14px!important;
+  margin-bottom:8px!important;
+}
+.repository-payload-pills{
+  gap:7px;
+}
