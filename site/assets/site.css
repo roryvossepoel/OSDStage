@@ -505,52 +505,6 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
 }
 
 
-/* Stronger action arrows without hover underlines on CTA-style links. */
-.button .link-arrow,
-.button > span[aria-hidden="true"],
-.text-link .link-arrow,
-.home-install-links a .link-arrow,
-.footer-column a .link-arrow,
-.report-preview-link .link-arrow,
-.capability > a .link-arrow{
-  display:inline-block;
-  margin-left:.18em;
-  font-size:1.12em;
-  font-weight:800;
-  line-height:1;
-  transform:translateY(-.02em);
-}
-.button:hover,
-.text-link:hover,
-.home-install-links a:hover,
-.footer-column a:hover,
-.report-preview-link:hover,
-.capability > a:hover{
-  text-decoration:none;
-}
-
-
-/* Fuller arrows across CTA and action links. */
-.button .link-arrow,
-.button > span[aria-hidden="true"],
-.text-link .link-arrow,
-.home-install-links a .link-arrow,
-.footer-column a .link-arrow,
-.report-preview-link .link-arrow,
-.capability > a .link-arrow{
-  font-size:1.18em;
-  font-weight:900;
-  letter-spacing:-.02em;
-}
-
-/* Use a heavier horizontal arrow where the source text uses a plain right arrow. */
-.button .link-arrow,
-.text-link .link-arrow,
-.report-preview-link .link-arrow,
-.capability > a .link-arrow{
-  font-family:"Segoe UI Symbol","Arial Unicode MS",sans-serif;
-}
-
 /* Thicken drawn flow arrows. */
 .workflow-steps li:not(:last-child)::after{
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 22' fill='none' stroke='%231c7659' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 11h39m-8-7 8 7-8 7'/%3E%3C/svg%3E") center/contain no-repeat!important;
@@ -577,5 +531,60 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
 @media(max-width:600px){
   .faq-list details>p{
     font-size:.87rem;
+  }
+}
+
+
+/* Semantic link indicators: buttons stay clean, internal links continue, external links leave the site. */
+.text-link,
+.home-install-links a,
+.footer-column a,
+.report-preview-link,
+.capability > a{
+  display:inline-flex;
+  align-items:center;
+  gap:.38em;
+  text-decoration:none;
+}
+.text-link:hover,
+.home-install-links a:hover,
+.footer-column a:hover,
+.report-preview-link:hover,
+.capability > a:hover{
+  text-decoration:none;
+}
+.link-indicator{
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:1em;
+  height:1em;
+  transition:transform .15s ease;
+}
+.link-indicator svg{
+  width:100%;
+  height:100%;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.15;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.link-indicator-internal{width:.82em;height:.82em}
+.link-indicator-external{width:.9em;height:.9em}
+.link-indicator-download{width:.95em;height:.95em}
+@media(hover:hover) and (pointer:fine){
+  .text-link:hover .link-indicator-internal,
+  .capability > a:hover .link-indicator-internal,
+  .report-preview-link:hover .link-indicator-internal{
+    transform:translateX(2px);
+  }
+  .text-link:hover .link-indicator-external,
+  .home-install-links a:hover .link-indicator-external,
+  .footer-column a:hover .link-indicator-external{
+    transform:translate(1px,-1px);
+  }
+  .text-link:hover .link-indicator-download{
+    transform:translateY(2px);
   }
 }
