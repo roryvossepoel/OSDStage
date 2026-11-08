@@ -273,38 +273,3 @@ html[data-theme="dark"] .catalog-summary-actions button{background:#17342d;borde
   html:not([data-theme]) .pagination-button{background:#16262c;border-color:#35505a}
   html:not([data-theme]) .catalog-summary-actions button{background:#17342d;border-color:#315548;color:#8ed7c2}
 }
-
-
-/* Final catalog dark-mode cleanup for iOS/native controls. */
-html[data-theme="dark"] .catalog-page .toolbar,
-html[data-theme="dark"] .catalog-page .searchbox,
-html[data-theme="dark"] .catalog-page input,
-html[data-theme="dark"] .catalog-page select,
-html[data-theme="dark"] .catalog-page .view-switch{
-  background:#142328;border-color:#35505a;color:#e8f0f2
-}
-html[data-theme="dark"] .catalog-page input::placeholder{color:#879ca3}
-html[data-theme="dark"] .catalog-page .card{border-color:#35505a}
-html[data-theme="dark"] .catalog-page .meta-label{color:#a9bbc1}
-html[data-theme="dark"] .catalog-page .description,
-html[data-theme="dark"] .catalog-page .app-subtitle,
-html[data-theme="dark"] .catalog-page #resultSummary,
-html[data-theme="dark"] .catalog-page .results-controls label,
-html[data-theme="dark"] .catalog-page .catalog-summary{color:#a4b5ba}
-@media(prefers-color-scheme:dark){
-  html:not([data-theme]) .catalog-page .toolbar,
-  html:not([data-theme]) .catalog-page .searchbox,
-  html:not([data-theme]) .catalog-page input,
-  html:not([data-theme]) .catalog-page select,
-  html:not([data-theme]) .catalog-page .view-switch{
-    background:#142328;border-color:#35505a;color:#e8f0f2
-  }
-  html:not([data-theme]) .catalog-page input::placeholder{color:#879ca3}
-  html:not([data-theme]) .catalog-page .card{border-color:#35505a}
-  html:not([data-theme]) .catalog-page .meta-label{color:#a9bbc1}
-  html:not([data-theme]) .catalog-page .description,
-  html:not([data-theme]) .catalog-page .app-subtitle,
-  html:not([data-theme]) .catalog-page #resultSummary,
-  html:not([data-theme]) .catalog-page .results-controls label,
-  html:not([data-theme]) .catalog-page .catalog-summary{color:#a4b5ba}
-}
