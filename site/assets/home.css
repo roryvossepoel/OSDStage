@@ -404,34 +404,3 @@ html[data-theme="dark"] .home-page .site-footer{background:#142922}
   html:not([data-theme]) .home-install .code-heading{background:#172a2e}
   html:not([data-theme]) .home-page .site-footer{background:#142922}
 }
-
-
-/* Final homepage dark contrast cleanup. */
-html[data-theme="dark"] .report-showcase-copy h2,
-html[data-theme="dark"] .report-showcase-copy h2 span,
-html[data-theme="dark"] .report-benefits strong,
-html[data-theme="dark"] .capability h3,
-html[data-theme="dark"] .section-intro h2{color:#e8f0f2}
-html[data-theme="dark"] .report-benefits,
-html[data-theme="dark"] .report-benefits li,
-html[data-theme="dark"] .report-showcase-copy>p:not(.eyebrow){color:#a8b9bd}
-html[data-theme="dark"] .report-benefits li::before{color:#4bc7a3}
-html[data-theme="dark"] .report-preview-metrics strong{color:#8ed6bd}
-html[data-theme="dark"] .report-preview-metrics span,
-html[data-theme="dark"] .report-preview-row small,
-html[data-theme="dark"] .report-preview-note{color:#9fb0b7}
-@media(prefers-color-scheme:dark){
-  html:not([data-theme]) .report-showcase-copy h2,
-  html:not([data-theme]) .report-showcase-copy h2 span,
-  html:not([data-theme]) .report-benefits strong,
-  html:not([data-theme]) .capability h3,
-  html:not([data-theme]) .section-intro h2{color:#e8f0f2}
-  html:not([data-theme]) .report-benefits,
-  html:not([data-theme]) .report-benefits li,
-  html:not([data-theme]) .report-showcase-copy>p:not(.eyebrow){color:#a8b9bd}
-  html:not([data-theme]) .report-benefits li::before{color:#4bc7a3}
-  html:not([data-theme]) .report-preview-metrics strong{color:#8ed6bd}
-  html:not([data-theme]) .report-preview-metrics span,
-  html:not([data-theme]) .report-preview-row small,
-  html:not([data-theme]) .report-preview-note{color:#9fb0b7}
-}
