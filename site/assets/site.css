@@ -296,6 +296,7 @@ html[data-theme="dark"] .step-dot{background:#18352e;color:#8bd1bb}
 
 /* Structured footer: brand, resources, project, then utilities. */
 .site-footer{
+  display:block;
   max-width:none;width:100%;margin:64px 0 0;padding:0;
   border:0;border-top:1px solid var(--edge);border-radius:0;
   background:linear-gradient(115deg,#edf6f1,#edf3fa);
@@ -320,7 +321,7 @@ html[data-theme="dark"] .step-dot{background:#18352e;color:#8bd1bb}
 .footer-column a:hover{text-decoration:none;color:var(--accent)}
 .footer-project .footer-gallery{font-weight:750;color:var(--accent)}
 .footer-bottom{
-  max-width:1264px;margin:0 auto;padding:20px 32px 24px;
+  max-width:1264px;margin:0 auto;padding:18px 32px 22px;
   border-top:1px solid color-mix(in srgb,var(--edge) 85%,transparent);
   display:flex!important;align-items:center;justify-content:space-between;gap:28px;
   font-size:.78rem;color:var(--soft)
