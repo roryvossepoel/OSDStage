@@ -274,28 +274,48 @@ if (siteFooter) {
 }
 
 
-// Give CTA-style links a consistent, fuller arrow without changing normal inline links.
-document.querySelectorAll('.button, .text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a').forEach(link => {
-  const existingArrow = [...link.querySelectorAll('span')].find(span => /^[→↗↓]$/.test(span.textContent.trim()));
-  if (existingArrow) {
-    existingArrow.classList.add('link-arrow');
-    return;
-  }
+// Apply one semantic indicator system across site action links.
+const stripTrailingGlyph = link => {
+  link.querySelectorAll('.link-arrow').forEach(node => node.remove());
+  [...link.childNodes].forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      node.textContent = node.textContent.replace(/\s*[→↗↓›]\s*$/u, '');
+    } else if (node.nodeType === Node.ELEMENT_NODE && /^[→↗↓›]$/.test(node.textContent.trim())) {
+      node.remove();
+    }
+  });
+};
 
-  for (let i = link.childNodes.length - 1; i >= 0; i--) {
-    const node = link.childNodes[i];
-    if (node.nodeType !== Node.TEXT_NODE) continue;
-    const match = node.textContent.match(/^(.*?)(\s*)([→↗↓])\s*$/s);
-    if (!match) continue;
-
-    node.textContent = match[1] + match[2];
-    const arrow = document.createElement('span');
-    arrow.className = 'link-arrow';
-    arrow.setAttribute('aria-hidden', 'true');
-    arrow.textContent = match[3];
-    link.append(arrow);
-    break;
+const iconSvg = type => {
+  if (type === 'external') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>';
   }
+  if (type === 'download') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10m-4-4 4 4 4-4"/><path d="M5 19h14"/></svg>';
+  }
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+};
+
+document.querySelectorAll('.button').forEach(button => {
+  stripTrailingGlyph(button);
+  button.querySelectorAll('.link-indicator').forEach(node => node.remove());
+});
+
+document.querySelectorAll('.text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a').forEach(link => {
+  stripTrailingGlyph(link);
+  link.querySelectorAll('.link-indicator').forEach(node => node.remove());
+
+  const isDownload = link.hasAttribute('download');
+  const href = link.getAttribute('href') || '';
+  const url = href ? new URL(href, window.location.href) : null;
+  const isExternal = !!url && url.origin !== window.location.origin;
+  const type = isDownload ? 'download' : isExternal ? 'external' : 'internal';
+
+  const indicator = document.createElement('span');
+  indicator.className = 'link-indicator link-indicator-' + type;
+  indicator.setAttribute('aria-hidden', 'true');
+  indicator.innerHTML = iconSvg(type);
+  link.append(indicator);
 });
 
 // Small dependency-free PowerShell highlighter for the site's short examples.
