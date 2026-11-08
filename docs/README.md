@@ -1,5 +1,7 @@
 # OSDStage documentation
 
+![OSDStage documentation — deploy, configure and verify before OOBE](images/osdstage-docs-banner.svg)
+
 Choose the task you want to complete. Start with the online WinPE workflow; cache preparation is optional unless the deployment must work offline. The Windows Viewer inspects your deployment without changing it.
 
 **Release candidate: RC4.** Check [release availability](release-status.md) when upgrading from RC1 or testing newer development changes.
