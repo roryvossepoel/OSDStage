@@ -1118,3 +1118,64 @@ html[data-theme="dark"] .cache-state{
   .repository-traits{gap:5px 7px}
   .cache-selector-note{padding-left:0}
 }
+
+
+/* Refine cache source rows: stronger icon rail and more readable state pills. */
+.cache-source-row{
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:stretch;
+  gap:12px;
+  padding:10px 12px;
+}
+.cache-source-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  align-self:stretch;
+  width:42px;
+  min-height:100%;
+  border-radius:9px;
+  background:#1f5c49!important;
+  color:#e9f7f1!important;
+}
+.cache-source-icon svg{
+  width:19px;
+  height:19px;
+  stroke-width:1.9;
+}
+.cache-source-row>div{
+  align-self:center;
+}
+.cache-source-row strong{
+  font-size:.78rem!important;
+}
+.cache-source-row small{
+  font-size:.7rem!important;
+  line-height:1.45;
+}
+.cache-state{
+  align-self:center;
+  padding:4px 8px;
+  font-size:.66rem!important;
+  font-weight:750;
+}
+html[data-theme="dark"] .cache-source-icon{
+  background:#164437!important;
+  color:#b9ead9!important;
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .cache-source-icon{
+    background:#164437!important;
+    color:#b9ead9!important;
+  }
+}
+@media(max-width:600px){
+  .cache-source-row{
+    grid-template-columns:42px minmax(0,1fr);
+  }
+  .cache-state{
+    grid-column:2;
+    justify-self:start;
+    margin-top:2px;
+  }
+}
