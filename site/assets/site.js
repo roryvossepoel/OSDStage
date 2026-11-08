@@ -234,11 +234,11 @@ if (siteFooter) {
       </nav>
       <nav class="footer-column footer-project" aria-label="Project">
         <span class="footer-heading">Project</span>
-        <a class="footer-primary-link" href="https://www.powershellgallery.com/packages/OSDStage">PowerShell Gallery ↗</a>
-        <a href="https://github.com/roryvossepoel/OSDStage/releases">Releases ↗</a>
-        <a href="https://github.com/roryvossepoel/OSDStage">GitHub ↗</a>
-        <a href="https://github.com/roryvossepoel/OSDStage/issues">Report an issue ↗</a>
-        <a href="https://github.com/roryvossepoel/OSDStage/blob/main/docs/sources.md">Sources & references ↗</a>
+        <a class="footer-primary-link" href="https://www.powershellgallery.com/packages/OSDStage">PowerShell Gallery</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/releases">Releases</a>
+        <a href="https://github.com/roryvossepoel/OSDStage">GitHub</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/issues">Report an issue</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/blob/main/docs/sources.md">Sources & references</a>
       </nav>
     </div>
     <div class="footer-utility">
@@ -301,7 +301,7 @@ document.querySelectorAll('.button').forEach(button => {
   button.querySelectorAll('.link-indicator').forEach(node => node.remove());
 });
 
-document.querySelectorAll('.text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a, .catalog-summary-actions a, .catalog-help a, #repoLink').forEach(link => {
+document.querySelectorAll('.text-link, .home-gallery, .home-install-links a, .footer-column a, .report-preview-link, .capability > a, .catalog-summary-actions a, .catalog-help a, #repoLink').forEach(link => {
   stripTrailingGlyph(link);
   link.querySelectorAll('.link-indicator').forEach(node => node.remove());
 
