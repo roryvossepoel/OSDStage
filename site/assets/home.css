@@ -1341,3 +1341,38 @@ html[data-theme="dark"] .repository-copy{
     align-items:flex-start!important;
   }
 }
+
+
+/* Subtle chapter divider between the report showcase and final Get started section. */
+.home-start{
+  position:relative;
+  margin-top:36px;
+  padding-top:72px;
+}
+.home-start::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  width:240px;
+  height:1px;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,#bfd4ca 20%,#bfd4ca 80%,transparent);
+}
+html[data-theme="dark"] .home-start::before{
+  background:linear-gradient(90deg,transparent,#31564b 20%,#31564b 80%,transparent);
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .home-start::before{
+    background:linear-gradient(90deg,transparent,#31564b 20%,#31564b 80%,transparent);
+  }
+}
+@media(max-width:600px){
+  .home-start{
+    margin-top:28px;
+    padding-top:56px;
+  }
+  .home-start::before{
+    width:180px;
+  }
+}
