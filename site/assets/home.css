@@ -435,3 +435,36 @@ html[data-theme="dark"] .report-preview-note{color:#9fb0b7}
   html:not([data-theme]) .report-preview-row small,
   html:not([data-theme]) .report-preview-note{color:#9fb0b7}
 }
+
+
+/* Keep the homepage footer compact now that Appearance is a third footer item. */
+@media(min-width:901px){
+  .home-page .site-footer{
+    grid-template-columns:minmax(220px,.85fr) minmax(0,1.55fr) auto;
+    gap:48px;
+    align-items:start;
+  }
+  .home-page .site-footer .footer-links{
+    justify-self:start;
+    max-width:520px;
+    justify-content:flex-start;
+    padding-top:6px;
+  }
+  .home-page .site-footer .footer-theme{
+    justify-self:end;
+    align-items:flex-end;
+    margin-left:0;
+    padding-top:4px;
+  }
+}
+@media(min-width:701px) and (max-width:900px){
+  .home-page .site-footer{
+    grid-template-columns:minmax(220px,1fr) minmax(0,1.4fr);
+    gap:30px 36px;
+  }
+  .home-page .site-footer .footer-theme{
+    grid-column:1/-1;
+    justify-self:start;
+    align-items:flex-start;
+  }
+}
