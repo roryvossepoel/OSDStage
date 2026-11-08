@@ -588,3 +588,39 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
     transform:translateY(2px);
   }
 }
+
+
+/* Mobile footer alignment: match the shared 20px page gutter exactly. */
+@media(max-width:600px){
+  .site-footer{
+    width:100%;
+    max-width:none;
+    margin-left:0!important;
+    margin-right:0!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  .site-footer .footer-main,
+  .site-footer .footer-utility{
+    width:100%;
+    max-width:none;
+    margin-left:0;
+    margin-right:0;
+    padding-left:20px!important;
+    padding-right:20px!important;
+  }
+  .site-footer .footer-main{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    justify-items:stretch;
+    align-items:start;
+  }
+  .site-footer .footer-brand,
+  .site-footer .footer-column,
+  .site-footer .footer-project{
+    width:100%;
+    min-width:0;
+    margin:0;
+    justify-self:stretch;
+  }
+}
