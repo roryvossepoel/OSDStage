@@ -693,3 +693,19 @@ html[data-theme="dark"] .guide-list .guide[open]{
     padding-right:14px;
   }
 }
+
+
+/* Catalog-specific action links use the shared semantic indicators too. */
+.catalog-summary-actions a,
+.catalog-help a,
+#repoLink{
+  display:inline-flex;
+  align-items:center;
+  gap:.38em;
+  text-decoration:none;
+}
+.catalog-summary-actions a:hover,
+.catalog-help a:hover,
+#repoLink:hover{
+  text-decoration:none;
+}
