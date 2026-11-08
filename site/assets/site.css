@@ -503,3 +503,28 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
     align-items:flex-start;
   }
 }
+
+
+/* Stronger action arrows without hover underlines on CTA-style links. */
+.button .link-arrow,
+.button > span[aria-hidden="true"],
+.text-link .link-arrow,
+.home-install-links a .link-arrow,
+.footer-column a .link-arrow,
+.report-preview-link .link-arrow,
+.capability > a .link-arrow{
+  display:inline-block;
+  margin-left:.18em;
+  font-size:1.12em;
+  font-weight:800;
+  line-height:1;
+  transform:translateY(-.02em);
+}
+.button:hover,
+.text-link:hover,
+.home-install-links a:hover,
+.footer-column a:hover,
+.report-preview-link:hover,
+.capability > a:hover{
+  text-decoration:none;
+}
