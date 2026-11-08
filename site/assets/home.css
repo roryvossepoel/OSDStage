@@ -435,3 +435,77 @@ html[data-theme="dark"] .report-preview-note{color:#9fb0b7}
   html:not([data-theme]) .report-preview-row small,
   html:not([data-theme]) .report-preview-note{color:#9fb0b7}
 }
+
+
+/* Clarify optional USB cache as a branch directly connected to OSDStage. */
+.cache-example{
+  position:relative;
+  overflow:visible;
+}
+.cache-main{
+  display:grid;
+  grid-template-columns:auto minmax(24px,1fr) auto minmax(24px,1fr) auto;
+  align-items:center;
+  gap:8px;
+  padding:6px 0 0;
+}
+.cache-main .cache-stage{
+  position:relative;
+  z-index:2;
+}
+.cache-branch{
+  display:grid;
+  justify-items:center;
+  gap:7px;
+  margin-top:0;
+  padding-top:0;
+  border:0;
+  color:#52796a;
+  text-align:center;
+}
+.cache-branch-line{
+  position:relative;
+  display:block;
+  width:1px;
+  height:24px;
+  background:#a9c9bb;
+}
+.cache-branch-line::before,
+.cache-branch-line::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  width:6px;
+  height:6px;
+  border-right:1.7px solid #28775e;
+  border-bottom:1.7px solid #28775e;
+}
+.cache-branch-line::before{
+  top:1px;
+  transform:translateX(-50%) rotate(225deg);
+}
+.cache-branch-line::after{
+  bottom:1px;
+  transform:translateX(-50%) rotate(45deg);
+}
+.cache-branch .cache-pill{
+  font-weight:700;
+}
+.cache-branch small{
+  font-size:.72rem;
+  line-height:1.35;
+  color:#718579;
+}
+@media(max-width:600px){
+  .cache-main{
+    grid-template-columns:auto minmax(18px,1fr) auto minmax(18px,1fr) auto;
+    gap:6px;
+  }
+  .cache-main>span:first-child,
+  .cache-main>span:last-child{
+    white-space:normal;
+    text-align:center;
+  }
+  .cache-branch-line{height:20px}
+  .cache-branch small{font-size:.68rem}
+}
