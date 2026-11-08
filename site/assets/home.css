@@ -1237,3 +1237,10 @@ html[data-theme="dark"] .repository-copy{
 .repository-payload-pills{
   gap:7px;
 }
+
+
+/* Repository card intentionally shows only the five supported package types. */
+.repository-payload-label,
+.repository-payload-pills{
+  display:none!important;
+}
