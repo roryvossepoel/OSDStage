@@ -213,30 +213,53 @@ if (existingGithubLink && !siteHeader.querySelector('.header-actions')) {
 
 
 
-// Keep appearance controls out of the primary header. The footer offers
-// explicit System / Light / Dark choices and reflects the saved preference.
+// Build one shared two-level footer on every page.
 const siteFooter = document.querySelector('.site-footer');
-if (siteFooter && !siteFooter.querySelector('.footer-theme')) {
-  const themeControl = document.createElement('div');
-  themeControl.className = 'footer-theme';
-  themeControl.setAttribute('role', 'group');
-  themeControl.setAttribute('aria-label', 'Appearance');
-  themeControl.innerHTML = `
-    <span class="footer-theme-label">Appearance</span>
-    <div class="footer-theme-options">
-      <button type="button" data-theme-mode="system">System</button>
-      <button type="button" data-theme-mode="light">Light</button>
-      <button type="button" data-theme-mode="dark">Dark</button>
+if (siteFooter) {
+  const pathPrefix = document.body.classList.contains('catalog-page') ? '../' : '';
+  siteFooter.innerHTML = `
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a class="brand" href="${pathPrefix}index.html"><span class="brand-mark" aria-hidden="true">▰</span>OSDStage</a>
+        <p>Your choices. Ready before OOBE.</p>
+        <span class="footer-license">Open source · MIT licensed</span>
+      </div>
+      <nav class="footer-column" aria-label="Resources">
+        <span class="footer-heading">Resources</span>
+        <a href="${pathPrefix}get-started.html">Get started</a>
+        <a href="${pathPrefix}catalog/index.html">Catalog</a>
+        <a href="${pathPrefix}guides.html">Guides</a>
+        <a href="${pathPrefix}report.html">Report</a>
+        <a href="${pathPrefix}faq.html">FAQ</a>
+      </nav>
+      <nav class="footer-column footer-project" aria-label="Project">
+        <span class="footer-heading">Project</span>
+        <a class="footer-primary-link" href="https://www.powershellgallery.com/packages/OSDStage">PowerShell Gallery ↗</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/releases">Releases ↗</a>
+        <a href="https://github.com/roryvossepoel/OSDStage">GitHub ↗</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/issues">Report an issue ↗</a>
+        <a href="https://github.com/roryvossepoel/OSDStage/blob/main/docs/sources.md">Sources & references ↗</a>
+      </nav>
+    </div>
+    <div class="footer-utility">
+      <span class="footer-copyright">© 2026 OSDStage · <a href="https://github.com/roryvossepoel/OSDStage/blob/main/LICENSE">MIT</a></span>
+      <div class="footer-theme" role="group" aria-label="Appearance">
+        <div class="footer-theme-options">
+          <button type="button" data-theme-mode="system">System</button>
+          <button type="button" data-theme-mode="light">Light</button>
+          <button type="button" data-theme-mode="dark">Dark</button>
+        </div>
+      </div>
     </div>`;
 
   const syncFooterTheme = () => {
-    themeControl.querySelectorAll('[data-theme-mode]').forEach(button => {
+    siteFooter.querySelectorAll('[data-theme-mode]').forEach(button => {
       const selected = button.dataset.themeMode === themePreference;
       button.setAttribute('aria-pressed', String(selected));
     });
   };
 
-  themeControl.addEventListener('click', event => {
+  siteFooter.addEventListener('click', event => {
     const button = event.target.closest('[data-theme-mode]');
     if (!button) return;
     applyTheme(button.dataset.themeMode);
@@ -248,7 +271,6 @@ if (siteFooter && !siteFooter.querySelector('.footer-theme')) {
   });
 
   syncFooterTheme();
-  siteFooter.append(themeControl);
 }
 
 // Small dependency-free PowerShell highlighter for the site's short examples.
