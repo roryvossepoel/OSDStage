@@ -41,6 +41,13 @@ def icon_only(changes):
     )
 
 
+def site_only(changes):
+    return bool(changes) and all(
+        status in ('A', 'M', 'D') and path.startswith('site/')
+        for status, path in changes
+    )
+
+
 def validate_icons(directory):
     icons = sorted(directory.glob('*.svg'))
     if not icons:
@@ -71,8 +78,15 @@ def main():
     try:
         event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
         changes = changed_files(os.environ.get('GITHUB_EVENT_NAME'), event)
-        full = not icon_only(changes)
-        reason = 'Full validation required' if full else 'Only SVG icons added or modified'
+        icons_only = icon_only(changes)
+        website_only = site_only(changes)
+        full = not (icons_only or website_only)
+        if icons_only:
+            reason = 'Only SVG icons added or modified'
+        elif website_only:
+            reason = 'Only website files changed'
+        else:
+            reason = 'Full validation required'
     except (KeyError, ValueError, OSError, subprocess.CalledProcessError) as error:
         reason = f'Full validation required: cannot safely classify changes ({type(error).__name__})'
     count = validate_icons(Path('metadata/icons'))
@@ -82,7 +96,7 @@ def main():
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
             summary.write(f'{reason}. Checked {count} SVG files.\n\n')
-            summary.write('PowerShell 7 and 5.1: **' + ('run' if full else 'skipped (icon-only change)') + '**.\n')
+            summary.write('PowerShell 7 and 5.1: **' + ('run' if full else 'skipped (no module-impacting changes)') + '**.\n')
 
 
 if __name__ == '__main__':
