@@ -294,52 +294,6 @@ html[data-theme="dark"] .step-dot{background:#18352e;color:#8bd1bb}
 }
 
 
-/* Compact three-part footer: project, links and appearance on one desktop row. */
-.site-footer{
-  display:grid;
-  grid-template-columns:minmax(220px,.85fr) minmax(0,1.55fr) auto;
-  column-gap:48px;
-  row-gap:20px;
-  align-items:start;
-}
-.site-footer .footer-brand{justify-self:start}
-.site-footer .footer-links{
-  justify-self:start;
-  justify-content:flex-start;
-  max-width:520px;
-  padding-top:6px;
-}
-.site-footer .footer-theme{
-  justify-self:end;
-  align-items:flex-end;
-  margin-left:0;
-  padding-top:4px;
-}
-@media(max-width:900px){
-  .site-footer{
-    grid-template-columns:minmax(220px,1fr) minmax(0,1.4fr);
-    column-gap:36px;
-  }
-  .site-footer .footer-theme{
-    grid-column:1/-1;
-    justify-self:start;
-    align-items:flex-start;
-    padding-top:2px;
-  }
-}
-@media(max-width:700px){
-  .site-footer{
-    grid-template-columns:1fr;
-    gap:20px;
-  }
-  .site-footer .footer-links,
-  .site-footer .footer-theme{
-    grid-column:auto;
-    justify-self:start;
-  }
-}
-
-
 /* Two-level footer: three content columns plus a compact utility bar. */
 .site-footer{
   display:block;
