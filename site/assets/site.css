@@ -276,3 +276,19 @@ html[data-theme="dark"] .step-dot{background:#18352e;color:#8bd1bb}
   html:not([data-theme]) .quiet-note{background:#142328;border-color:#294047}
   html:not([data-theme]) .step-dot{background:#18352e;color:#8bd1bb}
 }
+
+
+/* Get started mobile: keep each step in one column and contain long PowerShell content. */
+@media(max-width:600px){
+  .steps{width:100%;max-width:100%}
+  .instruction{grid-template-columns:minmax(0,1fr);gap:14px;width:100%;max-width:100%;min-width:0}
+  .instruction>div{min-width:0;max-width:100%}
+  .instruction .step-number{width:40px;height:40px;margin-bottom:2px}
+  .instruction .where{white-space:normal;overflow-wrap:anywhere}
+  .instruction h2,
+  .instruction p{max-width:100%;overflow-wrap:anywhere}
+  .instruction .code-block{width:100%;max-width:100%;min-width:0}
+  .instruction .code-block pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .instruction .code-block code{white-space:pre}
+  .notice{max-width:100%}
+}
