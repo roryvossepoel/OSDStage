@@ -709,3 +709,11 @@ html[data-theme="dark"] .guide-list .guide[open]{
 #repoLink:hover{
   text-decoration:none;
 }
+
+.home-gallery{
+  display:inline-flex;
+  align-items:center;
+  gap:.38em;
+  text-decoration:none;
+}
+.home-gallery:hover{text-decoration:none}
