@@ -436,3 +436,39 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
     gap:10px;
   }
 }
+
+
+/* Align footer content with the site's wider desktop content rhythm. */
+.site-footer .footer-main{
+  max-width:1328px;
+  padding-left:32px;
+  padding-right:32px;
+  grid-template-columns:minmax(260px,1.05fr) minmax(180px,.75fr) minmax(300px,1.2fr);
+  gap:64px;
+}
+.site-footer .footer-utility{
+  padding-left:max(32px,calc((100% - 1264px)/2));
+  padding-right:max(32px,calc((100% - 1264px)/2));
+}
+@media(max-width:850px){
+  .site-footer .footer-main{
+    max-width:none;
+    padding-left:24px;
+    padding-right:24px;
+    gap:28px 40px;
+  }
+  .site-footer .footer-utility{
+    padding-left:24px;
+    padding-right:24px;
+  }
+}
+@media(max-width:600px){
+  .site-footer .footer-main{
+    padding-left:20px;
+    padding-right:20px;
+  }
+  .site-footer .footer-utility{
+    padding-left:20px;
+    padding-right:20px;
+  }
+}
