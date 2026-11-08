@@ -55,3 +55,22 @@ html[data-theme="dark"] .report-pill.attention{background:#43371f;color:#f1ce7c}
   html:not([data-theme]) .report-pill{background:#19382d;color:#8fd6bd}
   html:not([data-theme]) .report-pill.attention{background:#43371f;color:#f1ce7c}
 }
+
+
+/* Final report-page dark contrast cleanup. */
+html[data-theme="dark"] .report-page h1,
+html[data-theme="dark"] .report-explainer h2,
+html[data-theme="dark"] .report-features h2,
+html[data-theme="dark"] .report-status-grid h3{color:#e8f0f2}
+html[data-theme="dark"] .report-explainer>p,
+html[data-theme="dark"] .report-features p:not(.eyebrow),
+html[data-theme="dark"] .report-status-grid p{color:#a8b9bd}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .report-page h1,
+  html:not([data-theme]) .report-explainer h2,
+  html:not([data-theme]) .report-features h2,
+  html:not([data-theme]) .report-status-grid h3{color:#e8f0f2}
+  html:not([data-theme]) .report-explainer>p,
+  html:not([data-theme]) .report-features p:not(.eyebrow),
+  html:not([data-theme]) .report-status-grid p{color:#a8b9bd}
+}
