@@ -273,6 +273,31 @@ if (siteFooter) {
   syncFooterTheme();
 }
 
+
+// Give CTA-style links a consistent, fuller arrow without changing normal inline links.
+document.querySelectorAll('.button, .text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a').forEach(link => {
+  const existingArrow = [...link.querySelectorAll('span')].find(span => /^[→↗↓]$/.test(span.textContent.trim()));
+  if (existingArrow) {
+    existingArrow.classList.add('link-arrow');
+    return;
+  }
+
+  for (let i = link.childNodes.length - 1; i >= 0; i--) {
+    const node = link.childNodes[i];
+    if (node.nodeType !== Node.TEXT_NODE) continue;
+    const match = node.textContent.match(/^(.*?)(\s*)([→↗↓])\s*$/s);
+    if (!match) continue;
+
+    node.textContent = match[1] + match[2];
+    const arrow = document.createElement('span');
+    arrow.className = 'link-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = match[3];
+    link.append(arrow);
+    break;
+  }
+});
+
 // Small dependency-free PowerShell highlighter for the site's short examples.
 function highlightPowerShell(code) {
   if (code.dataset.highlighted === 'true') return;
