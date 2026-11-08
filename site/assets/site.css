@@ -567,3 +567,15 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
   border-top-width:2.3px!important;
   border-right-width:2.3px!important;
 }
+
+
+/* Slightly reduce FAQ answer copy while keeping question headings unchanged. */
+.faq-list details>p{
+  font-size:.9rem;
+  line-height:1.7;
+}
+@media(max-width:600px){
+  .faq-list details>p{
+    font-size:.87rem;
+  }
+}
