@@ -1,5 +1,25 @@
 "use strict";
 
+// Theme preference: system by default, with optional light/dark override.
+const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+const themeModes = ['system', 'light', 'dark'];
+const readThemePreference = () => {
+  try {
+    const saved = localStorage.getItem('osdstage.theme');
+    return themeModes.includes(saved) ? saved : 'system';
+  } catch { return 'system'; }
+};
+let themePreference = readThemePreference();
+const applyTheme = mode => {
+  themePreference = themeModes.includes(mode) ? mode : 'system';
+  if (themePreference === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', themePreference);
+  document.documentElement.style.colorScheme = themePreference === 'system' ? 'light dark' : themePreference;
+  try { localStorage.setItem('osdstage.theme', themePreference); } catch {}
+};
+applyTheme(themePreference);
+
+
 // Keep the links visible without JavaScript; enhance the shared header only
 // after the toggle and panel are both available.
 const siteHeader = document.querySelector('.site-header');
@@ -189,6 +209,46 @@ if (existingGithubLink && !siteHeader.querySelector('.header-actions')) {
       shareButton.focus({preventScroll: true});
     }
   });
+}
+
+
+
+// Keep appearance controls out of the primary header. The footer offers
+// explicit System / Light / Dark choices and reflects the saved preference.
+const siteFooter = document.querySelector('.site-footer');
+if (siteFooter && !siteFooter.querySelector('.footer-theme')) {
+  const themeControl = document.createElement('div');
+  themeControl.className = 'footer-theme';
+  themeControl.setAttribute('role', 'group');
+  themeControl.setAttribute('aria-label', 'Appearance');
+  themeControl.innerHTML = `
+    <span class="footer-theme-label">Appearance</span>
+    <div class="footer-theme-options">
+      <button type="button" data-theme-mode="system">System</button>
+      <button type="button" data-theme-mode="light">Light</button>
+      <button type="button" data-theme-mode="dark">Dark</button>
+    </div>`;
+
+  const syncFooterTheme = () => {
+    themeControl.querySelectorAll('[data-theme-mode]').forEach(button => {
+      const selected = button.dataset.themeMode === themePreference;
+      button.setAttribute('aria-pressed', String(selected));
+    });
+  };
+
+  themeControl.addEventListener('click', event => {
+    const button = event.target.closest('[data-theme-mode]');
+    if (!button) return;
+    applyTheme(button.dataset.themeMode);
+    syncFooterTheme();
+  });
+
+  themeMedia.addEventListener('change', () => {
+    if (themePreference === 'system') applyTheme('system');
+  });
+
+  syncFooterTheme();
+  siteFooter.append(themeControl);
 }
 
 // Small dependency-free PowerShell highlighter for the site's short examples.
