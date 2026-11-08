@@ -1179,3 +1179,42 @@ html[data-theme="dark"] .cache-source-icon{
     margin-top:2px;
   }
 }
+
+
+/* Align capability subheads with the cache card's CONTENT SOURCE label. */
+.capability-subhead{
+  display:block;
+  margin:0 0 10px!important;
+  font-size:.7rem!important;
+  font-weight:750!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#6f857a!important;
+}
+.repository-copy{
+  display:grid;
+  gap:3px;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px dashed #c9ddd3;
+}
+.repository-copy>span{
+  font-size:.7rem;
+  line-height:1.4;
+  color:#718579;
+}
+html[data-theme="dark"] .capability-subhead,
+html[data-theme="dark"] .repository-copy>span{
+  color:#86a69b!important;
+}
+html[data-theme="dark"] .repository-copy{
+  border-top-color:#31564b;
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .capability-subhead,
+  html:not([data-theme]) .repository-copy>span{color:#86a69b!important}
+  html:not([data-theme]) .repository-copy{border-top-color:#31564b}
+}
+@media(max-width:600px){
+  .repository-copy{gap:4px}
+}
