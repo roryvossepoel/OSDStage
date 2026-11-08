@@ -301,7 +301,7 @@ document.querySelectorAll('.button').forEach(button => {
   button.querySelectorAll('.link-indicator').forEach(node => node.remove());
 });
 
-document.querySelectorAll('.text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a').forEach(link => {
+document.querySelectorAll('.text-link, .home-install-links a, .footer-column a, .report-preview-link, .capability > a, .catalog-summary-actions a, .catalog-help a, #repoLink').forEach(link => {
   stripTrailingGlyph(link);
   link.querySelectorAll('.link-indicator').forEach(node => node.remove());
 
