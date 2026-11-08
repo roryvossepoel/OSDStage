@@ -808,3 +808,124 @@ html[data-theme="dark"] .cache-target>span:last-child{color:#7fa89a}
     height:20px;
   }
 }
+
+
+/* Cache visual: online by default, optional OSDCloud USB cache automatically when available. */
+.cache-example{
+  display:grid;
+  gap:14px;
+  padding:8px 0 0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.cache-default,
+.cache-auto{
+  border:1px solid #dbe7e1;
+  border-radius:14px;
+  padding:14px 16px;
+  background:#f7faf8;
+}
+.cache-label{
+  margin:0 0 10px!important;
+  font-size:.7rem!important;
+  font-weight:750!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#5f7c71!important;
+}
+.cache-main{
+  display:grid;
+  grid-template-columns:auto minmax(22px,1fr) auto minmax(22px,1fr) auto;
+  align-items:center;
+  gap:8px;
+  padding:0!important;
+}
+.cache-main>span:first-child,
+.cache-main>span:last-child{
+  font-size:.72rem;
+  color:#557567;
+  white-space:nowrap;
+}
+.cache-stage{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:7px 12px!important;
+  border:1px solid #b9d8cc!important;
+  border-radius:999px!important;
+  background:#edf6f1!important;
+  color:#256b56!important;
+  font-size:.76rem;
+}
+.cache-flow-line{
+  position:relative;
+  display:block;
+  height:1px;
+  min-width:0;
+  background:#9fc5b5;
+}
+.cache-flow-line::after{
+  content:"";
+  position:absolute;
+  right:0;
+  top:50%;
+  width:6px;
+  height:6px;
+  border-top:2px solid #28775e;
+  border-right:2px solid #28775e;
+  transform:translateY(-50%) rotate(45deg);
+}
+.cache-auto p{
+  margin:0!important;
+  font-size:.78rem!important;
+  line-height:1.55!important;
+  color:#557567!important;
+}
+.cache-auto strong{color:#256b56}
+.cache-auto-note{
+  margin-top:6px!important;
+  font-size:.7rem!important;
+  color:#718579!important;
+}
+html[data-theme="dark"] .cache-default,
+html[data-theme="dark"] .cache-auto{
+  background:#ffffff05;
+  border-color:#2f5148;
+}
+html[data-theme="dark"] .cache-label{color:#9ed9c2!important}
+html[data-theme="dark"] .cache-stage{
+  background:transparent!important;
+  border-color:#7fb8a5!important;
+  color:#dff2ec!important;
+}
+html[data-theme="dark"] .cache-auto p,
+html[data-theme="dark"] .cache-main>span:first-child,
+html[data-theme="dark"] .cache-main>span:last-child{color:#9bb6ad!important}
+html[data-theme="dark"] .cache-auto strong{color:#9ed9c2}
+html[data-theme="dark"] .cache-auto-note{color:#7fa89a!important}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .cache-default,
+  html:not([data-theme]) .cache-auto{background:#ffffff05;border-color:#2f5148}
+  html:not([data-theme]) .cache-label{color:#9ed9c2!important}
+  html:not([data-theme]) .cache-stage{background:transparent!important;border-color:#7fb8a5!important;color:#dff2ec!important}
+  html:not([data-theme]) .cache-auto p,
+  html:not([data-theme]) .cache-main>span:first-child,
+  html:not([data-theme]) .cache-main>span:last-child{color:#9bb6ad!important}
+  html:not([data-theme]) .cache-auto strong{color:#9ed9c2}
+  html:not([data-theme]) .cache-auto-note{color:#7fa89a!important}
+}
+@media(max-width:600px){
+  .cache-default,
+  .cache-auto{padding:12px 14px}
+  .cache-main{
+    grid-template-columns:auto minmax(16px,1fr) auto minmax(16px,1fr) auto;
+    gap:6px;
+  }
+  .cache-main>span:first-child,
+  .cache-main>span:last-child{
+    font-size:.68rem;
+    white-space:normal;
+    text-align:center;
+  }
+}
