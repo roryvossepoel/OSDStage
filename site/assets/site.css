@@ -472,3 +472,34 @@ html[data-theme="dark"] .site-footer .footer-theme-options{background:#142328}
     padding-right:20px;
   }
 }
+
+
+/* Definitive shared footer responsive rules. */
+@media(max-width:850px){
+  .site-footer .footer-main{
+    grid-template-columns:minmax(220px,1fr) minmax(0,1fr);
+    gap:28px 40px;
+  }
+  .site-footer .footer-project{grid-column:2}
+}
+@media(max-width:600px){
+  .site-footer{
+    margin-top:40px;
+  }
+  .site-footer .footer-main{
+    grid-template-columns:1fr;
+    gap:24px;
+    padding:26px 20px 22px;
+  }
+  .site-footer .footer-project{grid-column:auto}
+  .site-footer .footer-utility{
+    padding:12px 20px 16px;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .site-footer .footer-theme{
+    width:auto;
+    align-items:flex-start;
+  }
+}
