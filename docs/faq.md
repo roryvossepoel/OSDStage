@@ -2,7 +2,11 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Viewer](viewer.md) · [Runtime](runtime.md)
 
+> Looking for a quick introduction? The [website FAQ](https://roryvossepoel.github.io/OSDStage/faq.html) covers general questions about OSDStage, privacy, networking, caching and deployment. This page focuses on technical behavior, edge cases and troubleshooting.
+
 Jump to [release differences](#does-main-match-the-gallery-module), [USB preparation](#do-i-need-to-prepare-every-usb-stick-first), [network failures](#what-happens-if-there-is-no-network), [signature checks](#why-did-a-signature-or-publisher-check-fail) or [logs](#where-are-the-logs).
+
+## Release and scope
 
 ## Does main match the Gallery module?
 
@@ -18,6 +22,8 @@ Nothing is selected just because another app was installed. See [feature scope](
 for supported variants and recorded acceptance. Wallpaper/lock-screen branding,
 regional defaults, time zone and language-pack injection are outside the agreed scope.
 
+## Staging and deployment
+
 ## Which viewer do these instructions describe?
 
 `Show-OSDStageUI` opens the Windows deployment inspector. The separate web catalog
@@ -32,6 +38,22 @@ No. `Add-OSDStageWindowsFeature` enables/disables named optional features.
 with Windows-managed online acquisition when required. A Windows display-language
 pack is a separate servicing concern; OSDStage does not inject language packs.
 See [capabilities](windows-capabilities.md) and [the language evaluation](language-evaluation.md).
+
+## Privacy and network behavior
+
+### Does OSDStage collect or share deployment data?
+
+No. OSDStage has no telemetry service, hosted backend or central inventory. Deployment choices, repository packages, configuration, logs and delivery reports are not uploaded to OSDStage or shared with the project. Built-in integrations do not report which apps are deployed or how devices are configured.
+
+Your own catalog and repository remain under your control. Deployment results are written locally on the device.
+
+### What network access does OSDStage use?
+
+OSDStage accesses external sources only when needed for the deployment you configured. Depending on the selected workflow, that can include the PowerShell Gallery, supported vendor download sources, Windows trust or revocation endpoints, and a catalog or repository that you specify.
+
+OSDStage does not require a connection to an OSDStage-hosted service and does not send deployment or usage data back to the project. An optional USB cache can reuse previously verified content, and fully offline deployments can use content prepared in advance.
+
+## Cache and offline deployment
 
 ## Do I need to prepare every USB stick first?
 
@@ -56,6 +78,8 @@ The Viewer is different: it can inspect current Windows, an explicit Windows roo
 Not in the deployed Windows installation for SetupComplete to work. The CLI stages `DeviceManifest.json`, the standalone PreInstall and Runner scripts, and the required available content. SetupComplete does not import the OSDStage module.
 
 The module is needed wherever you run its public CLI commands or open the Viewer.
+
+## Intune and app lifecycle
 
 ## What if an app installed by OSDStage is also a blocking app during Autopilot ESP?
 
@@ -223,6 +247,8 @@ No. On `Show-OSDStageUI` and app discovery it disables online repository lookup.
 
 For the Viewer only, `-SkipSignatureVerification` suppresses its signature inspection. This does not relax Sync or SetupComplete enforcement. For an actual offline deployment test, disconnect networking and provide the required cache; see [Offline WinPE deployment](../Examples/WinPE-Offline.md).
 
+## Integrity and trust
+
 ## Why do Files present, SHA-256 verified and Signature valid differ?
 
 They describe different evidence:
@@ -248,9 +274,13 @@ Get-OSDStageCache -VerifySignatures |
 
 The Viewer reports unsupported checks separately: WinPE does not invoke Windows Authenticode verification, repository ZIPs use their independent hash checks, and Adobe's outer ZIP is not assessed as a signed executable.
 
+## Failures and recovery
+
 ## What happens if Office refresh hangs?
 
 The standalone Office refresh has a 20-minute timeout by default. On a failed refresh, an available staged Office fallback must still satisfy its source and ODT signature/publisher checks. Without an acceptable fallback, Office acquisition fails and Runner skips Office while independent entries can continue. A manifest or supported-publisher trust failure remains fatal. The timeout is not a promise that an arbitrary cached Office configuration can satisfy a changed deployment.
+
+## Reports and logs
 
 ## Where are the logs?
 
@@ -305,6 +335,8 @@ The runtime retains general staging on failure so the manifest, payload and work
 ## Does SetupComplete retry a failed app after reboot?
 
 No. SetupComplete is a one-shot Windows Setup phase and OSDStage does not create a scheduled task, RunOnce value or service to repeat it. During that single run, an ordinary app-local acquisition or installer failure is recorded and independent remaining apps continue. The final result is still `Failed`, staging is retained and remediation is an explicit administrator action. Manifest, hash and supported-publisher trust failures stop the queue instead of continuing.
+
+## Repository and manifests
 
 ## What is the difference between catalog.json, CacheCatalog.json, and DeviceManifest.json?
 
