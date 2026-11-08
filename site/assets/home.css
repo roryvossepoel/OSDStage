@@ -1376,3 +1376,36 @@ html[data-theme="dark"] .home-start::before{
     width:180px;
   }
 }
+
+
+/* Subtle divider between the hero and How it works section. */
+.workflow-panel{
+  position:relative;
+  padding-top:54px;
+}
+.workflow-panel::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  width:180px;
+  height:1px;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,#d4e3dc 22%,#d4e3dc 78%,transparent);
+}
+html[data-theme="dark"] .workflow-panel::before{
+  background:linear-gradient(90deg,transparent,#29483f 22%,#29483f 78%,transparent);
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .workflow-panel::before{
+    background:linear-gradient(90deg,transparent,#29483f 22%,#29483f 78%,transparent);
+  }
+}
+@media(max-width:600px){
+  .workflow-panel{
+    padding-top:44px;
+  }
+  .workflow-panel::before{
+    width:140px;
+  }
+}
