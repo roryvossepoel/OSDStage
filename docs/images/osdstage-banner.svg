@@ -3,17 +3,17 @@
   <desc id="desc">Stage in WinPE. Apply software and settings before OOBE starts. Built-in integrations and typed repository packages, with an optional USB flash drive cache.</desc>
   <style>
     text { font-family: 'Segoe UI', Arial, sans-serif; }
-    .brand { font-size: 28px; font-weight: 700; fill: #203e60; }
-    .headline { font-size: 54px; font-weight: 700; fill: #172b42; }
-    .accent { fill: #203e60; }
-    .body { font-size: 23px; fill: #425c75; }
-    .label { font-size: 17px; font-weight: 600; fill: #172b42; }
-    .small { font-size: 15px; fill: #425c75; }
+    .brand { font-size: 28px; font-weight: 700; fill: #17394b; }
+    .headline { font-size: 54px; font-weight: 700; fill: #173c30; }
+    .accent { fill: #17394b; }
+    .body { font-size: 23px; fill: #60776b; }
+    .label { font-size: 17px; font-weight: 600; fill: #173c30; }
+    .small { font-size: 15px; fill: #60776b; }
     .icon { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
   </style>
 
-  <rect x="1" y="1" width="1198" height="398" rx="20" fill="#f6f8fb" stroke="#cad6e3"/>
-  <rect x="56" y="54" width="5" height="28" rx="2.5" fill="#8db69d"/>
+  <rect x="1" y="1" width="1198" height="398" rx="20" fill="#f7faf8" stroke="#d8e7e1"/>
+  <rect x="56" y="54" width="5" height="28" rx="2.5" fill="#b9d8cc"/>
   <text x="76" y="78" class="brand">OSDStage</text>
 
   <text x="56" y="159" class="headline">Your deployment.</text>
@@ -23,10 +23,10 @@
 
   <!-- Simple capability icons, not a deployment flow or app screenshot. -->
   <g transform="translate(760 66)">
-    <rect width="384" height="268" rx="18" fill="#e5edf7"/>
+    <rect width="384" height="268" rx="18" fill="#edf5f1"/>
 
-    <rect x="20" y="20" width="164" height="132" rx="12" fill="#eaf5ee" stroke="#8db69d"/>
-    <g class="icon" stroke="#426c53" transform="translate(75 36)">
+    <rect x="20" y="20" width="164" height="132" rx="12" fill="#edf6f1" stroke="#b9d8cc"/>
+    <g class="icon" stroke="#28775e" transform="translate(75 36)">
       <rect width="54" height="46" rx="7"/>
       <path d="M0 14 H54"/>
       <path d="M10 7 H11 M18 7 H19"/>
@@ -35,16 +35,16 @@
     <text x="102" y="113" text-anchor="middle" class="label">Built-in options</text>
     <text x="102" y="136" text-anchor="middle" class="small">Apps &amp; settings</text>
 
-    <rect x="200" y="20" width="164" height="132" rx="12" fill="#eef2fa" stroke="#9caed0"/>
-    <g class="icon" stroke="#203e60" transform="translate(255 36)">
+    <rect x="200" y="20" width="164" height="132" rx="12" fill="#f3f8f5" stroke="#cfe2d9"/>
+    <g class="icon" stroke="#17394b" transform="translate(255 36)">
       <rect width="54" height="46" rx="7"/>
       <path d="M13 14 L24 23 L13 32 M30 32 H41"/>
     </g>
     <text x="282" y="113" text-anchor="middle" class="label">Your repository</text>
     <text x="282" y="136" text-anchor="middle" class="small">Typed packages</text>
 
-    <rect x="20" y="170" width="344" height="78" rx="12" fill="#fff6e6" stroke="#cfb57f"/>
-    <g class="icon" stroke="#856a36" transform="translate(40 187)">
+    <rect x="20" y="170" width="344" height="78" rx="12" fill="#eef6f2" stroke="#d3e7dc"/>
+    <g class="icon" stroke="#3f7563" transform="translate(40 187)">
       <path d="M10 15 V2 H32 V15"/>
       <path d="M17 6 V10 M25 6 V10"/>
       <rect x="5" y="15" width="32" height="30" rx="7"/>
