@@ -288,7 +288,7 @@ const stripTrailingGlyph = link => {
 
 const iconSvg = type => {
   if (type === 'external') {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>';
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16 16 8M10 8h6v6"/></svg>';
   }
   if (type === 'download') {
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10m-4-4 4 4 4-4"/><path d="M5 19h14"/></svg>';
