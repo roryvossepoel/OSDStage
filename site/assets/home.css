@@ -929,3 +929,115 @@ html[data-theme="dark"] .cache-auto-note{color:#7fa89a!important}
     text-align:center;
   }
 }
+
+
+/* Cache card: show automatic source selection instead of a flow diagram. */
+.cache-example{
+  display:grid;
+  gap:8px;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.cache-selector-title{
+  margin:0 0 4px!important;
+  font-size:.68rem!important;
+  font-weight:750!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#6a8177!important;
+}
+.cache-source-row{
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px 11px;
+  border:1px solid #d8e7df;
+  border-radius:11px;
+  background:#f7faf8;
+}
+.cache-source-icon{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:8px;
+  background:#eaf4ef;
+  color:#28775e;
+}
+.cache-source-icon svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.cache-source-row>div{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.cache-source-row strong{
+  font-size:.75rem;
+  line-height:1.3;
+  color:#244f42;
+}
+.cache-source-row small{
+  font-size:.67rem;
+  line-height:1.4;
+  color:#718579;
+}
+.cache-state{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#edf6f1;
+  color:#256b56;
+  font-size:.61rem;
+  font-weight:700;
+  white-space:nowrap;
+}
+.cache-selector-note{
+  margin:2px 0 0!important;
+  font-size:.67rem!important;
+  color:#718579!important;
+}
+html[data-theme="dark"] .cache-source-row{
+  background:transparent;
+  border-color:#2f5148;
+}
+html[data-theme="dark"] .cache-source-icon{
+  background:#173a31;
+  color:#9ed9c2;
+}
+html[data-theme="dark"] .cache-source-row strong{color:#dff2ec}
+html[data-theme="dark"] .cache-source-row small,
+html[data-theme="dark"] .cache-selector-note,
+html[data-theme="dark"] .cache-selector-title{color:#86a69b!important}
+html[data-theme="dark"] .cache-state{
+  background:#18382f;
+  color:#9ed9c2;
+}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .cache-source-row{background:transparent;border-color:#2f5148}
+  html:not([data-theme]) .cache-source-icon{background:#173a31;color:#9ed9c2}
+  html:not([data-theme]) .cache-source-row strong{color:#dff2ec}
+  html:not([data-theme]) .cache-source-row small,
+  html:not([data-theme]) .cache-selector-note,
+  html:not([data-theme]) .cache-selector-title{color:#86a69b!important}
+  html:not([data-theme]) .cache-state{background:#18382f;color:#9ed9c2}
+}
+@media(max-width:600px){
+  .cache-source-row{
+    grid-template-columns:30px minmax(0,1fr);
+  }
+  .cache-state{
+    grid-column:2;
+    justify-self:start;
+    margin-top:2px;
+  }
+}
