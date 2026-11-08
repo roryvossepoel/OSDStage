@@ -468,3 +468,46 @@ html[data-theme="dark"] .report-preview-note{color:#9fb0b7}
     align-items:flex-start;
   }
 }
+
+
+/* The shared two-level footer owns homepage footer layout as well. */
+.home-page .site-footer{
+  display:block;
+  grid-template-columns:none;
+  gap:0;
+  align-items:initial;
+  width:100%;
+  max-width:none;
+  margin-top:54px;
+  padding-left:0;
+  padding-right:0;
+}
+.home-page .site-footer .footer-main{
+  display:grid;
+  grid-template-columns:minmax(240px,1.15fr) minmax(150px,.7fr) minmax(220px,1fr);
+  gap:54px;
+  align-items:start;
+}
+.home-page .site-footer .footer-theme{
+  justify-self:auto;
+  align-items:center;
+  margin-left:0;
+  padding-top:0;
+}
+@media(max-width:850px){
+  .home-page .site-footer .footer-main{
+    grid-template-columns:minmax(220px,1fr) minmax(0,1fr);
+    gap:28px 40px;
+  }
+}
+@media(max-width:600px){
+  .home-page .site-footer{
+    margin-top:40px;
+    padding-left:0;
+    padding-right:0;
+  }
+  .home-page .site-footer .footer-main{
+    grid-template-columns:1fr;
+    gap:24px;
+  }
+}
