@@ -1218,3 +1218,12 @@ html[data-theme="dark"] .repository-copy{
 @media(max-width:600px){
   .repository-copy{gap:4px}
 }
+
+
+/* Tighten repository and cache copy after visual review. */
+.capability:nth-child(2)>p:not(.capability-number){
+  max-width:33ch;
+}
+.cache-source-row small{
+  line-height:1.35;
+}
