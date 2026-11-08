@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from ci_changes import changed_files, icon_only, main, validate_icons
+from ci_changes import changed_files, icon_only, main, site_only, validate_icons
 
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M0 0h10v10z"/></svg>'
 
@@ -14,6 +14,13 @@ SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M0 0
 class ChangesTests(unittest.TestCase):
     def test_icon_edits_and_additions(self):
         self.assertTrue(icon_only([('M', 'metadata/icons/7zip.svg'), ('A', 'metadata/icons/new.svg')]))
+
+    def test_site_only_changes_skip_module_validation(self):
+        self.assertTrue(site_only([('M', 'site/assets/site.css'), ('A', 'site/new.html'), ('D', 'site/old.html')]))
+        for changes in [[], [('M', 'site/index.html'), ('M', 'Public/Test.ps1')],
+                        [('R', 'site/old.html')], [('M', 'README.md')]]:
+            with self.subTest(changes=changes):
+                self.assertFalse(site_only(changes))
 
     def test_mixed_deleted_renamed_unknown_and_empty_changes_run_full(self):
         for changes in [[], [('D', 'metadata/icons/7zip.svg')], [('T', 'metadata/icons/7zip.svg')],
