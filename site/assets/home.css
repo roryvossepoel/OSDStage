@@ -580,3 +580,80 @@ html[data-theme="dark"] .report-preview-note{color:#9fb0b7}
     border-top:1px solid #d7e6df;
   }
 }
+
+
+/* Simplify the optional cache diagram: no nested card, just one clear branch. */
+.cache-example{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:8px 0 0!important;
+}
+.cache-main{
+  padding:0;
+}
+.cache-main .cache-stage{
+  padding:7px 12px;
+  border:1px solid #b9d8cc;
+  border-radius:999px;
+  background:#edf6f1;
+}
+.cache-branch{
+  display:grid;
+  justify-items:center;
+  gap:5px;
+  margin-top:0;
+  color:#52796a;
+}
+.cache-branch-line{
+  width:1px;
+  height:18px;
+  background:#9fc5b5;
+  position:relative;
+}
+.cache-branch-line::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-1px;
+  width:6px;
+  height:6px;
+  border-right:1.7px solid #28775e;
+  border-bottom:1.7px solid #28775e;
+  transform:translateX(-50%) rotate(45deg);
+}
+.cache-branch-line::before{display:none!important}
+.cache-branch-title{
+  font-size:.76rem;
+  line-height:1.25;
+  font-weight:700;
+  color:#256b56;
+}
+.cache-branch small{
+  font-size:.68rem;
+  line-height:1.3;
+  color:#718579;
+}
+.cache-sidecar{display:contents}
+html[data-theme="dark"] .cache-main .cache-stage{
+  background:transparent;
+  border-color:#7fb8a5;
+  color:#dff2ec;
+}
+html[data-theme="dark"] .cache-branch-title{color:#9ed9c2}
+html[data-theme="dark"] .cache-branch small{color:#7fa89a}
+@media(prefers-color-scheme:dark){
+  html:not([data-theme]) .cache-main .cache-stage{
+    background:transparent;
+    border-color:#7fb8a5;
+    color:#dff2ec;
+  }
+  html:not([data-theme]) .cache-branch-title{color:#9ed9c2}
+  html:not([data-theme]) .cache-branch small{color:#7fa89a}
+}
+@media(max-width:600px){
+  .cache-main{
+    grid-template-columns:auto minmax(16px,1fr) auto minmax(16px,1fr) auto;
+  }
+  .cache-branch-line{height:16px}
+}
