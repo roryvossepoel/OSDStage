@@ -412,8 +412,8 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
 
     It 'renders the compact Target, USB and Offline status in a single label' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "form.Text = 'OSDStage Viewer - Read-only'"
-        $source | Should -Match "title.Text = 'OSDStage Viewer'"
+        $source | Should -Match "form.Text = 'OSDStage - Experimental selection preview'"
+        $source | Should -Match "title.Text = 'OSDStage'"
         $source | Should -Match '\$contextStatus\.Text = "Target:'
         $source | Should -Match 'Target: \$\(\$State\.TargetKind\)\s+\|\s+USB: \$usbLabel\s+\|\s+\$\(\$State\.CatalogMode\)'
         $source | Should -Not -Match '\$targetStatus = \[System.Windows.Forms.Label\]'
