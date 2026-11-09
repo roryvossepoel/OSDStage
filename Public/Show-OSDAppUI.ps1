@@ -415,13 +415,13 @@ function Show-OSDAppUI {
     $header.Controls.Add($title)
 
     $subtitle = [System.Windows.Forms.Label]::new()
-    $subtitle.Text = 'Select, configure and inspect'
+    $subtitle.Text = 'Experimental preview - selection and configuration only; staging is not implemented yet'
     $subtitle.ForeColor = [System.Drawing.Color]::Gainsboro
     $subtitle.SetBounds(20,49,560,23)
     $header.Controls.Add($subtitle)
 
     $readOnly = [System.Windows.Forms.Label]::new()
-    $readOnly.Text = 'Preview only'
+    $readOnly.Text = 'EXPERIMENTAL'
     $readOnly.ForeColor = [System.Drawing.Color]::White
     $readOnly.TextAlign = [System.Drawing.ContentAlignment]::MiddleRight
     $readOnly.SetBounds(811,22,110,28)
