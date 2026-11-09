@@ -1,18 +1,10 @@
-# OSDStage viewers
+# OSDStage Inspector
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Troubleshooting](faq.md)
 
-OSDStage Viewer is the read-only interface opened by `Show-OSDStageUI`. It displays what the CLI has prepared: the device queue and configuration, built-in/repository apps, script packages, USB cache and existing logs. It does not add, remove, configure, download or install apps.
+OSDStage Inspector is the read-only interface opened by `Show-OSDStageUI`. It displays what the PowerShell CLI has prepared and what is locally available: the device queue and stored configuration, package availability, USB cache and existing logs. It does not add, remove, configure, download or install apps.
 
-## Experimental selection and configuration preview
-
-> **Experimental:** this preview is for UI evaluation only. Selecting or configuring items in the Viewer does **not** stage, install, synchronize or persist anything. Closing the Viewer discards the preview.
-
-The development preview adds an in-memory selection to the **Packages** tab. Built-in items can expose configuration controls derived from the loaded OSDStage cmdlets. The selected order and settings are separate from the actual device manifest, which remains read-only in this preview.
-
-Actual staging continues to use the PowerShell CLI. A future change may connect an approved selection to the existing Add commands, but that behavior is intentionally outside this experimental preview.
-
-## Two different viewers
+## Inspector scope
 
 | Viewer | Reads | Does not do |
 | --- | --- | --- |
