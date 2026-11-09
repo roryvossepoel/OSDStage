@@ -57,13 +57,13 @@ General bugs without a security impact should be reported through the normal iss
 
 ### Repository packages
 
-Repository packages are administrator-controlled content. OSDStage verifies package payloads against the SHA-256 values published in the repository manifest, but a trusted repository can intentionally publish executable scripts or applications.
+Repository packages are administrator-controlled content. OSDStage verifies package payloads against the SHA-256 values published in the repository manifest, but a trusted repository can intentionally publish executable scripts or apps.
 
 Repository `App` and `Script` packages can execute as **SYSTEM**. Only use repositories and package sources that are under appropriate administrative control. Do not place untrusted or user-writable content in a repository or cache location used for deployment.
 
-### Built-in applications
+### Built-in apps
 
-OSDStage does not redistribute built-in application installers. Supported built-ins acquire content from vendor-controlled sources and use product-specific validation appropriate to that integration.
+OSDStage does not redistribute built-in app installers. Supported built-ins acquire content from vendor-controlled sources and use product-specific validation appropriate to that integration.
 
 The exact validation method can differ by product. Depending on the integration, OSDStage may use publisher or Authenticode checks, vendor-provided hashes, Microsoft-native package validation, or other documented controls.
 
@@ -109,6 +109,6 @@ Public disclosure should wait until a reasonable fix or mitigation is available,
 
 ## Third-party vulnerabilities
 
-OSDStage integrates with Windows, PowerShell, PowerShell Gallery and third-party application vendors.
+OSDStage integrates with Windows, PowerShell, PowerShell Gallery and third-party app vendors.
 
 Use the appropriate upstream security channel for vulnerabilities that exist entirely in those products. If the issue affects how OSDStage acquires, validates, stages or executes that content, include OSDStage in the report so the integration can be reviewed.
