@@ -4,9 +4,9 @@
 
 In the released Gallery version (0.43.0), `Show-OSDAppUI` opens the read-only OSDApps Viewer. It displays what the CLI has prepared: the device queue and configuration, built-in/repository apps, script packages, USB cache and existing logs. It does not add, remove, configure, download or install applications.
 
-## Selection and configuration preview (unreleased)
+## Selection and configuration preview (experimental, not functional for staging)
 
-The development version extends **the existing `Show-OSDAppUI` command**. PowerShell Gallery 0.43.0 still opens the read-only Viewer described below. Import the module from the reviewed source checkout to try this preview; no new release or exported cmdlet is introduced by this change.
+> **Experimental preview:** selection and configuration are available for UI review only. Staging from the UI is not implemented yet. Nothing selected here is applied to the deployment. Closing the Viewer discards the preview.`n`nThe development version extends **the existing `Show-OSDAppUI` command**. PowerShell Gallery 0.43.0 still opens the read-only Viewer described below. Import the module from the reviewed source checkout to try this preview; no new release or exported cmdlet is introduced by this change.
 
 The **Apps** tab opens first. Check built-in applications or repository applications/scripts to create a selection in memory. Highlight a built-in and click **Configure selected...**; configuring an unchecked app does not select it. The configuration dialog has **Apply**, **Cancel** and **Reset defaults**. Office settings are grouped into **Installation**, **Applications**, **Licensing** and **Advanced** tabs. Other built-ins separate their settings from advanced download URLs. Defaults and supported choices come from the loaded built-in cmdlet, never from the USB cache. Repository packages retain their package-defined settings.
 
