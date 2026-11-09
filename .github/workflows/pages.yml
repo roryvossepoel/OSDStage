@@ -20,7 +20,7 @@ jobs:
     name: Build and check website
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Build static website
         run: python3 build/build_pages.py
       - name: Check website links, markup and bundled metadata
