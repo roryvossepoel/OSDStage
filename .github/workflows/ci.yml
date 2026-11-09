@@ -79,13 +79,13 @@ jobs:
           if ($catalog.SchemaVersion -ne 2) { throw 'Unexpected example catalog schema.' }
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: validation-PowerShell-7
           path: TestResults
           if-no-files-found: warn
       - name: Upload module artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OSDStage-PowerShell-7
           path: dist/OSDStage
@@ -159,13 +159,13 @@ jobs:
           if ($catalog.SchemaVersion -ne 2) { throw 'Unexpected example catalog schema.' }
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: validation-Windows-PowerShell-5.1
           path: TestResults
           if-no-files-found: warn
       - name: Upload module artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OSDStage-Windows-PowerShell-5.1
           path: dist/OSDStage
