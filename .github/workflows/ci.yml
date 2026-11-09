@@ -23,7 +23,7 @@ jobs:
       run_module: ${{ steps.classify.outputs.run_module }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Test change selection
@@ -44,7 +44,7 @@ jobs:
         shell: pwsh
         run: throw 'Change classification or SVG validation failed. See the changes job.'
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Install test dependencies
         shell: pwsh
         run: |
@@ -103,7 +103,7 @@ jobs:
         shell: pwsh
         run: throw 'Change classification or SVG validation failed. See the changes job.'
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Install test dependencies
         shell: powershell
         run: |

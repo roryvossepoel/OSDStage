@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout immutable release tag
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: v${{ inputs.expected_version }}
           fetch-depth: 0
