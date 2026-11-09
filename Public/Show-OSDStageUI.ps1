@@ -70,21 +70,14 @@ function Show-OSDStageUIRows {
         } -Descending:([bool]$sorting.Descending))
     }
 
-    if ($Key -eq 'Packages') { $State.RenderingPackages = $true }
     $view.BeginUpdate()
     try {
         $view.Items.Clear()
         foreach ($item in $rows) {
-            if ($Key -eq 'Packages' -and $State.ContainsKey('Draft')) {
-                $item.Checked = $State.Draft.Order.Contains((Get-OSDStageUISelectionKey -App $item.Tag))
-            }
             [void]$view.Items.Add($item)
         }
     }
-    finally {
-        $view.EndUpdate()
-        if ($Key -eq 'Packages') { $State.RenderingPackages = $false }
-    }
+    finally { $view.EndUpdate() }
 }
 
 function Set-OSDStageUIListSort {
@@ -199,13 +192,12 @@ function Update-OSDStageUIReadOnlyView {
             [void]$item.SubItems.Add((Get-OSDStageUICachedVersion -App $app -CacheEntries $data.CacheEntries))
             [void]$item.SubItems.Add([string]$app.Architecture)
             [void]$item.SubItems.Add((Get-OSDStageUIAvailabilityLabel -Availability $app.Availability -Offline:$State.Offline))
-            [void]$item.SubItems.Add($(if ((Get-OSDStageUISelectionKey -App $app) -in @($data.StagedApps | ForEach-Object { Get-OSDStageUISelectionKey -App $_ })) { 'Staged' } else { '-' }))
-            $item.Tag = $app
+            [void]$item.SubItems.Add($(if ([string]$app.Id -in @($data.StagedApps.Id)) { 'Staged' } else { '-' }))
             $item
         }
         # Staged apps absent from the current catalog/cache remain visible.
         foreach ($app in @($data.StagedApps)) {
-            if ((Get-OSDStageUISelectionKey -App $app) -in @($data.CatalogApps | ForEach-Object { Get-OSDStageUISelectionKey -App $_ })) { continue }
+            if ([string]$app.Id -in @($data.CatalogApps.Id)) { continue }
             $displayInfo = Get-OSDStageUIDisplayInfo -App $app -CatalogApps $data.CatalogApps -BuiltInMetadata $builtInMetadata
             $item = [System.Windows.Forms.ListViewItem]::new([string]$displayInfo.DisplayName)
             [void]$item.SubItems.Add($(if ($app.Source -eq 'BuiltIn') { 'Built-in' } else { 'Repository' }))
@@ -216,7 +208,6 @@ function Update-OSDStageUIReadOnlyView {
             [void]$item.SubItems.Add([string]$app.Architecture)
             [void]$item.SubItems.Add('Not in current catalog/cache')
             [void]$item.SubItems.Add('Staged')
-            $item.Tag = $app
             $item
         }
     )
@@ -318,9 +309,8 @@ function Update-OSDStageUIReadOnlyView {
 function Show-OSDStageUI {
     <#
     .SYNOPSIS
-    Read-only overview of staged OSDStage, built-in and repository catalog,
-    USB cache, and available log files, with an experimental in-memory selection/configuration preview.
-    Preview choices never change device staging or cache.
+    Read-only inspector for staged OSDStage content, package availability,
+    USB cache, and logs. All staging and configuration stay PowerShell CLI-only.
     .EXAMPLE
     Show-OSDStageUI -Offline
     .EXAMPLE
@@ -384,9 +374,9 @@ function Show-OSDStageUI {
     }
 
     $form = [System.Windows.Forms.Form]::new()
-    $form.Text = 'OSDStage - Experimental selection preview'
+    $form.Text = 'OSDStage Inspector - Read-only'
     $form.Size = [System.Drawing.Size]::new(980,710)
-    $form.MinimumSize = [System.Drawing.Size]::new(900,700)
+    $form.MinimumSize = [System.Drawing.Size]::new(800,580)
     $form.StartPosition = 'CenterScreen'
     $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $form.Font = [System.Drawing.Font]::new('Segoe UI',9)
@@ -407,7 +397,7 @@ function Show-OSDStageUI {
     [void]$root.Controls.Add($header,0,0)
 
     $title = [System.Windows.Forms.Label]::new()
-    $title.Text = 'OSDStage'
+    $title.Text = 'OSDStage Inspector'
     $title.Font = [System.Drawing.Font]::new('Segoe UI',17,[System.Drawing.FontStyle]::Bold)
     $title.ForeColor = [System.Drawing.Color]::White
     $title.SetBounds(18,9,670,37)
@@ -415,13 +405,13 @@ function Show-OSDStageUI {
     $header.Controls.Add($title)
 
     $subtitle = [System.Windows.Forms.Label]::new()
-    $subtitle.Text = 'Experimental preview - selection and configuration only; staging is not implemented yet'
+    $subtitle.Text = 'Staged content, cache and diagnostics'
     $subtitle.ForeColor = [System.Drawing.Color]::Gainsboro
     $subtitle.SetBounds(20,49,560,23)
     $header.Controls.Add($subtitle)
 
     $readOnly = [System.Windows.Forms.Label]::new()
-    $readOnly.Text = 'EXPERIMENTAL'
+    $readOnly.Text = 'READ-ONLY'
     $readOnly.ForeColor = [System.Drawing.Color]::White
     $readOnly.TextAlign = [System.Drawing.ContentAlignment]::MiddleRight
     $readOnly.SetBounds(811,22,110,28)
@@ -480,7 +470,7 @@ function Show-OSDStageUI {
     $catalogTab = [System.Windows.Forms.TabPage]::new('Packages')
     $cacheTab = [System.Windows.Forms.TabPage]::new('Cache')
     $logsTab = [System.Windows.Forms.TabPage]::new('Logs')
-    foreach ($tab in @($catalogTab,$stagedTab,$cacheTab,$logsTab)) { [void]$tabs.TabPages.Add($tab) }
+    foreach ($tab in @($stagedTab,$catalogTab,$cacheTab,$logsTab)) { [void]$tabs.TabPages.Add($tab) }
 
     $stagedLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $stagedLayout.Dock = 'Fill'
@@ -518,14 +508,12 @@ function Show-OSDStageUI {
 
     $catalogLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $catalogLayout.Dock = 'Fill'
-    $catalogLayout.RowCount = 4
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',28))
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',35))
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',32))
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',65))
+    $catalogLayout.RowCount = 2
+    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',38))
+    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',100))
     $catalogTab.Controls.Add($catalogLayout)
     $catalogInfo = [System.Windows.Forms.Label]::new()
-    $catalogInfo.Text = 'Experimental preview: select packages and review built-in settings. Nothing is staged from this screen.'
+    $catalogInfo.Text = 'Built-in and repository apps | Configure and stage using PowerShell CLI'
     $catalogInfo.Dock = 'Fill'
     $catalogInfo.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     [void]$catalogLayout.Controls.Add($catalogInfo,0,0)
@@ -654,8 +642,6 @@ function Show-OSDStageUI {
         }
     }
 
-    Initialize-OSDStageUISelectionControls -State $script:OSDStageUIState -Layout $catalogLayout
-
     $stagedList.Add_SelectedIndexChanged({
         $state=$script:OSDStageUIState
         if (-not $state -or $state.StagedList.SelectedItems.Count -eq 0) { return }
@@ -726,19 +712,6 @@ function Show-OSDStageUI {
         }
     })
     $close.Add_Click({ $script:OSDStageUIState.Form.Close() })
-    $form.Add_FormClosing({
-        $state = $script:OSDStageUIState
-        if ($state -and $state.ContainsKey('Draft') -and $state.Draft.Order.Count -gt 0) {
-            $answer = [System.Windows.Forms.MessageBox]::Show(
-                $state.Form,
-                'Close and discard the experimental selection preview? Nothing has been staged.',
-                'OSDStage',
-                'YesNo',
-                'Question'
-            )
-            if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { $_.Cancel = $true }
-        }
-    })
 
     try {
         try {
