@@ -423,7 +423,7 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
 
     It 'adds package type and cache Vendor without breaking numeric Size sorting' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "'Cache'\s+\{ @\(0,75,95,88,175,95,115,74,122\) \}"
+        $source | Should -Match "'Cache'\s+\{ @\(0,75,95,88,145,90,105,70,105,105,120\) \}"
         $source | Should -Match "cacheList.Columns.Add\('Package Type',95\)"
         $source | Should -Match "cacheList.Columns.Add\('Vendor',88\)"
         $source | Should -Match 'elseif \(\$Key -eq ''Cache'' -and \$column -eq 7\)'
@@ -438,7 +438,7 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         $source | Should -Match "cacheRefresh.Text = 'Refresh'"
         $source | Should -Match "cacheHealth.Text = 'Check health'"
         $source | Should -Match "cacheUpdate.Text = 'Update cache'"
-        $source | Should -Match "cacheClear.Text = 'Clear cache\\.\\.\\.'"
+        $source | Should -Match "cacheClear.Text = 'Clear cache\.\.\.'"
         $source | Should -Match 'Get-OSDStageCacheHealth'
         $source | Should -Match 'Sync-OSDStageRepository'
         $source | Should -Match 'Clear-OSDStageCache -Name'
