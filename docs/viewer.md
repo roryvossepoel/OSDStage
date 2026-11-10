@@ -105,6 +105,7 @@ The Cache tab provides four explicit actions:
 
 - **Refresh** re-reads the current device and cache state. Use it after inserting, removing or replacing an OSDCloud USB device.
 - **Check health** calls `Get-OSDStageCacheHealth` and reports active, obsolete, orphaned, incomplete and corrupt content.
+- **Check updates** compares repository cache entries with the configured catalog and uses existing non-mutating OSDStage release resolvers where available. The Cache table then shows **Latest** and **Update status**. Unsupported built-ins remain `Not checked` rather than being guessed.
 - **Update cache** synchronizes repository content when a `CatalogUri` is configured and refreshes currently cached built-ins through their existing `Sync-OSDStage*` commands. Existing cache metadata is reused; Microsoft 365 Apps is refreshed with its cached `configuration.xml`.
 - **Clear cache...** removes the selected cache item through `Clear-OSDStageCache -Name`. With no selected row, it offers to clear the complete cache with `Clear-OSDStageCache -All`. Logs are preserved.
 
