@@ -13,7 +13,7 @@ function Set-OSDStageUIColumnWidths {
     $fixed = switch ($Key) {
         'Staged'       { @(65,0,90,95,100,125,185,105) }
         'Packages' { @(0,75,95,90,110,175,100,100,90) }
-        'Cache'        { @(0,75,95,88,175,95,115,74,122) }
+        'Cache'        { @(0,75,95,88,145,90,105,70,105,105,120) }
         'Logs'         { @(185,78,135,125,0) }
     }
     $flexIndex = if ($Key -in @('Staged','Packages','Cache')) {
@@ -306,6 +306,98 @@ function Update-OSDStageUIReadOnlyView {
     $State.Status.Text = "$stagedCount staged | $(@($data.CacheEntries).Count) USB cache entries | $(@($data.Logs).Count) logs"
 }
 
+function Get-OSDStageUICacheUpdateStatus {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]$Entry,
+        [Parameter()]$RepositoryCatalog
+    )
+
+    $current = [string]$Entry.Version
+    $latest = $null
+    $status = 'Not checked'
+    $detail = $null
+
+    try {
+        if ([string]$Entry.Source -eq 'Repository') {
+            if (-not $RepositoryCatalog) {
+                return [pscustomobject]@{ Latest=$null; Status='No catalog'; Detail='No repository catalog is available.' }
+            }
+            $matches = @($RepositoryCatalog.Packages | Where-Object {
+                [string]$_.Id -eq [string]$Entry.Id -and
+                (-not $_.Architecture -or -not $Entry.Architecture -or [string]$_.Architecture -eq [string]$Entry.Architecture)
+            })
+            if ($matches.Count -eq 1) {
+                $latest = [string]$matches[0].Version
+                $status = if ($latest -and $current -and $latest -ne $current) { 'Update available' } else { 'Current' }
+            }
+            elseif ($matches.Count -eq 0) { $status = 'Not in catalog' }
+            else { $status = 'Ambiguous' }
+        }
+        elseif ([string]$Entry.Id -eq '7Zip') {
+            $release = Get-OSDStage7ZipRelease -Architecture ([string]$Entry.Architecture)
+            $latest = [string]$release.Version
+            $status = if ($latest -ne $current) { 'Update available' } else { 'Current' }
+        }
+        elseif ([string]$Entry.Id -eq 'VisualStudioCode') {
+            $release = Get-OSDStageVisualStudioCodeRelease -Architecture ([string]$Entry.Architecture)
+            $latest = [string]$release.Version
+            $status = if ($latest -ne $current) { 'Update available' } else { 'Current' }
+        }
+        elseif ([string]$Entry.Id -eq 'DotNetRuntime') {
+            $spec = Get-OSDStagePrerequisiteSpec -Family DotNetRuntime -Architecture ([string]$Entry.Architecture) -Channel ([string]$Entry.Channel) -RuntimeType ([string]$Entry.RuntimeType)
+            $release = Get-OSDStagePrerequisiteRelease -Spec $spec
+            $latest = [string]$release.Version
+            $status = if ($latest -and $latest -ne $current) { 'Update available' } else { 'Current' }
+        }
+    }
+    catch {
+        $status = 'Check failed'
+        $detail = $_.Exception.Message
+    }
+
+    [pscustomobject]@{ Latest=$latest; Status=$status; Detail=$detail }
+}
+
+function Update-OSDStageUICacheUpdateStatus {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$State)
+
+    if (-not $State.Snapshot -or -not $State.Snapshot.CachePath) { throw 'No OSDStage USB cache is currently connected.' }
+
+    $repositoryCatalog = $null
+    $catalogUri = (Get-OSDStageConfiguration).CatalogUri
+    if ($catalogUri) {
+        try { $repositoryCatalog = Get-OSDStageCatalogPackages -CatalogUri $catalogUri }
+        catch { Write-Verbose "Repository update check unavailable: $($_.Exception.Message)" }
+    }
+
+    $results = @{}
+    foreach ($entry in @($State.Snapshot.CacheEntries)) {
+        $key = "$([string]$entry.Source):$([string]$entry.Id):$([string]$entry.Architecture):$([string]$entry.Channel):$([string]$entry.RuntimeType)"
+        $results[$key] = Get-OSDStageUICacheUpdateStatus -Entry $entry -RepositoryCatalog $repositoryCatalog
+    }
+    $State.CacheUpdateStatus = $results
+
+    foreach ($item in @($State.Rows['Cache'])) {
+        $entry = $item.Tag
+        $key = "$([string]$entry.Source):$([string]$entry.Id):$([string]$entry.Architecture):$([string]$entry.Channel):$([string]$entry.RuntimeType)"
+        $result = $results[$key]
+        while ($item.SubItems.Count -lt 11) { [void]$item.SubItems.Add('') }
+        $item.SubItems[9].Text = if ($result -and $result.Latest) { [string]$result.Latest } else { '-' }
+        $item.SubItems[10].Text = if ($result) { [string]$result.Status } else { 'Not checked' }
+        if ($result -and $result.Status -eq 'Update available') { $item.ForeColor = [System.Drawing.Color]::DarkOrange }
+        elseif ($result -and $result.Status -eq 'Check failed') { $item.ForeColor = [System.Drawing.Color]::Firebrick }
+        if ($result -and $result.Detail) { $item.ToolTipText += [Environment]::NewLine + "Update check: $($result.Detail)" }
+    }
+
+    Show-OSDStageUIRows -State $State -Key Cache
+    Set-OSDStageUIColumnWidths -State $State -Key Cache
+    $available = @($results.Values | Where-Object Status -eq 'Update available').Count
+    $failed = @($results.Values | Where-Object Status -eq 'Check failed').Count
+    $State.Status.Text = "Update check complete | $available update(s) available | $failed check(s) failed"
+    [pscustomobject]@{ Available=$available; Failed=$failed; Results=$results }
+}
 function Invoke-OSDStageUICacheUpdate {
     [CmdletBinding()]
     param([Parameter(Mandatory)][hashtable]$State)
@@ -679,6 +771,11 @@ function Show-OSDStageUI {
     $cacheHealth.AutoSize = $true
     $cacheActions.Controls.Add($cacheHealth)
 
+    $cacheCheckUpdates = [System.Windows.Forms.Button]::new()
+    $cacheCheckUpdates.Text = 'Check updates'
+    $cacheCheckUpdates.AutoSize = $true
+    $cacheActions.Controls.Add($cacheCheckUpdates)
+
     $cacheUpdate = [System.Windows.Forms.Button]::new()
     $cacheUpdate.Text = 'Update cache'
     $cacheUpdate.AutoSize = $true
@@ -704,7 +801,9 @@ function Show-OSDStageUI {
     [void]$cacheList.Columns.Add('Architecture',105)
     [void]$cacheList.Columns.Add('Integrity',145)
     [void]$cacheList.Columns.Add('Size',100)
-    [void]$cacheList.Columns.Add('Signature',145)
+    [void]$cacheList.Columns.Add('Signature',120)
+    [void]$cacheList.Columns.Add('Latest',105)
+    [void]$cacheList.Columns.Add('Update status',120)
     [void]$cacheLayout.Controls.Add($cacheList,0,2)
 
     $logsLayout = [System.Windows.Forms.TableLayoutPanel]::new()
@@ -776,7 +875,8 @@ function Show-OSDStageUI {
         CatalogMode=$catalogMode; CatalogDescription=$catalogDescription
         StagedList=$stagedList; CatalogList=$catalogList; CacheList=$cacheList
         StagedInfo=$stagedInfo; CacheInfo=$cacheInfo; Details=$details
-        CacheRefresh=$cacheRefresh; CacheHealth=$cacheHealth; CacheUpdate=$cacheUpdate; CacheClear=$cacheClear
+        CacheRefresh=$cacheRefresh; CacheHealth=$cacheHealth; CacheCheckUpdates=$cacheCheckUpdates; CacheUpdate=$cacheUpdate; CacheClear=$cacheClear
+        CacheUpdateStatus=@{}
         LogFiles=$logFiles; LogList=$logList; LogDetails=$logDetails; LogInfo=$logInfo
         LogEntries=@(); Status=$status; Snapshot=$null
         Lists=@{ Staged=$stagedList; Packages=$catalogList; Cache=$cacheList; Logs=$logList }
@@ -872,6 +972,19 @@ function Show-OSDStageUI {
             $state.Status.Text = "Cache health check failed: $($_.Exception.Message)"
             [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Cache health','OK','Error')
         }
+    })
+    $cacheCheckUpdates.Add_Click({
+        $state = $script:OSDStageUIState
+        if (-not $state) { return }
+        $state.Status.Text = 'Checking for cache updates...'
+        $state.Form.UseWaitCursor = $true
+        $state.Form.Refresh()
+        try { [void](Update-OSDStageUICacheUpdateStatus -State $state) }
+        catch {
+            $state.Status.Text = "Update check failed: $($_.Exception.Message)"
+            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Check updates','OK','Error')
+        }
+        finally { $state.Form.UseWaitCursor = $false }
     })
     $cacheUpdate.Add_Click({
         $state = $script:OSDStageUIState
