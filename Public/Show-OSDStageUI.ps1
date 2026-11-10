@@ -306,6 +306,122 @@ function Update-OSDStageUIReadOnlyView {
     $State.Status.Text = "$stagedCount staged | $(@($data.CacheEntries).Count) USB cache entries | $(@($data.Logs).Count) logs"
 }
 
+function Invoke-OSDStageUICacheUpdate {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$State)
+
+    if (-not $State.Snapshot -or -not $State.Snapshot.CachePath) {
+        throw 'No OSDStage USB cache is currently connected.'
+    }
+
+    $entries = @($State.Snapshot.CacheEntries)
+    $updated = [System.Collections.Generic.List[string]]::new()
+    $skipped = [System.Collections.Generic.List[string]]::new()
+    $failed = [System.Collections.Generic.List[string]]::new()
+
+    if (@($entries | Where-Object Source -eq 'Repository').Count -gt 0) {
+        try {
+            $catalogUri = (Get-OSDStageConfiguration).CatalogUri
+            if ($catalogUri) {
+                Sync-OSDStageRepository -Confirm:$false | Out-Null
+                $updated.Add('Repository')
+            }
+            else {
+                $skipped.Add('Repository: no CatalogUri configured')
+            }
+        }
+        catch {
+            $failed.Add("Repository: $($_.Exception.Message)")
+        }
+    }
+
+    $builtInEntries = @(
+        $entries |
+            Where-Object Source -eq 'BuiltIn' |
+            Sort-Object Id,Architecture,Channel,RuntimeType,CachePath -Unique
+    )
+
+    foreach ($entry in $builtInEntries) {
+        $commandName = "Sync-OSDStage$($entry.Id)"
+        $command = Get-Command -Name $commandName -Module OSDStage -ErrorAction SilentlyContinue
+        if (-not $command) {
+            $skipped.Add("$($entry.Id): no sync command")
+            continue
+        }
+
+        $parameters = @{}
+        if ($command.Parameters.ContainsKey('Architecture') -and $entry.Architecture) {
+            $parameters.Architecture = [string]$entry.Architecture
+        }
+        if ($command.Parameters.ContainsKey('Channel') -and $entry.Channel) {
+            $parameters.Channel = [string]$entry.Channel
+        }
+        if ($command.Parameters.ContainsKey('RuntimeType') -and $entry.RuntimeType) {
+            $parameters.RuntimeType = [string]$entry.RuntimeType
+        }
+
+        if ([string]$entry.Id -eq 'Microsoft365Apps') {
+            $configurationXml = Join-Path ([string]$entry.CachePath) 'configuration.xml'
+            if (-not (Test-Path -LiteralPath $configurationXml -PathType Leaf)) {
+                $skipped.Add('Microsoft365Apps: cached configuration.xml not found')
+                continue
+            }
+            $parameters.ConfigurationXml = $configurationXml
+        }
+
+        $missingMandatory = @(
+            foreach ($parameter in $command.Parameters.Values) {
+                if (-not $parameter.Attributes) { continue }
+                $mandatory = @($parameter.Attributes | Where-Object {
+                    $_ -is [System.Management.Automation.ParameterAttribute] -and $_.Mandatory
+                }).Count -gt 0
+                if ($mandatory -and -not $parameters.ContainsKey($parameter.Name)) {
+                    $parameter.Name
+                }
+            }
+        )
+        if ($missingMandatory.Count -gt 0) {
+            $skipped.Add("$($entry.Id): missing $($missingMandatory -join ', ')")
+            continue
+        }
+
+        try {
+            if ($command.Parameters.ContainsKey('Confirm')) { $parameters.Confirm = $false }
+            & $commandName @parameters | Out-Null
+            $label = [string]$entry.Id
+            if ($entry.Architecture) { $label += " ($($entry.Architecture))" }
+            $updated.Add($label)
+        }
+        catch {
+            $failed.Add("$($entry.Id): $($_.Exception.Message)")
+        }
+    }
+
+    [pscustomobject]@{
+        Updated = @($updated)
+        Skipped = @($skipped)
+        Failed  = @($failed)
+    }
+}
+
+function Format-OSDStageUICacheHealth {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)]$Health)
+
+    @(
+        "Cache: $(if ($Health.CacheAvailable) { 'Available' } else { 'Not available' })"
+        "Health: $(if ($Health.Healthy) { 'Healthy' } else { 'Needs attention' })"
+        "Entries: $($Health.EntryCount)"
+        "Active: $($Health.ActiveCount)"
+        "Obsolete: $($Health.ObsoleteCount)"
+        "Orphaned: $($Health.OrphanedCount)"
+        "Incomplete: $($Health.IncompleteCount)"
+        "Corrupt: $($Health.CorruptCount)"
+        "Removable: $($Health.RemovableSizeMB) MB"
+        "Desired state: $(if ($Health.DesiredStateAvailable) { 'Available' } else { 'Unavailable' })"
+    ) -join [Environment]::NewLine
+}
+
 function Show-OSDStageUI {
     <#
     .SYNOPSIS
@@ -535,8 +651,9 @@ function Show-OSDStageUI {
 
     $cacheLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $cacheLayout.Dock = 'Fill'
-    $cacheLayout.RowCount = 2
-    [void]$cacheLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',48))
+    $cacheLayout.RowCount = 3
+    [void]$cacheLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',38))
+    [void]$cacheLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',42))
     [void]$cacheLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',100))
     $cacheTab.Controls.Add($cacheLayout)
     $cacheInfo = [System.Windows.Forms.Label]::new()
@@ -544,10 +661,39 @@ function Show-OSDStageUI {
     $cacheInfo.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     $cacheInfo.AutoEllipsis = $true
     [void]$cacheLayout.Controls.Add($cacheInfo,0,0)
+
+    $cacheActions = [System.Windows.Forms.FlowLayoutPanel]::new()
+    $cacheActions.Dock = 'Fill'
+    $cacheActions.FlowDirection = [System.Windows.Forms.FlowDirection]::LeftToRight
+    $cacheActions.WrapContents = $false
+    $cacheActions.Padding = [System.Windows.Forms.Padding]::new(0,3,0,3)
+    [void]$cacheLayout.Controls.Add($cacheActions,0,1)
+
+    $cacheRefresh = [System.Windows.Forms.Button]::new()
+    $cacheRefresh.Text = 'Refresh'
+    $cacheRefresh.AutoSize = $true
+    $cacheActions.Controls.Add($cacheRefresh)
+
+    $cacheHealth = [System.Windows.Forms.Button]::new()
+    $cacheHealth.Text = 'Check health'
+    $cacheHealth.AutoSize = $true
+    $cacheActions.Controls.Add($cacheHealth)
+
+    $cacheUpdate = [System.Windows.Forms.Button]::new()
+    $cacheUpdate.Text = 'Update cache'
+    $cacheUpdate.AutoSize = $true
+    $cacheActions.Controls.Add($cacheUpdate)
+
+    $cacheClear = [System.Windows.Forms.Button]::new()
+    $cacheClear.Text = 'Clear cache...'
+    $cacheClear.AutoSize = $true
+    $cacheActions.Controls.Add($cacheClear)
+
     $cacheList = [System.Windows.Forms.ListView]::new()
     $cacheList.Dock = 'Fill'
     $cacheList.View = 'Details'
     $cacheList.FullRowSelect = $true
+    $cacheList.MultiSelect = $false
     $cacheList.GridLines = $true
     $cacheList.ShowItemToolTips = $true
     [void]$cacheList.Columns.Add('Display Name',265)
@@ -559,7 +705,7 @@ function Show-OSDStageUI {
     [void]$cacheList.Columns.Add('Integrity',145)
     [void]$cacheList.Columns.Add('Size',100)
     [void]$cacheList.Columns.Add('Signature',145)
-    [void]$cacheLayout.Controls.Add($cacheList,0,1)
+    [void]$cacheLayout.Controls.Add($cacheList,0,2)
 
     $logsLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $logsLayout.Dock = 'Fill'
@@ -630,6 +776,7 @@ function Show-OSDStageUI {
         CatalogMode=$catalogMode; CatalogDescription=$catalogDescription
         StagedList=$stagedList; CatalogList=$catalogList; CacheList=$cacheList
         StagedInfo=$stagedInfo; CacheInfo=$cacheInfo; Details=$details
+        CacheRefresh=$cacheRefresh; CacheHealth=$cacheHealth; CacheUpdate=$cacheUpdate; CacheClear=$cacheClear
         LogFiles=$logFiles; LogList=$logList; LogDetails=$logDetails; LogInfo=$logInfo
         LogEntries=@(); Status=$status; Snapshot=$null
         Lists=@{ Staged=$stagedList; Packages=$catalogList; Cache=$cacheList; Logs=$logList }
@@ -698,6 +845,109 @@ function Show-OSDStageUI {
         $state = $script:OSDStageUIState
         if ($state) { Set-OSDStageUIColumnWidths -State $state -Key Logs }
     })
+    $cacheRefresh.Add_Click({
+        $state = $script:OSDStageUIState
+        if (-not $state) { return }
+        $state.Status.Text = 'Refreshing cache inventory...'
+        $state.Form.Refresh()
+        try {
+            Update-OSDStageUIReadOnlyView -State $state
+        }
+        catch {
+            $state.Status.Text = "Refresh failed: $($_.Exception.Message)"
+            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Cache refresh','OK','Error')
+        }
+    })
+    $cacheHealth.Add_Click({
+        $state = $script:OSDStageUIState
+        if (-not $state) { return }
+        try {
+            if (-not $state.Snapshot -or -not $state.Snapshot.CachePath) { throw 'No OSDStage USB cache is currently connected.' }
+            $health = Get-OSDStageCacheHealth -CachePath $state.Snapshot.CachePath -Offline:$state.Offline
+            $summary = Format-OSDStageUICacheHealth -Health $health
+            $state.Status.Text = "Cache health: $(if ($health.Healthy) { 'Healthy' } else { 'Needs attention' })"
+            [void][System.Windows.Forms.MessageBox]::Show($summary,'OSDStage - Cache health','OK','Information')
+        }
+        catch {
+            $state.Status.Text = "Cache health check failed: $($_.Exception.Message)"
+            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Cache health','OK','Error')
+        }
+    })
+    $cacheUpdate.Add_Click({
+        $state = $script:OSDStageUIState
+        if (-not $state) { return }
+        $answer = [System.Windows.Forms.MessageBox]::Show(
+            'Update the connected cache using the current repository catalog and the existing built-in cache configuration?',
+            'OSDStage - Update cache',
+            [System.Windows.Forms.MessageBoxButtons]::YesNo,
+            [System.Windows.Forms.MessageBoxIcon]::Question
+        )
+        if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { return }
+
+        $state.Status.Text = 'Updating cache...'
+        $state.Form.UseWaitCursor = $true
+        $state.Form.Refresh()
+        try {
+            $result = Invoke-OSDStageUICacheUpdate -State $state
+            Update-OSDStageUIReadOnlyView -State $state
+            $summary = @(
+                "Updated: $(@($result.Updated).Count)"
+                "Skipped: $(@($result.Skipped).Count)"
+                "Failed: $(@($result.Failed).Count)"
+            )
+            if ($result.Skipped.Count -gt 0) { $summary += ''; $summary += 'Skipped:'; $summary += @($result.Skipped) }
+            if ($result.Failed.Count -gt 0) { $summary += ''; $summary += 'Failed:'; $summary += @($result.Failed) }
+            $state.Status.Text = "Cache update complete | $(@($result.Updated).Count) updated | $(@($result.Failed).Count) failed"
+            [void][System.Windows.Forms.MessageBox]::Show(
+                ($summary -join [Environment]::NewLine),
+                'OSDStage - Update cache',
+                'OK',
+                $(if ($result.Failed.Count -gt 0) { 'Warning' } else { 'Information' })
+            )
+        }
+        catch {
+            $state.Status.Text = "Cache update failed: $($_.Exception.Message)"
+            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Update cache','OK','Error')
+        }
+        finally {
+            $state.Form.UseWaitCursor = $false
+        }
+    })
+    $cacheClear.Add_Click({
+        $state = $script:OSDStageUIState
+        if (-not $state) { return }
+        try {
+            if (-not $state.Snapshot -or -not $state.Snapshot.CachePath) { throw 'No OSDStage USB cache is currently connected.' }
+
+            if ($state.CacheList.SelectedItems.Count -gt 0) {
+                $entry = $state.CacheList.SelectedItems[0].Tag
+                $message = "Remove '$($entry.DisplayName)' ($($entry.Id)) from the connected cache?"
+                $answer = [System.Windows.Forms.MessageBox]::Show(
+                    $message,'OSDStage - Clear cache','YesNo','Warning'
+                )
+                if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { return }
+                Clear-OSDStageCache -Name ([string]$entry.Id) -Confirm:$false | Out-Null
+            }
+            else {
+                $answer = [System.Windows.Forms.MessageBox]::Show(
+                    'No cache item is selected. Clear the entire connected OSDStage cache? Logs are preserved.',
+                    'OSDStage - Clear cache',
+                    'YesNo',
+                    'Warning'
+                )
+                if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) { return }
+                Clear-OSDStageCache -All -Confirm:$false | Out-Null
+            }
+
+            Update-OSDStageUIReadOnlyView -State $state
+            $state.Status.Text = 'Cache clear completed.'
+        }
+        catch {
+            $state.Status.Text = "Cache clear failed: $($_.Exception.Message)"
+            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Clear cache','OK','Error')
+        }
+    })
+
     $refresh.Add_Click({
         $state = $script:OSDStageUIState
         if (-not $state) { return }
