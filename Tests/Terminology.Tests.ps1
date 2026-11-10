@@ -26,6 +26,8 @@ Describe 'Canonical OSDStage terminology' {
             $source = $source -replace ('\bClient' + $script:obsoleteTerm + 'ID\b'), ''
             # The Add-Type compiler output kind is a mandatory external API enum.
             $source = $source -replace ('\bConsole' + $script:obsoleteTerm + '\b'), ''
+            # Windows Forms uses this mandatory external .NET type for message pumping.
+            $source = $source -replace ('\bSystem\.Windows\.Forms\.' + $script:obsoleteTerm + '\b'), ''
             # Windows taskbar XML uses these externally defined attribute names.
             $source = $source -replace ('Desktop' + $script:obsoleteTerm + '(ID|LinkPath)'), ''
             # Windows default-association XML, the policy key and Microsoft documentation URLs are external contracts.
