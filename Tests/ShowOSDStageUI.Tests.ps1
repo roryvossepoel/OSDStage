@@ -520,4 +520,31 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         }
     }
 
+    It 'checks update availability for supported cached content without synchronizing it' {
+        InModuleScope OSDStage {
+            Mock Get-OSDStage7ZipRelease { [pscustomobject]@{Version='26.08';Architecture='x64'} }
+            $entry = [pscustomobject]@{Id='7Zip';Source='BuiltIn';Architecture='x64';Version='26.05'}
+            $result = Get-OSDStageUICacheUpdateStatus -Entry $entry
+            $result.Latest | Should -Be '26.08'
+            $result.Status | Should -Be 'Update available'
+        }
+    }
+
+    It 'compares repository cache versions with the configured catalog metadata' {
+        InModuleScope OSDStage {
+            $entry = [pscustomobject]@{Id='CustomApp';Source='Repository';Architecture='x64';Version='1.0.0'}
+            $catalog = [pscustomobject]@{Packages=@([pscustomobject]@{Id='CustomApp';Architecture='x64';Version='1.1.0'})}
+            $result = Get-OSDStageUICacheUpdateStatus -Entry $entry -RepositoryCatalog $catalog
+            $result.Latest | Should -Be '1.1.0'
+            $result.Status | Should -Be 'Update available'
+        }
+    }
+
+    It 'exposes a Check updates action and cache update status columns' {
+        $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
+        $source | Should -Match "cacheCheckUpdates.Text = 'Check updates'"
+        $source | Should -Match "Columns.Add\('Latest'"
+        $source | Should -Match "Columns.Add\('Update status'"
+        $source | Should -Match 'Update-OSDStageUICacheUpdateStatus'
+    }
 }
