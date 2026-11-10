@@ -135,7 +135,7 @@ function Invoke-OSDStageUIManagerJob {
     $elapsed=[System.Windows.Forms.Label]::new();$elapsed.Dock='Fill';$elapsed.Text='Elapsed: 00:00';[void]$layout.Controls.Add($elapsed,0,2)
     $details=[System.Windows.Forms.TextBox]::new();$details.Dock='Fill';$details.Multiline=$true;$details.ReadOnly=$true;$details.ScrollBars=[System.Windows.Forms.ScrollBars]::Vertical;$details.BackColor=[System.Drawing.Color]::White;$details.Font=[System.Drawing.Font]::new('Consolas',9);[void]$layout.Controls.Add($details,0,3)
     $close=[System.Windows.Forms.Button]::new();$close.Text='Close';$close.Enabled=$false;$close.Width=100;$close.Anchor='Right';[void]$layout.Controls.Add($close,0,4)
-    $records=[System.Collections.Generic.List[object]]::new();$completed=$false;$watch=[System.Diagnostics.Stopwatch]::StartNew()
+    $records=[System.Collections.Generic.List[object]]::new();$operation=[pscustomobject]@{Completed=$false};$watch=[System.Diagnostics.Stopwatch]::StartNew()
     $timer=[System.Windows.Forms.Timer]::new();$timer.Interval=250
     $timer.Add_Tick({
         $elapsed.Text='Elapsed: '+$watch.Elapsed.ToString('mm\:ss')
@@ -147,12 +147,12 @@ function Invoke-OSDStageUIManagerJob {
                 $details.AppendText("[$((Get-Date).ToString('HH:mm:ss'))] $($record.Message)$([Environment]::NewLine)");$details.SelectionStart=$details.TextLength;$details.ScrollToCaret()
             }
         }
-        if(-not $completed -and $job.State -in @('Completed','Failed','Stopped')){
-            $completed=$true;foreach($record in @(Receive-Job -Job $job -ErrorAction SilentlyContinue)){if($record){$records.Add($record)}};$watch.Stop();$timer.Stop()
+        if(-not $operation.Completed -and $job.State -in @('Completed','Failed','Stopped')){
+            $operation.Completed=$true;foreach($record in @(Receive-Job -Job $job -ErrorAction SilentlyContinue)){if($record){$records.Add($record)}};$watch.Stop();$timer.Stop()
             $progress.Style=[System.Windows.Forms.ProgressBarStyle]::Continuous;$progress.Maximum=1;$progress.Value=1;$activity.Text=if($job.State -eq 'Completed'){'Completed'}else{"Finished: $($job.State)"};$elapsed.Text='Elapsed: '+$watch.Elapsed.ToString('mm\:ss');$close.Enabled=$true;$form.ControlBox=$true
         }
     })
-    $close.Add_Click({if($completed){$form.Close()}});$form.Add_FormClosing({if(-not $completed){$_.Cancel=$true}})
+    $close.Add_Click({ $form.Close() });$form.Add_FormClosing({ param($sender,$eventArgs) if(-not $operation.Completed){$eventArgs.Cancel=$true} })
     try{$timer.Start();[void]$form.ShowDialog($State.Form)}finally{$timer.Stop();$timer.Dispose();if($job.State -notin @('Completed','Failed','Stopped')){Stop-Job -Job $job -ErrorAction SilentlyContinue};foreach($record in @(Receive-Job -Job $job -ErrorAction SilentlyContinue)){if($record){$records.Add($record)}};Remove-Job -Job $job -Force -ErrorAction SilentlyContinue;$form.Dispose()}
     @($records)
 }
