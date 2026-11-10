@@ -31,6 +31,7 @@ foreach ($folder in @('Private','Public')) {
 # Loaded after Public so the responsive cache updater replaces the early
 # prototype helper embedded in Show-OSDStageUI without exporting a new command.
 . (Join-Path $moduleRoot 'Runtime\OSDStageUICacheUpdate.ps1')
+. (Join-Path $moduleRoot 'Runtime\OSDStageUICacheUpdateCompatibility.ps1')
 
 Export-ModuleMember -Function @(
     'Set-OSDStageConfiguration',
