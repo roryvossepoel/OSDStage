@@ -12,7 +12,7 @@ function Set-OSDStageUIColumnWidths {
     # App / Message absorb remaining space on window resize.
     $fixed = switch ($Key) {
         'Staged'       { @(65,0,90,95,100,125,185,105) }
-        'Packages' { @(0,75,95,90,110,175,100,100,90) }
+        'Packages' { @(0,80,95,90,150,130,150) }
         'Cache'        { @(0,75,95,88,145,90,105,70,105,105,120) }
         'Logs'         { @(185,78,135,125,0) }
     }
@@ -156,9 +156,12 @@ function Update-OSDStageUILogViewer {
 
 function Update-OSDStageUIReadOnlyView {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][hashtable]$State)
+    param(
+        [Parameter(Mandatory)][hashtable]$State,
+        [Parameter()]$Snapshot
+    )
 
-    $data = Get-OSDStageUIReadOnlySnapshot -WindowsPath $State.Target -Offline:$State.Offline -SkipSignatureVerification:$State.SkipSignatureVerification
+    $data = if ($Snapshot) { $Snapshot } else { Get-OSDStageUIReadOnlySnapshot -WindowsPath $State.Target -Offline:$State.Offline -SkipSignatureVerification:$State.SkipSignatureVerification }
     $State.Snapshot = $data
     $builtInMetadata = @(Get-OSDStageUIBuiltInMetadata)
 
@@ -304,6 +307,7 @@ function Update-OSDStageUIReadOnlyView {
         }
     }
     $State.Status.Text = "$stagedCount staged | $(@($data.CacheEntries).Count) USB cache entries | $(@($data.Logs).Count) logs"
+    if (Get-Command Update-OSDStageUIManagerRows -ErrorAction SilentlyContinue) { Update-OSDStageUIManagerRows -State $State -PreserveChecks }
 }
 
 function Get-OSDStageUICacheUpdateStatus {
@@ -582,7 +586,7 @@ function Show-OSDStageUI {
     }
 
     $form = [System.Windows.Forms.Form]::new()
-    $form.Text = 'OSDStage Inspector - Read-only'
+    $form.Text = 'OSDStage Inspector'
     $form.Size = [System.Drawing.Size]::new(980,710)
     $form.MinimumSize = [System.Drawing.Size]::new(800,580)
     $form.StartPosition = 'CenterScreen'
@@ -617,14 +621,6 @@ function Show-OSDStageUI {
     $subtitle.ForeColor = [System.Drawing.Color]::Gainsboro
     $subtitle.SetBounds(20,49,560,23)
     $header.Controls.Add($subtitle)
-
-    $readOnly = [System.Windows.Forms.Label]::new()
-    $readOnly.Text = 'READ-ONLY'
-    $readOnly.ForeColor = [System.Drawing.Color]::White
-    $readOnly.TextAlign = [System.Drawing.ContentAlignment]::MiddleRight
-    $readOnly.SetBounds(811,22,110,28)
-    $readOnly.Anchor = 'Top,Right'
-    $header.Controls.Add($readOnly)
 
     $context = [System.Windows.Forms.Panel]::new()
     $context.Dock = 'Fill'
@@ -675,10 +671,10 @@ function Show-OSDStageUI {
     $tabs.Dock = 'Fill'
     [void]$root.Controls.Add($tabs,0,3)
     $stagedTab = [System.Windows.Forms.TabPage]::new('Staged for device')
-    $catalogTab = [System.Windows.Forms.TabPage]::new('Packages')
+    $catalogTab = [System.Windows.Forms.TabPage]::new('Cache manager')
     $cacheTab = [System.Windows.Forms.TabPage]::new('Cache')
     $logsTab = [System.Windows.Forms.TabPage]::new('Logs')
-    foreach ($tab in @($stagedTab,$catalogTab,$cacheTab,$logsTab)) { [void]$tabs.TabPages.Add($tab) }
+    foreach ($tab in @($stagedTab,$catalogTab,$logsTab)) { [void]$tabs.TabPages.Add($tab) }
 
     $stagedLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $stagedLayout.Dock = 'Fill'
@@ -716,30 +712,93 @@ function Show-OSDStageUI {
 
     $catalogLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $catalogLayout.Dock = 'Fill'
-    $catalogLayout.RowCount = 2
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',38))
+    $catalogLayout.RowCount = 4
+    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',34))
+    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',42))
     [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',100))
+    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',145))
     $catalogTab.Controls.Add($catalogLayout)
+
     $catalogInfo = [System.Windows.Forms.Label]::new()
-    $catalogInfo.Text = 'Built-in and repository apps | Configure and stage using PowerShell CLI'
+    $catalogInfo.Text = 'Loading cache manager...'
     $catalogInfo.Dock = 'Fill'
     $catalogInfo.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+    $catalogInfo.AutoEllipsis = $true
     [void]$catalogLayout.Controls.Add($catalogInfo,0,0)
+
+    $managerActions = [System.Windows.Forms.FlowLayoutPanel]::new()
+    $managerActions.Dock = 'Fill'
+    $managerActions.FlowDirection = [System.Windows.Forms.FlowDirection]::LeftToRight
+    $managerActions.WrapContents = $false
+    $managerActions.Padding = [System.Windows.Forms.Padding]::new(0,3,0,3)
+    [void]$catalogLayout.Controls.Add($managerActions,0,1)
+
+    $managerRefresh = [System.Windows.Forms.Button]::new()
+    $managerRefresh.Text = 'Refresh'
+    $managerRefresh.AutoSize = $true
+    $managerActions.Controls.Add($managerRefresh)
+
+    $managerHealth = [System.Windows.Forms.Button]::new()
+    $managerHealth.Text = 'Check health'
+    $managerHealth.AutoSize = $true
+    $managerActions.Controls.Add($managerHealth)
+
+    $managerCheckUpdates = [System.Windows.Forms.Button]::new()
+    $managerCheckUpdates.Text = 'Check updates'
+    $managerCheckUpdates.AutoSize = $true
+    $managerActions.Controls.Add($managerCheckUpdates)
+
+    $managerCacheSelected = [System.Windows.Forms.Button]::new()
+    $managerCacheSelected.Text = 'Cache selected'
+    $managerCacheSelected.AutoSize = $true
+    $managerActions.Controls.Add($managerCacheSelected)
+
+    $managerUpdateSelected = [System.Windows.Forms.Button]::new()
+    $managerUpdateSelected.Text = 'Update selected'
+    $managerUpdateSelected.AutoSize = $true
+    $managerActions.Controls.Add($managerUpdateSelected)
+
+    $managerUpdateAll = [System.Windows.Forms.Button]::new()
+    $managerUpdateAll.Text = 'Update all available'
+    $managerUpdateAll.AutoSize = $true
+    $managerActions.Controls.Add($managerUpdateAll)
+
+    $managerRemoveSelected = [System.Windows.Forms.Button]::new()
+    $managerRemoveSelected.Text = 'Remove selected...'
+    $managerRemoveSelected.AutoSize = $true
+    $managerActions.Controls.Add($managerRemoveSelected)
+
+    $managerClearAll = [System.Windows.Forms.Button]::new()
+    $managerClearAll.Text = 'Clear entire cache...'
+    $managerClearAll.AutoSize = $true
+    $managerActions.Controls.Add($managerClearAll)
+
     $catalogList = [System.Windows.Forms.ListView]::new()
     $catalogList.Dock = 'Fill'
     $catalogList.View = 'Details'
     $catalogList.FullRowSelect = $true
+    $catalogList.MultiSelect = $false
+    $catalogList.CheckBoxes = $true
     $catalogList.GridLines = $true
-    [void]$catalogList.Columns.Add('Display Name',260)
-    [void]$catalogList.Columns.Add('Source',90)
+    $catalogList.ShowItemToolTips = $true
+    [void]$catalogList.Columns.Add('App',260)
+    [void]$catalogList.Columns.Add('Source',80)
     [void]$catalogList.Columns.Add('Package Type',95)
-    [void]$catalogList.Columns.Add('Vendor',100)
-    [void]$catalogList.Columns.Add('Version / policy',110)
-    [void]$catalogList.Columns.Add('USB version',115)
-    [void]$catalogList.Columns.Add('Architecture',95)
-    [void]$catalogList.Columns.Add('Availability',160)
-    [void]$catalogList.Columns.Add('Deployment',95)
-    [void]$catalogLayout.Controls.Add($catalogList,0,1)
+    [void]$catalogList.Columns.Add('Vendor',90)
+    [void]$catalogList.Columns.Add('Cached version',150)
+    [void]$catalogList.Columns.Add('Available version',130)
+    [void]$catalogList.Columns.Add('Status',150)
+    [void]$catalogLayout.Controls.Add($catalogList,0,2)
+
+    $managerDetails = [System.Windows.Forms.TextBox]::new()
+    $managerDetails.Multiline = $true
+    $managerDetails.ReadOnly = $true
+    $managerDetails.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+    $managerDetails.Dock = 'Fill'
+    $managerDetails.BackColor = [System.Drawing.Color]::White
+    $managerDetails.Font = [System.Drawing.Font]::new('Consolas',9)
+    $managerDetails.Text = 'Select an app to view its cached configurations.'
+    [void]$catalogLayout.Controls.Add($managerDetails,0,3)
 
     $cacheLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $cacheLayout.Dock = 'Fill'
@@ -874,6 +933,10 @@ function Show-OSDStageUI {
         TargetKind=$targetKind; TargetDescription=$targetText
         CatalogMode=$catalogMode; CatalogDescription=$catalogDescription
         StagedList=$stagedList; CatalogList=$catalogList; CacheList=$cacheList
+        ManagerList=$catalogList; ManagerInfo=$catalogInfo; ManagerDetails=$managerDetails
+        ManagerRefresh=$managerRefresh; ManagerHealth=$managerHealth; ManagerCheckUpdates=$managerCheckUpdates
+        ManagerCacheSelected=$managerCacheSelected; ManagerUpdateSelected=$managerUpdateSelected; ManagerUpdateAll=$managerUpdateAll
+        ManagerRemoveSelected=$managerRemoveSelected; ManagerClearAll=$managerClearAll
         StagedInfo=$stagedInfo; CacheInfo=$cacheInfo; Details=$details
         CacheRefresh=$cacheRefresh; CacheHealth=$cacheHealth; CacheCheckUpdates=$cacheCheckUpdates; CacheUpdate=$cacheUpdate; CacheClear=$cacheClear
         CacheUpdateStatus=@{}
@@ -894,6 +957,54 @@ function Show-OSDStageUI {
         if (-not $state -or $state.StagedList.SelectedItems.Count -eq 0) { return }
         $selected = $state.StagedList.SelectedItems[0].Tag
         $state.Details.Text = Format-OSDStageUIStagedDetails -App $selected.App -Vendor $selected.Vendor
+    })
+    $catalogList.Add_SelectedIndexChanged({
+        $state=$script:OSDStageUIState
+        if ($state) { Update-OSDStageUIManagerDetails -State $state }
+    })
+    $managerRefresh.Add_Click({
+        $state=$script:OSDStageUIState
+        if ($state) { Invoke-OSDStageUIManagerRefresh -State $state }
+    })
+    $managerHealth.Add_Click({
+        $state=$script:OSDStageUIState
+        if ($state) { Invoke-OSDStageUIManagerHealthCheck -State $state }
+    })
+    $managerCheckUpdates.Add_Click({
+        $state=$script:OSDStageUIState
+        if (-not $state) { return }
+        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey @(Get-OSDStageUIManagerCheckedKeys -State $state)
+    })
+    $managerCacheSelected.Add_Click({
+        $state=$script:OSDStageUIState
+        if ($state) { Invoke-OSDStageUIManagerCacheSelected -State $state }
+    })
+    $managerUpdateSelected.Add_Click({
+        $state=$script:OSDStageUIState
+        if (-not $state) { return }
+        $keys=@(Get-OSDStageUIManagerCheckedKeys -State $state)
+        if ($keys.Count -eq 0) {
+            [void][System.Windows.Forms.MessageBox]::Show('Select one or more cached apps first.','OSDStage - Update selected','OK','Information')
+            return
+        }
+        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey $keys
+        [void](Invoke-OSDStageUICacheUpdate -State $state -SelectedAppKey $keys -SkipRecheck)
+        Invoke-OSDStageUIManagerRefresh -State $state
+    })
+    $managerUpdateAll.Add_Click({
+        $state=$script:OSDStageUIState
+        if (-not $state) { return }
+        Invoke-OSDStageUIManagerCheckUpdates -State $state
+        [void](Invoke-OSDStageUICacheUpdate -State $state -SkipRecheck)
+        Invoke-OSDStageUIManagerRefresh -State $state
+    })
+    $managerRemoveSelected.Add_Click({
+        $state=$script:OSDStageUIState
+        if ($state) { Invoke-OSDStageUIManagerRemoveSelected -State $state; Invoke-OSDStageUIManagerRefresh -State $state }
+    })
+    $managerClearAll.Add_Click({
+        $state=$script:OSDStageUIState
+        if ($state) { Invoke-OSDStageUIManagerClearEntireCache -State $state; Invoke-OSDStageUIManagerRefresh -State $state }
     })
     $logFiles.Add_SelectedIndexChanged({
         $state=$script:OSDStageUIState
@@ -1063,16 +1174,7 @@ function Show-OSDStageUI {
 
     $refresh.Add_Click({
         $state = $script:OSDStageUIState
-        if (-not $state) { return }
-        $state.Status.Text = 'Refreshing inventory...'
-        $state.Form.Refresh()
-        try {
-            Update-OSDStageUIReadOnlyView -State $state
-        }
-        catch {
-            $state.Status.Text = "Refresh failed: $($_.Exception.Message)"
-            [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message,'OSDStage - Inventory','OK','Error')
-        }
+        if ($state) { Invoke-OSDStageUIManagerRefresh -State $state }
     })
     $close.Add_Click({ $script:OSDStageUIState.Form.Close() })
 
