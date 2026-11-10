@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Troubleshooting](faq.md)
 
-OSDStage Inspector is the read-only interface opened by `Show-OSDStageUI`. It displays what the PowerShell CLI has prepared and what is locally available: the device queue and stored configuration, package availability, USB cache and existing logs. It does not add, remove, configure, download or install apps.
+OSDStage Inspector is opened by `Show-OSDStageUI`. Its deployment views are read-only: it displays what the PowerShell CLI has prepared and what is locally available, including the device queue and stored configuration, package availability, USB cache and existing logs. It does not configure, stage or install packages. The **Cache** tab additionally exposes explicit maintenance actions for the connected OSDStage cache.
 
 ## Inspector scope
 
@@ -69,7 +69,7 @@ must come from an actual run of the current module.
 
 The compact context row shows **Target | USB | Offline/Online**. Its tooltip provides fuller target, cache and catalog context. `Offline` describes repository lookup behavior, not the machine's actual network connection.
 
-Search filters displayed rows. Clicking a column header sorts the view; it does not change `DeviceManifest.json` or installation order. Refresh reloads the inventory and applicable checks. The only other actions are selecting a row/log, switching tabs and closing the window.
+Search filters displayed rows. Clicking a column header sorts the view; it does not change `DeviceManifest.json` or installation order. Refresh reloads the inventory and re-detects the currently connected OSDStage cache. Deployment data remains read-only; only the explicit maintenance buttons on the **Cache** tab can modify cache content.
 
 ## Staged for device
 
@@ -98,6 +98,18 @@ Apps combines built-in definitions and available repository/cache metadata. Stag
 The CLI can distinguish `Cached` from `CachedOnly`; the Viewer labels both as USB cached. The difference concerns whether a current online catalog match is available, not a different physical cache location.
 
 ## Cache
+
+### Cache maintenance
+
+The Cache tab provides four explicit actions:
+
+- **Refresh** re-reads the current device and cache state. Use it after inserting, removing or replacing an OSDCloud USB device.
+- **Check health** calls `Get-OSDStageCacheHealth` and reports active, obsolete, orphaned, incomplete and corrupt content.
+- **Update cache** synchronizes repository content when a `CatalogUri` is configured and refreshes currently cached built-ins through their existing `Sync-OSDStage*` commands. Existing cache metadata is reused; Microsoft 365 Apps is refreshed with its cached `configuration.xml`.
+- **Clear cache...** removes the selected cache item through `Clear-OSDStageCache -Name`. With no selected row, it offers to clear the complete cache with `Clear-OSDStageCache -All`. Logs are preserved.
+
+Update and clear actions always require confirmation in the Inspector. They manage cache content only; they do not change the device manifest or stage packages.
+
 
 Cache lists entries from `\OSDStage` on the configured cache volume, separately from the Windows target's staging folder. It shows Display Name, Source, Package Type, Vendor, USB version, architecture, integrity, size and signature status. Row tooltips retain the exact signature file, signer and check scope where available.
 
