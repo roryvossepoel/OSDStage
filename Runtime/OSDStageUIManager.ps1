@@ -223,3 +223,92 @@ function Invoke-OSDStageUIManagerClearEntireCache {
     $worker={param($Payload);Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop;Write-Output([pscustomobject]@{RecordType='Progress';Position=0;Total=1;Message='Clearing connected cache...'});Clear-OSDStageCache -All -Confirm:$false -ErrorAction Stop|Out-Null;Write-Output([pscustomobject]@{RecordType='Progress';Position=1;Total=1;Message='Cache cleared'})}
     [void](Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Clear entire cache' -InitialActivity 'Clearing cache...' -Worker $worker -Payload $payload)
 }
+
+
+function Invoke-OSDStageUIManagerRefresh {
+    [CmdletBinding()]param([Parameter(Mandatory)][hashtable]$State)
+    $configured=(Get-OSDStageConfiguration).CatalogUri
+    $payload=[pscustomobject]@{
+        ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1'
+        WindowsPath=$State.Target
+        Offline=[bool]$State.Offline
+        SkipSignatureVerification=[bool]$State.SkipSignatureVerification
+        CatalogUri=$(if($configured){$configured.AbsoluteUri}else{$null})
+    }
+    $worker={
+        param($Payload)
+        Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop
+        if($Payload.CatalogUri){Set-OSDStageConfiguration -CatalogUri ([uri]$Payload.CatalogUri)|Out-Null}
+        $module=Get-Module OSDStage
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=0;Total=1;Message='Reading device, cache and signatures...'})
+        $snapshot=& $module {
+            param($WindowsPath,$Offline,$Skip)
+            Get-OSDStageUIReadOnlySnapshot -WindowsPath $WindowsPath -Offline:$Offline -SkipSignatureVerification:$Skip
+        } $Payload.WindowsPath ([bool]$Payload.Offline) ([bool]$Payload.SkipSignatureVerification)
+        Write-Output([pscustomobject]@{RecordType='SnapshotResult';Data=$snapshot})
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=1;Total=1;Message='Inventory refreshed'})
+    }
+    $records=@(Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Refreshing' -InitialActivity 'Refreshing inventory...' -Worker $worker -Payload $payload)
+    $record=@($records|Where-Object RecordType -eq 'SnapshotResult'|Select-Object -Last 1)
+    if($record.Count -eq 1){
+        Update-OSDStageUIReadOnlyView -State $State -Snapshot $record[0].Data
+        $State.Status.Text='Inventory refreshed.'
+    }
+}
+
+function Invoke-OSDStageUIManagerCacheSelected {
+    [CmdletBinding()]param([Parameter(Mandatory)][hashtable]$State)
+    $groups=@($State.ManagerList.Items|Where-Object Checked|ForEach-Object{$_.Tag})
+    if($groups.Count -eq 0){
+        [void][System.Windows.Forms.MessageBox]::Show('Select one or more uncached repository apps first.','OSDStage - Cache selected','OK','Information')
+        return
+    }
+
+    $eligible=@($groups|Where-Object{$_.Source -eq 'Repository' -and @($_.CacheEntries).Count -eq 0})
+    $builtIn=@($groups|Where-Object{$_.Source -eq 'BuiltIn' -and @($_.CacheEntries).Count -eq 0})
+    $alreadyCached=@($groups|Where-Object{@($_.CacheEntries).Count -gt 0})
+
+    if($builtIn.Count -gt 0){
+        [void][System.Windows.Forms.MessageBox]::Show(
+            'New built-in cache configurations are created with the PowerShell CLI. They are not created by the Cache Manager.',
+            'OSDStage - Cache selected','OK','Information'
+        )
+    }
+    if($alreadyCached.Count -gt 0){
+        [void][System.Windows.Forms.MessageBox]::Show(
+            'One or more selected apps are already cached. Use Check updates or Update selected for those apps.',
+            'OSDStage - Cache selected','OK','Information'
+        )
+    }
+    if($eligible.Count -eq 0){return}
+
+    $catalogUri=(Get-OSDStageConfiguration).CatalogUri
+    if(-not $catalogUri){
+        [void][System.Windows.Forms.MessageBox]::Show('No repository catalog is configured in this PowerShell session.','OSDStage - Cache selected','OK','Warning')
+        return
+    }
+
+    $names=@($eligible.Id|Sort-Object -Unique)
+    $nl=[Environment]::NewLine
+    $answer=[System.Windows.Forms.MessageBox]::Show(
+        ('Cache selected repository apps?'+$nl+$nl+'- '+($names -join ($nl+'- '))),
+        'OSDStage - Cache selected','YesNo','Question'
+    )
+    if($answer -ne [System.Windows.Forms.DialogResult]::Yes){return}
+
+    $payload=[pscustomobject]@{
+        ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1'
+        CatalogUri=$catalogUri.AbsoluteUri
+        Names=$names
+    }
+    $worker={
+        param($Payload)
+        Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop
+        Set-OSDStageConfiguration -CatalogUri ([uri]$Payload.CatalogUri)|Out-Null
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=0;Total=1;Message="Caching $(@($Payload.Names).Count) repository app(s)..."})
+        Sync-OSDStageRepository -Name @($Payload.Names) -Confirm:$false -ErrorAction Stop|Out-Null
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=1;Total=1;Message='Repository cache synchronized'})
+    }
+    [void](Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Caching selected apps' -InitialActivity 'Preparing repository cache...' -Worker $worker -Payload $payload)
+    Invoke-OSDStageUIManagerRefresh -State $State
+}
