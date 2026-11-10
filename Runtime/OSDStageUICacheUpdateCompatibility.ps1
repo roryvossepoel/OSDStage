@@ -101,7 +101,11 @@ function Invoke-OSDStageUICacheUpdateLegacy {
 
 function Invoke-OSDStageUICacheUpdate {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][hashtable]$State)
+    param(
+        [Parameter(Mandatory)][hashtable]$State,
+        [string[]]$SelectedAppKey,
+        [switch]$SkipRecheck
+    )
 
     # Pester model tests call the helper without real WinForms controls. Keep
     # that non-UI contract while production Inspector sessions use the
@@ -111,5 +115,5 @@ function Invoke-OSDStageUICacheUpdate {
         return Invoke-OSDStageUICacheUpdateLegacy -State $State
     }
 
-    & $script:OSDStageUICacheUpdateAsync -State $State
+    & $script:OSDStageUICacheUpdateAsync -State $State -SelectedAppKey $SelectedAppKey -SkipRecheck:$SkipRecheck
 }
