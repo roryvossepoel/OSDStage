@@ -433,4 +433,91 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         $source | Should -Not -Match '(?i)\bSet-OSDStageConfiguration\b'
     }
 
+    It 'wires explicit cache maintenance actions without adding deployment mutation' {
+        $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
+        $source | Should -Match "cacheRefresh.Text = 'Refresh'"
+        $source | Should -Match "cacheHealth.Text = 'Check health'"
+        $source | Should -Match "cacheUpdate.Text = 'Update cache'"
+        $source | Should -Match "cacheClear.Text = 'Clear cache\\.\\.\\.'"
+        $source | Should -Match 'Get-OSDStageCacheHealth'
+        $source | Should -Match 'Sync-OSDStageRepository'
+        $source | Should -Match 'Clear-OSDStageCache -Name'
+        $source | Should -Match 'Clear-OSDStageCache -All'
+        $source | Should -Not -Match '(?i)\bInvoke-OSDStageUIStage\b'
+        $source | Should -Not -Match '(?i)\bRemove-OSDStageStaging\b'
+    }
+
+    It 'updates repository and cached built-in content through existing sync commands' {
+        InModuleScope OSDStage {
+            $state = @{
+                Snapshot = [pscustomobject]@{
+                    CachePath = 'E:\OSDStage'
+                    CacheEntries = @(
+                        [pscustomobject]@{
+                            Id='RepoApp';Source='Repository';Architecture='x64';CachePath='E:\OSDStage\Packages\RepoApp'
+                        },
+                        [pscustomobject]@{
+                            Id='GoogleChromeEnterprise';Source='BuiltIn';Architecture='x64';CachePath='E:\OSDStage\BuiltIn\GoogleChromeEnterprise\x64'
+                        }
+                    )
+                }
+            }
+
+            Mock Get-OSDStageConfiguration { [pscustomobject]@{CatalogUri=[uri]'https://example.org/catalog.json'} }
+            Mock Sync-OSDStageRepository { }
+            Mock Sync-OSDStageGoogleChromeEnterprise { }
+
+            $result = Invoke-OSDStageUICacheUpdate -State $state
+
+            Should -Invoke Sync-OSDStageRepository -Exactly 1
+            Should -Invoke Sync-OSDStageGoogleChromeEnterprise -Exactly 1 -ParameterFilter { $Architecture -eq 'x64' }
+            $result.Updated | Should -Contain 'Repository'
+            $result.Updated | Should -Contain 'GoogleChromeEnterprise (x64)'
+            @($result.Failed).Count | Should -Be 0
+        }
+    }
+
+    It 'preserves cached Microsoft 365 configuration when updating Office cache' {
+        InModuleScope OSDStage {
+            $root = Join-Path $TestDrive 'Microsoft365Apps'
+            New-Item -Path $root -ItemType Directory -Force | Out-Null
+            $configurationXml = Join-Path $root 'configuration.xml'
+            '<Configuration />' | Set-Content -LiteralPath $configurationXml -Encoding UTF8
+
+            $state = @{
+                Snapshot = [pscustomobject]@{
+                    CachePath = $TestDrive
+                    CacheEntries = @(
+                        [pscustomobject]@{
+                            Id='Microsoft365Apps';Source='BuiltIn';Architecture='x64'
+                            Channel='MonthlyEnterprise';RuntimeType=$null;CachePath=$root
+                        }
+                    )
+                }
+            }
+
+            Mock Sync-OSDStageMicrosoft365Apps { }
+
+            $result = Invoke-OSDStageUICacheUpdate -State $state
+
+            Should -Invoke Sync-OSDStageMicrosoft365Apps -Exactly 1 -ParameterFilter {
+                $ConfigurationXml -eq $configurationXml -and $Architecture -eq 'x64'
+            }
+            @($result.Failed).Count | Should -Be 0
+        }
+    }
+
+    It 'formats cache health into a compact operator summary' {
+        InModuleScope OSDStage {
+            $summary = Format-OSDStageUICacheHealth -Health ([pscustomobject]@{
+                CacheAvailable=$true;Healthy=$false;EntryCount=17;ActiveCount=15
+                ObsoleteCount=1;OrphanedCount=1;IncompleteCount=0;CorruptCount=0
+                RemovableSizeMB=42.5;DesiredStateAvailable=$true
+            })
+            $summary | Should -Match 'Health: Needs attention'
+            $summary | Should -Match 'Entries: 17'
+            $summary | Should -Match 'Removable: 42.5 MB'
+        }
+    }
+
 }
