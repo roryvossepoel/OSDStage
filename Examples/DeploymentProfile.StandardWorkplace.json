@@ -1,0 +1,20 @@
+{
+  "SchemaVersion": 1,
+  "Name": "Standard Workplace",
+  "Packages": [
+    {
+      "Source": "BuiltIn",
+      "Id": "Microsoft365Apps",
+      "Parameters": {
+        "Channel": "MonthlyEnterprise",
+        "Architecture": "x64",
+        "Language": ["nl-nl", "en-us"]
+      }
+    },
+    {"Source":"BuiltIn","Id":"MicrosoftTeams","Parameters":{"Architecture":"x64"}},
+    {"Source":"BuiltIn","Id":"GoogleChromeEnterprise","Parameters":{"Architecture":"x64"}},
+    {"Source":"BuiltIn","Id":"AdobeAcrobatUnified","Parameters":{"Architecture":"x64"}},
+    {"Source":"BuiltIn","Id":"7Zip","Parameters":{"Architecture":"x64"}},
+    {"Source":"Repository","Id":"NotepadPlusPlus"}
+  ]
+}
