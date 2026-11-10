@@ -165,7 +165,7 @@ function Invoke-OSDStageUIManagerCheckUpdates {
     $payload=[pscustomobject]@{ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1';CatalogUri=$(if($configured){$configured.AbsoluteUri}else{$null});Entries=$entries}
     $worker={
         param($Payload);$ErrorActionPreference='Stop';Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop;$module=Get-Module OSDStage;$catalog=$null
-        if($Payload.CatalogUri){$catalog=& $module {param($uri)Get-OSDStageCatalogPackages -CatalogUri ([uri]$uri) ([string]$Payload.CatalogUri)}
+        if($Payload.CatalogUri){$catalog=& $module {param($uri)Get-OSDStageCatalogPackages -CatalogUri ([uri]$uri)} ([string]$Payload.CatalogUri)}
         $position=0;$total=@($Payload.Entries).Count
         foreach($entry in @($Payload.Entries)){$position++;Write-Output([pscustomobject]@{RecordType='Progress';Position=$position-1;Total=$total;Message="Checking $($entry.DisplayName) ($position of $total)"})
             $result=& $module {param($e,$c)Get-OSDStageUICacheUpdateStatus -Entry $e -RepositoryCatalog $c} $entry $catalog
