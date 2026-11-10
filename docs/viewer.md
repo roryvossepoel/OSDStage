@@ -71,50 +71,48 @@ must come from an actual run of the current module.
 
 The compact context row shows **Target | USB | Offline/Online**. Its tooltip provides fuller target, cache and catalog context. `Offline` describes repository lookup behavior, not the machine's actual network connection.
 
-Search filters displayed rows. Clicking a column header sorts the view; it does not change `DeviceManifest.json` or installation order. Refresh reloads the inventory and re-detects the currently connected OSDStage cache. Deployment data remains read-only; only the explicit maintenance buttons on the **Cache** tab can modify cache content.
+Search filters displayed rows. Clicking a column header sorts the current view; it does not change `DeviceManifest.json` or installation order. Refresh re-reads the target and re-detects the connected OSDStage cache. Potentially slow maintenance actions run with a progress window so the Inspector remains responsive.
 
 ## Staged for device
 
-This tab reads the selected target's `DeviceManifest.json` and shows the manifest order, Display Name, Source, Package Type, Vendor, version policy, USB version and architecture. The detail pane shows the selected app's actual staged settings, not settings reconstructed from defaults.
+This tab reads the selected target's `DeviceManifest.json` and shows the manifest order, Display Name, Source, Package Type, Vendor, version policy, cached version and architecture. The detail pane shows the selected app's actual staged settings, not settings reconstructed from defaults.
 
 The Order column remains the manifest sequence even when the table is sorted differently. The detail pane is populated on initial load when entries are available.
 
 **Staged does not mean installed.** `SetupComplete.cmd: Present` reports file presence, not evidence that SetupComplete or every installer has completed. An empty queue can mean no apps were staged, the wrong target was selected, or successful cleanup removed staging. Use runtime logs to establish the installation outcome.
 
-## Apps
+## Cache manager
 
-The **Package Type** column identifies `App`, `Script`, `Font`, `Certificate` or `Driver` in **Staged for device**, **Apps** and **Cache**. The tab is still labeled **Apps**, but it can contain other package types. Search for the type to filter entries. Missing type metadata defaults to `App`.
+The Cache manager combines package discovery and cache inventory into one app-oriented view. Each logical app is shown once. When an app has multiple cached configurations, such as Firefox channels or runtime variants, the main row summarizes them and the detail pane shows the individual configurations.
 
-Apps combines built-in definitions and available repository/cache metadata. Staged apps remain visible even when absent from the current catalog/cache. Source distinguishes built-ins from repository packages; Vendor is displayed only when available from the relevant metadata.
-
-| Column or value | Meaning |
+| Column | Meaning |
 | --- | --- |
-| Display Name | Human-readable name; technical Id is a fallback when no name is available. |
-| Version / policy: `Current` | Built-in acquisition is vendor-managed. This is not a claim that the cached or installed version is latest. |
-| Repository version | Explicit package version from repository metadata. |
-| USB version | Recorded or inspected version of the matching cached content, separate from the deployment policy. |
-| USB cached | Content is available in the detected USB cache; it is not a statement about installation on the Windows target. |
-| Staged | App Id is present in the selected target's manifest. |
-| Vendor: `-` | No Vendor value could be resolved; the Viewer does not invent a publisher. |
+| App | Human-readable app/package name. |
+| Source | Built-in or Repository. |
+| Package Type | `App`, `Script`, `Font`, `Certificate` or `Driver`. |
+| Vendor | Publisher metadata when available; the Inspector does not invent one. |
+| Cached version | Exact version for a single cached configuration, or a configuration count when multiple variants exist. |
+| Available version | Version resolved by the update check. Multiple configurations are summarized and expanded in the detail pane. |
+| Status | `Current`, `Update available`, `Check failed`, `Not cached`, `Catalog not configured`, or another explicit state. |
 
-The CLI can distinguish `Cached` from `CachedOnly`; the Viewer labels both as USB cached. The difference concerns whether a current online catalog match is available, not a different physical cache location.
-
-## Cache
+Checkboxes are temporary action selection only. Unchecking an app never removes it. New built-in cache configurations remain CLI-only: the Cache manager does not choose architecture, channel, language, runtime type or Office settings.
 
 ### Cache maintenance
 
-The Cache tab provides four explicit actions:
+- **Refresh** re-reads device, cache and signature state. Use it after inserting, removing or replacing an OSDCloud USB device.
+- **Check health** runs `Get-OSDStageCacheHealth` and shows concrete non-healthy entries with state, integrity, recommended action, size, reason and path.
+- **Check updates** checks the selected apps; with no checked rows it checks every cached app. Existing exact version resolvers are used for Office, Chrome, Firefox, 7-Zip, Visual Studio Code, Visual C++ runtimes, .NET runtimes and CMTrace Open. Other vendor payloads are still checked against their recorded remote metadata instead of being silently skipped.
+- **Cache selected** can add uncached repository apps when a catalog is configured. New built-in configurations must be created with the PowerShell CLI.
+- **Update selected** rechecks and updates only the checked apps that are actually out of date.
+- **Update all available** rechecks the cache and synchronizes only entries explicitly identified as having an update. Current entries are not intentionally reacquired.
+- **Remove selected...** removes only checked cached apps after an explicit confirmation.
+- **Clear entire cache...** is a separate destructive action with its own confirmation. Logs are preserved.
 
-- **Refresh** re-reads the current device and cache state. Use it after inserting, removing or replacing an OSDCloud USB device.
-- **Check health** calls `Get-OSDStageCacheHealth` and reports active, obsolete, orphaned, incomplete and corrupt content.
-- **Check updates** compares repository cache entries with the configured catalog and uses existing non-mutating OSDStage release resolvers where available. The Cache table then shows **Latest** and **Update status**. Unsupported built-ins remain `Not checked` rather than being guessed.
-- **Update cache** synchronizes repository content when a `CatalogUri` is configured and refreshes currently cached built-ins through their existing `Sync-OSDStage*` commands. Existing cache metadata is reused; Microsoft 365 Apps is refreshed with its cached `configuration.xml`.
-- **Clear cache...** removes the selected cache item through `Clear-OSDStageCache -Name`. With no selected row, it offers to clear the complete cache with `Clear-OSDStageCache -All`. Logs are preserved.
+Maintenance actions do not stage packages or change the device deployment manifest.
 
-Update and clear actions always require confirmation in the Inspector. They manage cache content only; they do not change the device manifest or stage packages.
+### Cached configurations
 
-
-Cache lists entries from `\OSDStage` on the configured cache volume, separately from the Windows target's staging folder. It shows Display Name, Source, Package Type, Vendor, USB version, architecture, integrity, size and signature status. Row tooltips retain the exact signature file, signer and check scope where available.
+The main table intentionally hides technical variant rows. Select an app to inspect its cached configurations in the detail pane, including architecture, channel, runtime type or language where recorded, cached version, available version, update result and cache path.
 
 ### Versions
 
