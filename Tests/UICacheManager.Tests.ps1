@@ -29,6 +29,13 @@ Describe 'OSDStage Cache manager' {
         $script:managerSource | Should -Match 'Invoke-OSDStageUIManagerClearEntireCache'
     }
 
+    It 'allows the completed progress dialog to close while blocking early closure' {
+        $script:managerSource | Should -Match '\$operation=\[pscustomobject\]@\{Completed=\$false\}'
+        $script:managerSource | Should -Match '\$operation\.Completed=\$true'
+        $script:managerSource | Should -Match '\$close\.Add_Click\(\{ \$form\.Close\(\) \}\)'
+        $script:managerSource | Should -Match 'param\(\$sender,\$eventArgs\) if\(-not \$operation\.Completed\)\{\$eventArgs\.Cancel=\$true\}'
+    }
+
     It 'separates selected removal from entire cache clearing' {
         $script:managerSource | Should -Match 'Remove selected'
         $script:managerSource | Should -Match 'Clear the entire connected OSDStage cache'
