@@ -4,6 +4,8 @@
 
 OSDStage Inspector is opened by `Show-OSDStageUI`. Its deployment views are read-only: it displays what the PowerShell CLI has prepared and what is locally available, including the device queue and stored configuration, package availability, USB cache and existing logs. It does not configure, stage or install packages. The **Cache** tab additionally exposes explicit maintenance actions for the connected OSDStage cache.
 
+<a id="two-different-viewers"></a>
+
 ## Inspector scope
 
 | Viewer | Reads | Does not do |
