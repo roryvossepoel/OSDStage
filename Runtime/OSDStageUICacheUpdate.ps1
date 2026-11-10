@@ -17,21 +17,30 @@ function Get-OSDStageUIOfficeAvailableVersion {
 
 function New-OSDStageUICacheUpdatePlan {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][hashtable]$State)
+    param(
+        [Parameter(Mandatory)][hashtable]$State,
+        [string[]]$SelectedAppKey,
+        [switch]$SkipRecheck
+    )
 
     if (-not $State.Snapshot -or -not $State.Snapshot.CachePath) {
         throw 'No OSDStage USB cache is currently connected.'
     }
 
-    # Always refresh release metadata immediately before an update. This avoids
-    # applying stale status from a previously connected USB device.
-    $State.Status.Text = 'Checking available cache updates...'
-    $State.Form.Refresh()
-    [System.Windows.Forms.Application]::DoEvents()
-    [void](Update-OSDStageUICacheUpdateStatus -State $State)
+    if (-not $SkipRecheck) {
+        # Recheck immediately before mutation unless the Cache Manager already
+        # completed a responsive background check for the same action.
+        $State.Status.Text = 'Checking available cache updates...'
+        $State.Form.Refresh()
+        [System.Windows.Forms.Application]::DoEvents()
+        [void](Update-OSDStageUICacheUpdateStatus -State $State)
+    }
 
+    $selected = @($SelectedAppKey | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     $available = @(
         foreach ($entry in @($State.Snapshot.CacheEntries)) {
+            $appKey = "$([string]$entry.Source):$([string]$entry.Id)"
+            if ($selected.Count -gt 0 -and $appKey -notin $selected) { continue }
             $key = Get-OSDStageUICacheUpdateKey -Entry $entry
             $status = $State.CacheUpdateStatus[$key]
             if ($status -and [string]$status.Status -eq 'Update available') {
@@ -89,9 +98,13 @@ function New-OSDStageUICacheUpdatePlan {
 
 function Invoke-OSDStageUICacheUpdate {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][hashtable]$State)
+    param(
+        [Parameter(Mandatory)][hashtable]$State,
+        [string[]]$SelectedAppKey,
+        [switch]$SkipRecheck
+    )
 
-    $plan = @(New-OSDStageUICacheUpdatePlan -State $State)
+    $plan = @(New-OSDStageUICacheUpdatePlan -State $State -SelectedAppKey $SelectedAppKey -SkipRecheck:$SkipRecheck)
     if ($plan.Count -eq 0) {
         [void][System.Windows.Forms.MessageBox]::Show(
             'No supported cache updates are currently available.',
