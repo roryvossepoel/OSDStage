@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Troubleshooting](faq.md)
 
-OSDStage Inspector is opened by `Show-OSDStageUI`. Its deployment views are read-only: it displays what the PowerShell CLI has prepared and what is locally available, including the device queue and stored configuration, package availability, USB cache and existing logs. It does not configure, stage or install packages. The **Cache** tab additionally exposes explicit maintenance actions for the connected OSDStage cache.
+OSDStage Inspector is opened by `Show-OSDStageUI`. Its deployment views are read-only: it displays what the PowerShell CLI has prepared and what is locally available, including the device queue and stored configuration, package availability, USB cache and existing logs. It does not configure, stage or install packages. The **Cache** tab shows cached apps and exposes explicit cache maintenance actions.
 
 <a id="two-different-viewers"></a>
 
@@ -81,38 +81,32 @@ The Order column remains the manifest sequence even when the table is sorted dif
 
 **Staged does not mean installed.** `SetupComplete.cmd: Present` reports file presence, not evidence that SetupComplete or every installer has completed. An empty queue can mean no apps were staged, the wrong target was selected, or successful cleanup removed staging. Use runtime logs to establish the installation outcome.
 
-## Cache manager
+## Cache
 
-The Cache manager combines package discovery and cache inventory into one app-oriented view. Each logical app is shown once. When an app has multiple cached configurations, such as Firefox channels or runtime variants, the main row summarizes them and the detail pane shows the individual configurations.
+The Cache view is intentionally small: it shows only apps that are actually present in the connected cache. Each logical app is shown once.
 
 | Column | Meaning |
 | --- | --- |
-| App | Human-readable app/package name. |
-| Source | Built-in or Repository. |
-| Package Type | `App`, `Script`, `Font`, `Certificate` or `Driver`. |
-| Vendor | Publisher metadata when available; the Inspector does not invent one. |
-| Cached version | Exact version for a single cached configuration, or a configuration count when multiple variants exist. |
-| Available version | Version resolved by the update check. Multiple configurations are summarized and expanded in the detail pane. |
-| Status | `Current`, `Update available`, `Check failed`, `Not cached`, `Catalog not configured`, or another explicit state. |
+| App | Human-readable cached app/package name. |
+| Version | Cached version, or a configuration count when the app has multiple cached configurations. |
+| Status | Current, update available, check failed, catalog unavailable, or a health warning. |
 
-Checkboxes are temporary action selection only. Unchecking an app never removes it. New built-in cache configurations remain CLI-only: the Cache manager does not choose architecture, channel, language, runtime type or Office settings.
+New built-in cache configurations remain CLI-only. The Cache view does not choose architecture, channel, language, runtime type or Office settings.
 
 ### Cache maintenance
 
-- **Refresh** re-reads device, cache and signature state. Use it after inserting, removing or replacing an OSDCloud USB device.
-- **Check health** runs `Get-OSDStageCacheHealth` and shows concrete non-healthy entries with state, integrity, recommended action, size, reason and path.
-- **Check updates** checks the selected apps; with no checked rows it checks every cached app. Existing exact version resolvers are used for Office, Chrome, Firefox, 7-Zip, Visual Studio Code, Visual C++ runtimes, .NET runtimes and CMTrace Open. Other vendor payloads are still checked against their recorded remote metadata instead of being silently skipped.
-- **Cache selected** can add uncached repository apps when a catalog is configured. New built-in configurations must be created with the PowerShell CLI.
-- **Update selected** rechecks and updates only the checked apps that are actually out of date.
-- **Update all available** rechecks the cache and synchronizes only entries explicitly identified as having an update. Current entries are not intentionally reacquired.
-- **Remove selected...** removes only checked cached apps after an explicit confirmation.
-- **Clear entire cache...** is a separate destructive action with its own confirmation. Logs are preserved.
+The primary actions are deliberately limited to **Refresh**, **Check cache**, **Update** and **More...**.
 
-Maintenance actions do not stage packages or change the device deployment manifest.
+- **Refresh** re-reads the connected cache.
+- **Check cache** checks the selected app, or all cached apps when nothing is selected. It performs version/update checks and a cache-health pass in the same background operation.
+- **Update** updates the selected app, or all available updates when nothing is selected.
+- **More...** contains less common maintenance such as health details, removing the selected app and clearing the entire cache.
+
+Slow operations use a progress dialog so the main Inspector does not freeze. Removing an app and clearing the entire cache remain separate, explicitly confirmed actions.
 
 ### Cached configurations
 
-The main table intentionally hides technical variant rows. Select an app to inspect its cached configurations in the detail pane, including architecture, channel, runtime type or language where recorded, cached version, available version, update result and cache path.
+Technical cache variants are not shown as separate rows in the main table. Multiple cached configurations are summarized as a count.
 
 ### Versions
 
