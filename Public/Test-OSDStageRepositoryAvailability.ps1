@@ -12,11 +12,7 @@ function Test-OSDStageRepositoryAvailability {
 
     Assert-OSDStageSourceEnabled -Source Repository
     $names = @($Name | Select-Object -Unique)
-    foreach ($item in $names) {
-        if ($item -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$' -or $item -match '\.\.') {
-            throw "Invalid repository app Id '$item'."
-        }
-    }
+    Assert-OSDStageRepositorySelection -Name $names
 
     $architecture = Get-OSDStageHostArchitecture
     $sourceUri = (Get-OSDStageConfiguration).CatalogUri

@@ -151,6 +151,11 @@ Describe 'Repository selection availability before staging' {
             $result.Packages[0].Source | Should -Be Cache
         }
 
+        It 'rejects built-in IDs before reading the repository, matching Add-OSDStage' {
+            { Test-OSDStageRepositoryAvailability -Name Microsoft365Apps } | Should -Throw '*Use Add-OSDStageMicrosoft365Apps*'
+            Should -Invoke Get-OSDStageManifest -Exactly 0
+        }
+
         It 'rejects unsafe IDs before reading sources' {
             { Test-OSDStageRepositoryAvailability -Name '../escape' } | Should -Throw '*Invalid repository app Id*'
             Should -Invoke Get-OSDStageManifest -Exactly 0
