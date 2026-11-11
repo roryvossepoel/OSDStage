@@ -55,8 +55,8 @@ Describe 'Standalone delivery report' {
         )
         $html = ConvertTo-OSDStageReportHtml $report
         $html | Should -Match '<th scope="col">App</th>'
-        $html | Should -Match '<td>Google Chrome &lt;Enterprise&gt;</td>'
-        $html | Should -Match '<td>FallbackId</td>'
+        $html | Should -Match '<td class="text-cell">Google Chrome &lt;Enterprise&gt;</td>'
+        $html | Should -Match '<td class="text-cell">FallbackId</td>'
         $html | Should -Not -Match '<td>GoogleChromeEnterprise</td>|<Enterprise>'
         $report.Packages[0].Id | Should -Be 'GoogleChromeEnterprise'
     }
