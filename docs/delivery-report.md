@@ -20,6 +20,8 @@ $report.Checks | Format-Table Name, Passed, Detail -Wrap
 - HTML durations use minutes and seconds, rounded to the nearest whole second (for example, 2460.5 seconds becomes `41 min 01 sec`). JSON retains the numeric `DurationSeconds` values for analysis.
 - Staging module version, device name, manufacturer, model and Windows version/build when available.
 - App and configuration results, versions, exit codes, durations and recorded acquisition/cache outcomes.
+- App tables use the recorded display name, falling back to the package ID. JSON keeps both fields. A successful entry without failure evidence displays `n/a` for Failure Type; genuinely unknown failure details remain `Unknown`.
+- In current development, the runner records MSI ProductVersion (including Chrome) and the Acrobat patch version from the executed payload. This is package-version evidence, not an independent installed-product inventory. Optional metadata failures do not fail an otherwise successful installation. Unresolved versions display `Unknown`, never the `Current` selection placeholder. Historical results without version evidence cannot be reconstructed by rendering them again.
 - Correlated Windows Update totals, individual selections and outcomes, restart requirements and follow-up scan indication.
 - Evidence checks for matching deployment identity, complete package results and matching component/Windows Update details.
 - Expandable component operations from the runtime reports, stored under `Packages[].Details` in JSON schema 1.1.

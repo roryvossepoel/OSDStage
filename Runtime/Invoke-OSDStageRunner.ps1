@@ -224,6 +224,16 @@ function New-RunnerAppResult {
     )
 
     $cacheInfo = Get-RunnerCacheInfo -App $App
+    $version = [string]$App.Version
+    if ($Status -eq 'Succeeded' -and $Execution -and
+        $Execution.PSObject.Properties['Version'] -and
+        -not [string]::IsNullOrWhiteSpace([string]$Execution.Version)) {
+        $version = [string]$Execution.Version
+    }
+    elseif ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'Current') {
+        $version = if ($cacheInfo) { [string]$cacheInfo.Version } else { $null }
+    }
+    if ([string]::IsNullOrWhiteSpace($version) -or $version -eq 'Current') { $version = $null }
     # Only current, uniquely correlated PreInstall evidence may describe acquisition.
     # CacheInfo.json still supplies content identity, never per-deployment flags.
     $hasAcquisitionPhase = ([string]$App.Source -eq 'BuiltIn' -and
@@ -258,7 +268,7 @@ function New-RunnerAppResult {
         Source          = [string]$App.Source
         Type            = if ($App.Type) { [string]$App.Type } else { $null }
         PackageType     = if ($App.PackageType) { [string]$App.PackageType } else { 'App' }
-        Version         = if ($App.Version) { [string]$App.Version } elseif ($cacheInfo -and $cacheInfo.Version) { [string]$cacheInfo.Version } else { $null }
+        Version         = $version
         Architecture    = if ($App.Architecture) { [string]$App.Architecture } elseif ($cacheInfo -and $cacheInfo.Architecture) { [string]$cacheInfo.Architecture } else { $null }
         Status          = $Status
         ExitCode        = if ($Execution -and $null -ne $Execution.ExitCode) { [int]$Execution.ExitCode } else { $null }
@@ -1189,7 +1199,7 @@ try {
                 }
 
                 Write-RunnerLog -LogPath $logPath -Event 'BuiltInInstallComplete' -Message 'Built-in Adobe Acrobat Unified installation completed.' -Data @{ Id=$app.Id; ExitCode=$process.ExitCode; DurationSeconds=[math]::Round($installStopwatch.Elapsed.TotalSeconds) }
-                [pscustomobject]@{ ExitCode=$process.ExitCode; Integrity='NotAssessed' }
+                [pscustomobject]@{ ExitCode=$process.ExitCode; Integrity='NotAssessed'; Version=(Get-OSDStageAdobePatchVersion -Path $packagePath) }
             }
             'PrerequisiteExe' {
                 $packagePath = Assert-OSDStageManifestPayload -App $app -StagedPath $StagedPath
@@ -1394,7 +1404,7 @@ try {
                 }
 
                 Write-RunnerLog -LogPath $logPath -Event 'BuiltInInstallComplete' -Message "Built-in $displayName installation completed." -Data @{ Id=$app.Id; ExitCode=$process.ExitCode; DurationSeconds=[math]::Round($installStopwatch.Elapsed.TotalSeconds) }
-                [pscustomobject]@{ ExitCode=$process.ExitCode; Integrity='PublisherValidatedByPreInstall' }
+                [pscustomobject]@{ ExitCode=$process.ExitCode; Integrity='PublisherValidatedByPreInstall'; Version=(Get-OSDStageMsiProductVersion -Path $packagePath) }
             }
             default {
                 throw "Unsupported built-in app type '$($app.Type)' for '$($app.Id)'."

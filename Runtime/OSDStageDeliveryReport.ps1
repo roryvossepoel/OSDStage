@@ -276,13 +276,21 @@ function ConvertTo-OSDStageReportHtml {
     function Format-ReportTable {
         param([object[]]$Rows, [string[]]$Fields)
         $header = ($Fields | ForEach-Object {
-            $label = if ($_ -eq 'DurationSeconds') { 'Duration' } else { $_ -creplace '([a-z])([A-Z])', '$1 $2' }
+            $label = if ($_ -eq 'DisplayName') { 'App' } elseif ($_ -eq 'DurationSeconds') { 'Duration' } else { $_ -creplace '([a-z])([A-Z])', '$1 $2' }
             '<th scope="col">' + (Format-ReportValue $label) + '</th>'
         }) -join ''
         $body = ($Rows | ForEach-Object {
             $row = $_
             '<tr>' + (($Fields | ForEach-Object {
-                $value = if ($_ -eq 'DurationSeconds') { Format-ReportDuration $row.$_ } else { Format-ReportValue $row.$_ }
+                $value = if ($_ -eq 'DurationSeconds') { Format-ReportDuration $row.$_ }
+                elseif ($_ -eq 'DisplayName') {
+                    $name = if ([string]::IsNullOrWhiteSpace([string]$row.DisplayName)) { $row.Id } else { $row.DisplayName }
+                    Format-ReportValue $name
+                }
+                elseif ($_ -eq 'FailureType' -and [string]::IsNullOrWhiteSpace([string]$row.FailureType) -and
+                    $row.Status -eq 'Succeeded' -and $row.ErrorPresent -ne $true) { 'n/a' }
+                elseif ($_ -eq 'Version' -and $row.Version -eq 'Current') { 'Unknown' }
+                else { Format-ReportValue $row.$_ }
                 '<td>' + $value + '</td>'
             }) -join '') + '</tr>'
         }) -join ''
@@ -317,7 +325,7 @@ function ConvertTo-OSDStageReportHtml {
             })
             if ($rows.Count -gt 0) {
                 '<h3>' + $group.Title + '</h3>' +
-                    (Format-ReportTable $rows @('Id','Status','Version','ExitCode','DurationSeconds','AcquisitionOutcome','RebootRequired','FailureType','ErrorPresent'))
+                    (Format-ReportTable $rows @('DisplayName','Status','Version','ExitCode','DurationSeconds','AcquisitionOutcome','RebootRequired','FailureType','ErrorPresent'))
             }
         }
         '<section class="panel apps-card"><h2>Apps</h2>' + ($appGroups -join '') + '</section>'
@@ -368,7 +376,7 @@ $(if ($Report.ErrorPresent -or $Report.FailureType) { '<p class="muted">Failure 
 <div class="metrics"><div class="metric">Expected<strong>$(Format-ReportValue $Report.Counts.Expected)</strong></div><div class="metric">Succeeded<strong>$(Format-ReportValue $Report.Counts.Succeeded)</strong></div><div class="metric">Failed<strong>$(Format-ReportValue $Report.Counts.Failed)</strong></div><div class="metric">Skipped<strong>$(Format-ReportValue $Report.Counts.Skipped)</strong></div><div class="metric">Unknown / not run<strong>$(Format-ReportValue $Report.Counts.UnknownOrNotRun)</strong></div></div>
 <section class="panel"><h2>Device</h2>$deviceTable</section>
 $packageCards
-<p class="muted">Missing values are shown as Unknown. Raw error messages are retained in local runtime logs.</p>
+<p class="muted">Missing values are shown as Unknown; Failure Type is n/a for successful entries without an error. Versions describe the recorded package payload. Raw error messages are retained in local runtime logs.</p>
 <details open><summary>Evidence checks</summary>$checkTable</details>
 <section class="panel"><h2>Scope and follow-up</h2><p>$(Format-ReportValue $Report.Scope)</p><p>$(Format-ReportValue $Report.Privacy)</p></section>
 <div class="deployment-meta"><p>Deployment <code>$(Format-ReportValue $Report.DeploymentId)</code></p><p>Started: $(Format-ReportValue $Report.StartedAtUtc) &middot; Completed: $(Format-ReportValue $Report.CompletedAtUtc)</p><p>Report <code>$(Format-ReportValue $Report.ReportId)</code> &middot; Generated: $(Format-ReportValue $Report.GeneratedAtUtc)</p></div>

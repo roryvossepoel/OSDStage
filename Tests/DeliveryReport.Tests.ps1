@@ -47,6 +47,44 @@ Describe 'Standalone delivery report' {
         $html | Should -Match '<h3>Built-in apps</h3>'
         $html | Should -Not -Match '<h3>Repository apps</h3>|<h3>Apps with unknown source</h3>'
     }
+    It 'uses escaped display names with ID fallback and preserves JSON identities' {
+        $report = New-OSDStageDeliveryReport -Result $result -Manifest $manifest -Directory $directory
+        $report.Packages = @(
+            [pscustomobject]@{Id='GoogleChromeEnterprise';DisplayName='Google Chrome <Enterprise>';PackageType='App';Source='BuiltIn';Status='Succeeded'},
+            [pscustomobject]@{Id='FallbackId';DisplayName=' ';PackageType='App';Source='Repository';Status='Succeeded'}
+        )
+        $html = ConvertTo-OSDStageReportHtml $report
+        $html | Should -Match '<th scope="col">App</th>'
+        $html | Should -Match '<td>Google Chrome &lt;Enterprise&gt;</td>'
+        $html | Should -Match '<td>FallbackId</td>'
+        $html | Should -Not -Match '<td>GoogleChromeEnterprise</td>|<Enterprise>'
+        $report.Packages[0].Id | Should -Be 'GoogleChromeEnterprise'
+    }
+    It 'shows n/a only for a successful entry without failure evidence: <State>/<Failure>/<ErrorPresent>' -ForEach @(
+        @{State='Succeeded';Failure='';ErrorPresent=$false;Expected='n/a'},
+        @{State='Failed';Failure='';ErrorPresent=$true;Expected='Unknown'},
+        @{State='Skipped';Failure='';ErrorPresent=$false;Expected='Unknown'},
+        @{State='Succeeded';Failure='UnexpectedEvidence';ErrorPresent=$false;Expected='UnexpectedEvidence'},
+        @{State='Succeeded';Failure='';ErrorPresent=$true;Expected='Unknown'}
+    ) {
+        $report = New-OSDStageDeliveryReport -Result $result -Manifest $manifest -Directory $directory
+        $report.Packages = @([pscustomobject]@{
+            Id='Chrome';DisplayName='Chrome';PackageType='App';Source='BuiltIn';Status=$State
+            Version='157.0.1.0';ExitCode=0;DurationSeconds=1;AcquisitionOutcome='CacheReused'
+            RebootRequired=$false;FailureType=$Failure;ErrorPresent=$ErrorPresent
+        })
+        $html = ConvertTo-OSDStageReportHtml $report
+        $errorText = if ($ErrorPresent) { 'Yes' } else { 'No' }
+        $html | Should -Match "<td>No</td><td>$Expected</td><td>$errorText</td>"
+        $report.Packages[0].FailureType | Should -Be $Failure
+    }
+    It 'does not present a legacy Current placeholder as a concrete version' {
+        $report = New-OSDStageDeliveryReport -Result $result -Manifest $manifest -Directory $directory
+        $report.Packages[0].Version = 'Current'
+        $html = ConvertTo-OSDStageReportHtml $report
+        $html | Should -Not -Match '<td>Current</td>'
+        $report.Packages[0].Version | Should -Be 'Current'
+    }
     It 'formats HTML durations as minutes and seconds without changing JSON precision' {
         $result.DurationSeconds = 2460.5
         $result.Packages[0] | Add-Member DurationSeconds 213.5
