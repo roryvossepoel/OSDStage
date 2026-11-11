@@ -181,7 +181,7 @@ the `AppAcquisitionComplete` log event. For example:
 | Office build mismatch | The compatible generation does not match the explicit build pin or CDN-advertised build. |
 | HTTP metadata changed | The ETag or last-modified/length comparison differs. This does **not** prove a newer app version. |
 | HTTP metadata insufficient | Comparable metadata is unavailable, so currency cannot be established. |
-| Release-validated package rejected | The existing 7Zip, Visual Studio Code or prerequisite generation failed current-release validation; the original validation message is retained. |
+| Release-validated package rejected | The existing 7-Zip, Visual Studio Code or prerequisite generation failed current-release validation; the original validation message is retained. |
 | Confirmed reuse | The applicable current-build, HTTP or release checks accepted the existing payload. |
 | Offline or fallback use | Content passed the applicable fallback checks, but currency was not established. Refresh failures retain their original error. |
 | Acquisition failed | The final failure is reported, even if an earlier comparison would have allowed reuse. |

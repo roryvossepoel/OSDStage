@@ -91,7 +91,7 @@ to complete this table.
 
 The existing set is Microsoft 365 Apps, Microsoft Teams, Adobe Acrobat Unified,
 Google Chrome Enterprise, Mozilla Firefox Enterprise, Cisco Webex, Zoom
-Workplace, 7Zip, Visual Studio Code, Visual C++ redistributables, .NET runtimes,
+Workplace, 7-Zip, Visual Studio Code, Visual C++ redistributables, .NET runtimes,
 Microsoft Company Portal and CMTrace Open. See [per-app contracts](built-in-apps.md),
 [metadata](../metadata/builtins.json) and [version-specific test evidence](testing.md).
 

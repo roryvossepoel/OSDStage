@@ -150,7 +150,7 @@
     },
     {
       "Id": "7Zip",
-      "DisplayName": "7Zip",
+      "DisplayName": "7-Zip",
       "Source": "BuiltIn",
       "Vendor": "Igor Pavlov",
       "Acquisition": "7ZipExe",

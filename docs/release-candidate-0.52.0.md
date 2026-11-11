@@ -97,8 +97,8 @@ for the precise field meanings. No new physical run is claimed here.
 
 **Signature coverage:** successful cache/installer status is not proof that every
 file was checked for a digital signature. The observed preparation run had ten
-Valid signature entries and three Not assessed entries (7Zip, Adobe and Company
-Portal). 7Zip uses upstream release SHA-256 validation; the outer Adobe ZIP and
+Valid signature entries and three Not assessed entries (7-Zip, Adobe and Company
+Portal). 7-Zip uses upstream release SHA-256 validation; the outer Adobe ZIP and
 the Company Portal bundle/dependency set are not fully assessed by that signature
 inspector. Company Portal has file-hash checks. Office signature inspection covers
 setup.exe, and Teams inspection covers teamsbootstrapper.exe rather than every

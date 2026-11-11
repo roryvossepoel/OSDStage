@@ -55,7 +55,7 @@ These observations validate the tested x64 deployment path and chosen 13-package
 | Metadata source | Advertised version |
 | --- | --- |
 | Office MonthlyEnterprise x64 descriptor | `16.0.20430.20180` |
-| 7Zip x64 stable release | `26.05` |
+| 7-Zip x64 stable release | `26.05` |
 | Visual Studio Code x64 stable system installer | `1.143.1` |
 | .NET 10.0 Runtime x86 / Desktop Runtime x64 | `10.0.13` |
 
@@ -515,11 +515,11 @@ Implementation commit: `53f229e7b235e289a703fe7211d8f78e84125958` ([PR #47](http
 This deployment verifies power-request registration and release within both real runtime phases, successful installations and cleanup. It does not independently demonstrate an actual idle sleep transition; the earlier prototype idle comparison is separate evidence. Manual sleep, lid actions and battery-policy limitations remain as documented in [Runtime](runtime.md).
 
 
-### 7Zip physical candidate validation (2026-10-20)
+### 7-Zip physical candidate validation (2026-10-20)
 
 The x64 candidate at `de96798dd5a549b13855cf78cf184ec6010995e0` passed a
 clean WinPE-to-OOBE test (deployment `3d547621-288f-400f-95fd-33698a42c15a`).
-7Zip 26.04 was downloaded, installed machine-wide with exit code 0, and its
+7-Zip 26.04 was downloaded, installed machine-wide with exit code 0, and its
 registered and executable versions matched. PreInstall took 4.5 seconds and
 Runner 3.1 seconds; staging cleanup passed. This was a download test, not a
 warm-cache reuse test. Native ARM64/x86 installation has not been physically tested.
@@ -549,7 +549,7 @@ The candidate retained module version 0.46.0; this built-in ships in 0.47.0.
 [Candidate CI](https://github.com/roryvossepoel/OSDStage/actions/runs/39479913392)
 passed on Windows PowerShell 5.1 and PowerShell 7. This physical result covers
 x64 download and installation, not ARM64 installation, warm-cache reuse or
-interactive editor behavior. The 0.47.0 release includes 7Zip's physical
+interactive editor behavior. The 0.47.0 release includes 7-Zip's physical
 candidate evidence and naming limitation documented above.
 
 ## Visual C++ and .NET prerequisite candidate
