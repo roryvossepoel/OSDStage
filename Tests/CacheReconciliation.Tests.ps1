@@ -260,12 +260,12 @@ Describe 'Transactional desired-state cache reconciliation' {
             Set-Content -LiteralPath (Join-Path $owned 'partial.bin') -Value partial
             Set-Content -LiteralPath (Join-Path $manual 'readme.txt') -Value manual
 
-            $warnings = @()
-            Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false -WarningVariable warnings | Out-Null
+            $result = @(Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false 3>&1)
+            $warnings = @($result | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
 
             Test-Path -LiteralPath $owned | Should -BeFalse
             Test-Path -LiteralPath (Join-Path $manual 'readme.txt') | Should -BeTrue
-            ($warnings -join ' ') | Should -Match 'left untouched'
+            @($warnings.Message) -join ' ' | Should -Match 'left untouched'
         }
     }
 
