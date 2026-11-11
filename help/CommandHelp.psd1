@@ -804,6 +804,37 @@
             Examples = @(@{ Code = 'Add-OSDStagePackage -Id ConfigureWindows -DisplayName ''Configure Windows'' -Version 1.0.0 -Architecture x64 -PackageType Script -PackagePath ''C:\Work\Build\ConfigureWindows\Package.zip'' -RepositoryPath ''C:\Work\Repository'''; Remarks = 'Publish a script package using the same repository and SetupComplete runtime contract as an app.' })
             Link = 'docs/repository.md'
         }
+        'Test-OSDStageDeploymentProfile' = @{
+            Synopsis = 'Validate an OSDStage deployment profile without staging anything.'
+            Description = 'Reads a deployment profile, validates schema version 1, package identities, supported BuiltIn and Repository sources, exported staging commands, reserved generator parameters, ValidateSet values and parameter type conversion. Validation never stages packages, modifies Windows, changes the cache or executes generated PowerShell.'
+            Environment = 'Any supported PowerShell host where the OSDStage module can be imported. A local JSON profile can be supplied by path, or an in-memory profile object can be piped in.'
+            Output = 'Boolean validation result by default. With -Detailed, returns OSDStage.DeploymentProfileValidation with Valid, Errors and the parsed Profile.'
+            Parameters = @{
+                Path = 'Path to a deployment profile JSON file using SchemaVersion 1.'
+                InputObject = 'In-memory deployment profile object. Accepts pipeline input and is mutually exclusive with Path.'
+                Detailed = 'Return the detailed validation object instead of only true or false.'
+            }
+            Examples = @(
+                @{ Code = 'Test-OSDStageDeploymentProfile -Path ''.\Examples\DeploymentProfile.StandardWorkplace.json'''; Remarks = 'Validate the example profile without staging or executing anything.' },
+                @{ Code = '$result = Test-OSDStageDeploymentProfile -Path ''.\profile.json'' -Detailed'; Remarks = 'Inspect validation errors and the parsed profile.' }
+            )
+            Link = 'docs/deployment-profiles.md'
+        }
+        'ConvertTo-OSDStageDeploymentScript' = @{
+            Synopsis = 'Convert a validated OSDStage deployment profile to deterministic PowerShell.'
+            Description = 'Validates a deployment profile and converts it to ordered OSDStage Add commands. The generated text is deterministic for the same profile, uses PowerShell literals for supported values and never invokes the generated commands automatically. Review the generated script before execution.'
+            Environment = 'Any supported PowerShell host where the OSDStage module can be imported. A local JSON profile can be supplied by path, or an in-memory profile object can be piped in.'
+            Output = 'PowerShell script text containing deterministic OSDStage staging commands. No staging command is executed by this conversion.'
+            Parameters = @{
+                Path = 'Path to a deployment profile JSON file using SchemaVersion 1.'
+                InputObject = 'In-memory deployment profile object. Accepts pipeline input and is mutually exclusive with Path.'
+            }
+            Examples = @(
+                @{ Code = 'ConvertTo-OSDStageDeploymentScript -Path ''.\Examples\DeploymentProfile.StandardWorkplace.json'''; Remarks = 'Generate reviewable PowerShell from the example profile without executing it.' },
+                @{ Code = 'ConvertTo-OSDStageDeploymentScript -Path ''.\profile.json'' | Set-Content -LiteralPath ''.\generated-osdstage.ps1'' -Encoding UTF8'; Remarks = 'Write the deterministic generated script to a file for review.' }
+            )
+            Link = 'docs/deployment-profiles.md'
+        }
         'Test-OSDStagePackage' = @{
             Synopsis = 'Validate repository archive structure and report SHA-256.'
             Description = 'Extracts into owned temporary storage and validates structure for the selected PackageType. App/Script require Package/Install.ps1; Font requires at least one TTF/OTF file. Certificate requires only public CA .cer/.crt files under Package/; no scripts or private keys. Driver checks are structural only: at least one INF, complete Package directory layout and no reparse points. Windows validates INF content and signatures during import. Validation never executes package content.'

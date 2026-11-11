@@ -15,6 +15,8 @@ Describe 'OSDStage product and schema contract' {
             'Get-OSDStageDeploymentResult',
             'Test-OSDStageCache',
             'Test-OSDStageDeployment',
+            'Test-OSDStageDeploymentProfile',
+            'ConvertTo-OSDStageDeploymentScript',
             'Show-OSDStageUI',
             'Remove-OSDStageStaging',
             'Sync-OSDStageRepository',
