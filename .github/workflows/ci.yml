@@ -126,7 +126,7 @@ jobs:
           Import-Module ./OSDStage.psd1 -Force
           $module = Get-Module OSDStage
           & $module {
-              $definitions = @(Get-OSDStageUIBuiltInMetadata)
+              $definitions = @((Get-Content -LiteralPath (Join-Path $moduleRoot 'metadata/builtins.json') -Raw | ConvertFrom-Json).Packages)
               $expected = @{
                   Microsoft365Apps='Microsoft'; MicrosoftTeams='Microsoft'; MicrosoftCompanyPortal='Microsoft'; CMTraceOpen='CMTrace Open'
                   RegistrySettings='OSDStage'; WindowsInboxCleanup='OSDStage'; WindowsFeatures='OSDStage'; WindowsCapabilities='OSDStage'; WindowsUpdate='OSDStage'; DefaultAssociations='OSDStage'; EnvironmentVariables='OSDStage'; FileSystem='OSDStage'; Services='OSDStage'; DesktopSettings='OSDStage'; WiFiProfiles='OSDStage'; Certificates='OSDStage'
@@ -135,8 +135,8 @@ jobs:
               }
               if ($definitions.Count -ne $expected.Count) { throw 'Built-in metadata count mismatch.' }
               foreach ($id in $expected.Keys) {
-                  $info = Get-OSDStageUIDisplayInfo -App ([pscustomobject]@{Id=$id;Source='BuiltIn'}) -BuiltInMetadata $definitions
-                  if ($info.Vendor -ne $expected[$id] -or -not $info.DisplayName -or ($info.DisplayName -eq $id -and $id -ne '7Zip')) { throw "Incorrect metadata: $id" }
+                  $matches = @($definitions | Where-Object Id -eq $id)
+                  if ($matches.Count -ne 1 -or $matches[0].Vendor -ne $expected[$id] -or -not $matches[0].DisplayName) { throw "Incorrect metadata: $id" }
               }
               Write-Host 'Windows PowerShell 5.1 built-in metadata smoke checks passed.'
           }

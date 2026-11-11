@@ -92,14 +92,14 @@ Add-OSDStageCMTraceOpen -Architecture x64
 Add-OSDStageWindowsInboxCleanup -Preset Tested13 -DiagnoseOnly
 
 Test-OSDStageDeployment -RequireOfflineReady -ThrowOnFailure
-Show-OSDStageUI -Offline
+Test-OSDStageDeployment -ThrowOnFailure
 ```
 
 This queue contains 14 built-ins. Cleanup runs in diagnosis mode; removal needs a
 separate explicit destructive acceptance test. `CleanupMode Never` retains
 staging for inspection and does not test automatic successful-stage cleanup.
 Inspect every manifest path: it must name the recorded actual vendor file, not
-an extension-only placeholder. Close the Viewer, then continue the normal
+an extension-only placeholder. Continue the normal
 OSDCloud reboot. Never manually rerun the SetupComplete scripts.
 
 ## Required deployment scenarios

@@ -59,15 +59,15 @@ Test-OSDStageDeployment -ThrowOnFailure
 
 If you run this check, resolve any reported failure before rebooting. For a fresh built-in deployment without cache, `OfflineReady=False` and `NetworkRequired=True` are expected; `Valid=True` means staging passed, not that installation has happened.
 
-Optionally inspect the queue in the read-only Viewer:
+Validate the prepared queue:
 
 ```powershell
-Show-OSDStageUI -Offline
+Test-OSDStageDeployment -ThrowOnFailure
 ```
 
-Expect Microsoft 365 Apps first, Adobe Acrobat Unified second and Google Chrome Enterprise third, followed by a repository app only if step 2 was used. The Viewer needs Windows Forms and an STA session. Its `-Offline` switch limits repository lookup; it does not change deployment networking.
+Expect Microsoft 365 Apps first, Adobe Acrobat Unified second and Google Chrome Enterprise third, followed by a repository app only if step 2 was used.
 
-Close the Viewer and continue your normal deployment reboot after staging completes without errors. To reboot manually from WinPE:
+Continue your normal deployment reboot after staging completes without errors. To reboot manually from WinPE:
 
 ```powershell
 wpeutil reboot

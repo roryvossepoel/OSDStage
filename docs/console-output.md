@@ -65,7 +65,6 @@ original details. A narrow terminal may wrap a long summary onto another line.
 | `Remove-OSDStageStaging` | Actual queue removals and remaining count; never claims to uninstall Windows software |
 | `Clear-OSDStageCache` | Actual removed item count and preserved review count; logs are not included in the item count |
 | `Set-OSDStageConfiguration` | Timestamped configuration confirmation on the information stream, preserving its normally empty success stream |
-| `Show-OSDStageUI` | Opens the existing graphical viewer; no extra success-stream object |
 
 Commands using `-WhatIf` retain PowerShell's preview messages. A repository or
 cache cleanup preview returned as an object is described as not applied.

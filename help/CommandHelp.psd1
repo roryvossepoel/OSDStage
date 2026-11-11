@@ -30,7 +30,7 @@
         EmailHint = 'Literal Cisco placeholder: $userPrincipalName, $mail or $SAMAccountName. Quote the placeholder. A fixed email address is rejected for this all-users install.'
         AdditionalMsiProperties = 'Cisco NAME=VALUE pairs. Managed properties, duplicates, unsupported quotes and control characters are rejected. Prefer dedicated parameters.'
         Id = 'Technical repository app identifier, used in metadata and paths; not a display name.'
-        DisplayName = 'Human-readable repository app name for discovery and the Viewer.'
+        DisplayName = 'Human-readable repository app name for command-line discovery.'
         Vendor = 'Optional descriptive publisher metadata, not a cryptographic result or installer argument.'
         Version = 'Repository package version written into authoring metadata and paths. Does not query installed apps.'
         PackagePath = 'Existing Package.zip archive. App and Script packages require Package/Install.ps1; Font packages require at least one .ttf or .otf under Package/. Driver packages require INFs and their complete vendor payload under Package/.'
@@ -529,25 +529,6 @@
                 @{ Code = 'Test-OSDStageDeployment -WindowsPath ''C:\'' -RequireOfflineReady -ThrowOnFailure'; Remarks = 'Stop the workflow unless all queued payloads are local.' }
             )
             Link = 'docs/getting-started.md'
-        }
-        'Show-OSDStageUI' = @{
-            Synopsis = 'Open the read-only OSDStage Viewer.'
-            Description = 'Displays staging, apps, cache and logs without changing manifest, cache or configuration. A configured repository is read unless Offline is supplied. Supported signatures are checked by default on full Windows. No app installation, staging or removal controls exist.'
-            Environment = 'STA PowerShell with Windows Forms on full Windows or provisioned WinPE. Full Windows otherwise inspects its current system root.'
-            Output = 'Interactive window, no deployment-result objects. Staged is not installed.'
-            Parameters = @{
-                WindowsPath = 'Windows volume root to inspect, not its Windows subdirectory. Cannot combine with TestMode. WinPE otherwise discovers a target; full Windows uses its system drive.'
-                Offline = 'Skip repository lookup only. Optional, not required for read-only behavior, not a network detector; signature checks stay enabled.'
-                PreviewOnly = 'Legacy compatibility parameter. Viewer is always read-only; this does not add separate preview behavior.'
-                TestMode = 'Inspect the existing isolated TEMP\OSDStage-GUI-Staging-Test folder. Does not create it. Intended for full-Windows tests, not ordinary WinPE deployment.'
-                SkipSignatureVerification = 'Skip Viewer signature inspection, not deployment enforcement. Combine with Offline to suppress both catalog and signature requests by the Viewer.'
-            }
-            Examples = @(
-                @{ Code = 'Show-OSDStageUI'; Remarks = 'STA: inspect local state and any configured online catalog.' },
-                @{ Code = 'Show-OSDStageUI -Offline'; Remarks = 'Inspect locally; signature inspection remains enabled on full Windows.' },
-                @{ Code = 'Show-OSDStageUI -WindowsPath ''D:\'' -Offline'; Remarks = 'Replace D:\ with your intended prepared Windows volume.' }
-            )
-            Link = 'docs/viewer.md'
         }
         'Add-OSDStage' = @{
             Synopsis = 'Synchronize and stage repository apps for SetupComplete.'

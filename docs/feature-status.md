@@ -15,12 +15,11 @@ The combined, repository-only, renamed empty-cache and published RC4 deployments
 3. Review the documented scope and limits, then explicitly decide whether to
    prepare a stable `1.0.0` release using the [release procedure](releasing.md).
 
-The Windows Viewer and web catalog viewer are read-only. Neither is an interactive deployment editor. See [the viewer guide](viewer.md).
+The Windows Viewer and deployment-profile experiments have been withdrawn from the 1.0 scope. Configuration and staging use PowerShell; the web catalog remains a read-only metadata browser. See [inspection and diagnostics](viewer.md).
 
 The OSDStage name and public GitHub Pages site at [osdstage.com](https://osdstage.com/)
 are delivered, including the mobile navigation in
-[PR #124](https://github.com/roryvossepoel/OSDStage/pull/124). Interactive Viewer
-expansion remains deferred.
+[PR #124](https://github.com/roryvossepoel/OSDStage/pull/124). A website code-generation wizard is under consideration, not implemented.
 
 The tables retain earlier device evidence with its original commit and deployment
 IDs. Earlier test completion does not establish every architecture or variant.
@@ -86,7 +85,7 @@ to complete this table.
 | Ordered runtime, fault isolation, logs and cleanup | Built. [Runtime guide](runtime.md) and [testing history](testing.md) describe one-shot execution and retained failure evidence. The 31 October acceptance below records operator-confirmed OnSuccess staging removal; both RC4 Gallery runs record OnSuccess cleanup scheduling. | Scheduling alone does not prove removal. Continuation to Windows Update after failed or skipped packages has automated coverage; the two successful Gallery runs do not exercise those failure paths. |
 | Windows Update: `Add-OSDStageWindowsUpdate` | Included in RC3 and RC4. One optional pass runs last in SetupComplete, with opt-in drivers/firmware and no automatic restart. The [RC4 Gallery runs](rc4-gallery-acceptance.md) installed 36/36 offers on Dell and 4/4 on Surface; [contract and earlier evidence](windows-update.md). | Monthly cumulative Windows/.NET field coverage remains open. A successful pass does not mean no updates remain after a restart or later scan. |
 | Delivery reports | Included in RC4. Standalone JSON/HTML reports correlate package and component results; [broad report acceptance](delivery-report.md#broad-component-acceptance-3-november-2026) and [published Gallery acceptance](rc4-gallery-acceptance.md) record matching evidence and report checks. | Reports describe execution and follow-up requirements; they do not certify hardware health, complete patching or Autopilot enrollment. |
-| Inspection and diagnostics | Built. Read-only Viewer, cache health, deployment-result inspection and [maintenance diagnostics](maintenance.md). | Interactive selection/configuration expansion remains deferred; [draft PR #39](https://github.com/roryvossepoel/OSDStage/pull/39) is separate from the delivered read-only Viewer. |
+| Inspection and diagnostics | Built. CLI cache health, deployment-result inspection and [maintenance diagnostics](maintenance.md). | Windows UI experiments #39/#149 and deployment profiles #154 are closed; they are not required for CLI inspection. |
 
 ### Vendor built-ins
 
@@ -203,7 +202,7 @@ coverage limits, not reasons to repeat these completed installations.
 | First-sign-in animation and support information | Not requested for this module. |
 | Shortcut creation | Not selected. Pin configuration does not create missing shortcuts/apps. |
 | Separate OneDrive per-machine integration | No new work selected. Revisit only after an explicit need and current installation behavior are established. |
-| Interactive Viewer expansion | Deferred. The current Windows and web viewers remain read-only; the earlier [draft PR #39](https://github.com/roryvossepoel/OSDStage/pull/39) is not part of the accepted RC4 deployment path. Naming and public Pages delivery are complete, as recorded above. |
+| Interactive Viewer expansion | Withdrawn from 1.0. The Windows Viewer is removed from current source; published RC4 remains unchanged. The website catalog remains available. |
 
 ## Next closeout work
 

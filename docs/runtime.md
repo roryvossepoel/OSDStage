@@ -228,7 +228,7 @@ Module/cache actions with USB use:
 <cache volume>:\OSDStage\Logs\Client.log
 ```
 
-Runtime `LogPath` can be configured. The Viewer discovers known default locations, so custom paths may need to be read separately. Logs are CMTrace-compatible. The runtime rotates the active log and retains numbered `.1`, `.2` and `.3` archives.
+Runtime `LogPath` can be configured. Read logs at the configured path when using custom locations. Logs are CMTrace-compatible. The runtime rotates the active log and retains numbered `.1`, `.2` and `.3` archives.
 
 | Event | Interpretation |
 | --- | --- |
@@ -274,7 +274,7 @@ Add-OSDStageAdobeAcrobatUnified -InstallTimeoutMinutes 20
 
 Chrome Enterprise, Firefox Enterprise, Cisco Webex and Zoom Workplace use the `VendorMsi` runtime type. The local MSI is installed through `msiexec.exe /i ... /qn /norestart`, with any validated built-in MSI properties appended.
 
-The generic MSI runner uses a 10-minute default installation timeout, logs waiting heartbeats, accepts exit codes `0` and `3010`, and retains source on failure. Review app-specific options before changing properties; the Viewer does not edit them.
+The generic MSI runner uses a 10-minute default installation timeout, logs waiting heartbeats, accepts exit codes `0` and `3010`, and retains source on failure. Review app-specific options before changing properties.
 
 ## Timing and failure diagnostics
 

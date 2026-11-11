@@ -31,7 +31,7 @@ function Remove-OSDStageStaging {
         if ($PSBoundParameters.ContainsKey('WindowsPath')) {
             throw '-TestMode uses only the isolated TEMP target. Omit -WindowsPath.'
         }
-        $target = Get-OSDStageUITestWindowsPath
+        $target = Get-OSDStageTestWindowsPath
     }
     else {
         if (-not $winPE) {

@@ -13,7 +13,7 @@ Describe 'Module package contents' {
         Import-Module (Join-Path $root 'OSDStage.psd1') -Force -ErrorAction Stop
     }
 
-    It 'ships the runtime built-in metadata used by the Viewer' {
+    It 'ships the built-in metadata for discovery and external consumers' {
         Test-Path -LiteralPath (Join-Path $script:builtModule.Path 'metadata\builtins.json') -PathType Leaf |
             Should -BeTrue
     }

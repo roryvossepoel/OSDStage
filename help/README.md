@@ -24,7 +24,7 @@ Start a fresh PowerShell session to avoid cached help from a previous module imp
 
 ```powershell
 Import-Module ./dist/OSDStage/OSDStage.psd1 -Force
-Get-Help Show-OSDStageUI -Full
+Get-Help Get-OSDStageCache -Full
 Get-Help Add-OSDStage -Examples
 Get-Help Clear-OSDStageCache -Parameter All
 ```

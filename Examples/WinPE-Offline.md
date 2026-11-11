@@ -110,8 +110,6 @@ This command validates requested repository archive hashes before staging. It do
 (Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json).Packages |
     Select-Object Id, Source, PackageType, Architecture, Channel, Language, Version
 
-# Optional read-only Viewer, with Windows Forms and an STA session available.
-Show-OSDStageUI -WindowsPath $WindowsPath -Offline
 ```
 
 Require a complete staged payload before continuing:
@@ -120,7 +118,7 @@ Require a complete staged payload before continuing:
 Test-OSDStageDeployment -WindowsPath $WindowsPath -RequireOfflineReady -ThrowOnFailure
 ```
 
-Review the queue, then close the Viewer. Reboot through your normal deployment process only after staging succeeds. This example does not reboot automatically. Keep the USB flash drive attached and LAN/Wi-Fi disconnected through SetupComplete.
+Review the validation result and staged manifest. Reboot through your normal deployment process only after staging succeeds. This example does not reboot automatically. Keep the USB flash drive attached and LAN/Wi-Fi disconnected through SetupComplete.
 
 ## 5. Confirm actual offline behavior
 

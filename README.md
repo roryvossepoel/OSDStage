@@ -60,13 +60,13 @@ Company Portal and CMTrace Open also support online acquisition during SetupComp
 
 Keep networking available for either online route. No module copy on the USB flash drive is needed when loading from the Gallery. For a fully disconnected deployment, [prepare matching content and save the module first](Examples/WinPE-Offline.md).
 
-For an optional preflight check before rebooting, run `Test-OSDStageDeployment -ThrowOnFailure`. You can also inspect the queue in the Viewer:
+Before rebooting, validate the prepared deployment:
 
 ```powershell
-Show-OSDStageUI -Offline
+Test-OSDStageDeployment -ThrowOnFailure
 ```
 
-The Viewer is read-only. Here, `-Offline` skips online repository discovery; it does not change the deployment's network behavior. Close the Viewer before rebooting.
+See [inspection and diagnostics](docs/viewer.md) for cache, staging and result commands.
 
 ## Your deployment, recorded
 
@@ -151,11 +151,11 @@ Use the [USB preparation guide](Examples/Prepare-UsbCache.md) to get started, [c
 
 ## Inspect before deployment. Keep the results afterward.
 
-The **Windows Viewer** (`Show-OSDStageUI`) shows the staged queue, available packages, cache and logs. The **Package Type** column identifies the selected package type. Use it in WinPE to review staging or on a preparation machine to inspect the cache. See the [Viewer guide](docs/viewer.md).
+Use **PowerShell inspection commands** to inspect packages, cache health, prepared staging and deployment results. See [inspection and diagnostics](docs/viewer.md).
 
-The separate **web catalog viewer** browses built-in metadata and a user-supplied repository URL. It cannot inspect a local USB cache or target staging. See [the viewer distinction](docs/viewer.md#two-different-viewers).
+The separate **web catalog viewer** browses built-in metadata and a user-supplied repository URL. It cannot inspect a local USB cache or target staging. See [the web catalog](docs/viewer.md#web-catalog).
 
-The deployed Windows system keeps its results without needing the module or Viewer:
+The deployed Windows system keeps its results without needing the module:
 
 | File | Purpose |
 | --- | --- |

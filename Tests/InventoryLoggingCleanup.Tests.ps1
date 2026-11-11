@@ -18,11 +18,10 @@ Describe 'Inventory and client logging analyzer cleanup' {
             @(Write-OSDStageLog -LogPath $legacyPath -Event 'CacheInspected' @parameters).Count | Should -Be 0
             @(Write-OSDStageLog -LogPath $namedPath -EventName 'CacheInspected' @parameters).Count | Should -Be 0
             (Get-FileHash -LiteralPath $legacyPath).Hash | Should -Be (Get-FileHash -LiteralPath $namedPath).Hash
-            $row = ConvertFrom-OSDStageUILogLine -Line (Get-Content -LiteralPath $legacyPath)
-            $row.Event | Should -Be 'CacheInspected'
-            $row.Component | Should -Be 'Cache'
-            $row.Level | Should -Be 'Warning'
-            $row.Message | Should -Be 'Cache inspection | A=first; Z=1,2'
+            $line = Get-Content -LiteralPath $legacyPath
+            $line | Should -Match ([regex]::Escape('[CacheInspected] Cache inspection | A=first; Z=1,2'))
+            $line | Should -Match 'component="Cache"'
+            $line | Should -Match 'type="2"'
         }
     }
 
@@ -36,65 +35,21 @@ Describe 'Inventory and client logging analyzer cleanup' {
             Write-OSDStageLog @parameters
             $lines = @(Get-Content -LiteralPath $path)
             $lines.Count | Should -Be 1
-            $row = ConvertFrom-OSDStageUILogLine -Line $lines[0]
-            $row.Event | Should -Be 'Inspect'
-            $row.Message | Should -Be 'first second ]LOG]! > text'
+            $lines[0] | Should -Match ([regex]::Escape('[Inspect] first second ]LOG]! > text'))
         }
     }
 
-    It 'keeps an event-only record readable by the Viewer parser' {
+    It 'keeps event-only records in CMTrace format' {
         InModuleScope OSDStage {
             $path = Join-Path $TestDrive 'event-only.log'
             Write-OSDStageLog -LogPath $path -Component 'Client' -Event 'Ready'
-            $row = ConvertFrom-OSDStageUILogLine -Line (Get-Content -LiteralPath $path)
-            $row.Event | Should -Be 'Ready'
-            $row.Message | Should -BeNullOrEmpty
+            (Get-Content -LiteralPath $path) | Should -Match ([regex]::Escape('<![LOG[[Ready]]LOG]!>'))
         }
     }
 
-    It 'selects the explicit architecture and channel without changing input inventory' {
-        InModuleScope OSDStage {
-            $app = [pscustomobject]@{ Id='MozillaFirefoxEnterprise'; Architecture='x64'; Channel='Rapid' }
-            $entries = @(
-                [pscustomobject]@{Id=$app.Id; Architecture='x86'; Channel='Rapid'; Version='1.0'; Valid=$true},
-                [pscustomobject]@{Id=$app.Id; Architecture='x64'; Channel='ESR'; Version='2.0'; Valid=$true},
-                [pscustomobject]@{Id=$app.Id; Architecture='x64'; Channel='Rapid'; Version='3.0'; Valid=$false},
-                [pscustomobject]@{Id=$app.Id; Architecture='x64'; Channel='Rapid'; Version='4.0'; Valid=$true}
-            )
-            $before = ConvertTo-Json -InputObject $entries -Depth 5 -Compress
-            Get-OSDStageUICachedVersion -App $app -CacheEntries $entries | Should -Be '4.0'
-            (ConvertTo-Json -InputObject $entries -Depth 5 -Compress) | Should -Be $before
-        }
-    }
 
-    It 'does not pick an arbitrary version from ambiguous architectures' {
-        InModuleScope OSDStage {
-            $app = [pscustomobject]@{Id='GoogleChromeEnterprise'; Architecture='Auto'}
-            $entries = @(
-                [pscustomobject]@{Id=$app.Id; Architecture='x86'; Version='1.0'; Valid=$true},
-                [pscustomobject]@{Id=$app.Id; Architecture='x64'; Version='2.0'; Valid=$true}
-            )
-            Get-OSDStageUICachedVersion -App $app -CacheEntries $entries | Should -Be '-'
-        }
-    }
 
-    It 'preserves missing and Current-only cached version labels' {
-        InModuleScope OSDStage {
-            $app = [pscustomobject]@{Id='GoogleChromeEnterprise'; Architecture='x64'}
-            Get-OSDStageUICachedVersion -App $app -CacheEntries @() | Should -Be '-'
-            $entry = [pscustomobject]@{Id=$app.Id; Architecture='x64'; Version='Current'; Valid=$true}
-            Get-OSDStageUICachedVersion -App $app -CacheEntries @($entry) | Should -Be 'Not recorded'
-        }
-    }
 
-    It 'retains the existing display-only legacy Teams match without mutating the entry' {
-        InModuleScope OSDStage {
-            $app = [pscustomobject]@{Id='MicrosoftTeams'; Architecture='x64'}
-            $entry = [pscustomobject]@{Id='Teams'; Architecture='x64'; Version='1.2.3.4'; Valid=$true}
-            Get-OSDStageUICachedVersion -App $app -CacheEntries @($entry) | Should -Be '1.2.3.4'
-            $entry.Id | Should -Be 'Teams'
-        }
-    }
 
     It 'retains one trimmed MSI version and reports a failed view close only on the verbose stream' {
         InModuleScope OSDStage {
@@ -133,7 +88,7 @@ Describe 'Inventory and client logging analyzer cleanup' {
         }
     }
 
-    It 'does not regress the specific analyzer rules addressed in the four reviewed files' {
+    It 'does not regress the specific analyzer rules addressed in the reviewed files' {
         $rules = @(
             'PSAvoidAssignmentToAutomaticVariable',
             'PSAvoidUsingEmptyCatchBlock',
@@ -141,7 +96,6 @@ Describe 'Inventory and client logging analyzer cleanup' {
         )
         foreach ($relative in @(
             'Private/Write-OSDStageLog.ps1',
-            'Private/OSDStageUIFormatting.ps1',
             'Private/Get-OSDStageCachedPackageVersion.ps1',
             'Public/Test-OSDStageRepository.ps1'
         )) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — 1.0 preparation
+
+- Remove the Windows Viewer command, implementation, UI-only tests and screenshots. Use the CLI staging/cache/result checks and delivery report instead. The website catalog and public metadata remain available.
+- Withdraw the unmerged deployment-profile and Windows UI experiments from 1.0. Existing PowerShell runner configuration remains the deployment interface. Published release candidates are unchanged.
+
 ## 1.0.0-rc4
 
 - Fourth public release candidate, not GA. Adds automatic `DeliveryReport.json` and standalone offline `DeliveryReport.html` after runner completion or terminal PreInstall failure. Includes module/device information, package and cache outcomes, correlated Windows Update details, restart requirements and evidence checks. Reporting failures preserve the runtime outcome.

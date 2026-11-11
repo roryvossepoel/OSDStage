@@ -200,9 +200,4 @@ Describe 'Repository driver packages' {
         $report.Items[0].DriverStoreStatus | Should -Be Failed
         $report.Items[0].InstallCommand | Should -BeNullOrEmpty
     }
-    It 'labels Driver packages in the UI' {
-        InModuleScope OSDStage {
-            Get-OSDStageUIPackageType -App ([pscustomobject]@{Source='Repository';PackageType='Driver'}) | Should -Be Driver
-        }
-    }
 }

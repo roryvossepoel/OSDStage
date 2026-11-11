@@ -162,7 +162,7 @@ try {
         $writer.WriteStartElement('command','returnValues',$commandNs)
         $writer.WriteStartElement('command','returnValue',$commandNs)
         $writer.WriteStartElement('dev','type',$dev)
-        Write-HelpText 'maml' 'name' $maml $(if ($name -eq 'Show-OSDStageUI') { 'None' } else { 'System.Management.Automation.PSObject' })
+        Write-HelpText 'maml' 'name' $maml 'System.Management.Automation.PSObject'
         $writer.WriteEndElement()
         $writer.WriteStartElement('maml','description',$maml)
         Write-HelpParagraph $spec.Output

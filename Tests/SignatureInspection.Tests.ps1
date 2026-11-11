@@ -122,78 +122,9 @@ Describe 'Built-in Authenticode cache inspection (read-only)' {
         }
     }
 
-    It 'formats supported trust results without treating Not assessed as Valid' {
-        InModuleScope OSDStage {
-            (Get-OSDStageUISignatureLabel -Status Valid) | Should -Be 'Signature valid'
-            (Get-OSDStageUISignatureLabel -Status NotSigned) | Should -Be 'Not signed'
-            (Get-OSDStageUISignatureLabel -Status 'Not assessed') | Should -Be 'Not assessed'
-            (Get-OSDStageUISignatureLabel -Status UnknownError) | Should -Be 'Trust unknown'
-            (Get-OSDStageUISignatureLabel -Status 'Not assessed' -Source Repository) | Should -Be 'N/A'
-            (Get-OSDStageUISignatureLabel -Status 'Not assessed' -Source BuiltIn) | Should -Be 'Not assessed'
-            (Get-OSDStageUISignatureLabel -Status Valid -Source BuiltIn) | Should -Be 'Signature valid'
-        }
-    }
 
-    It 'checks signatures by default in the compact GUI with explicit skip option' {
-        $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "RowStyle\]::new\('Absolute',80\)"
-        $source | Should -Match 'Deployment overview'
-        $source | Should -Match 'SkipSignatureVerification'
-        $source | Should -Match 'SkipSignatureVerification:\$State.SkipSignatureVerification'
-        $source | Should -Match "Columns.Add\('Signature'"
-        $source | Should -Match "'Cache'\s+\{ @\(0,75,95,88,175,95,115,74,122\) \}"
-        $source | Should -Match 'Get-OSDStageUISignatureLabel -Status'
-        $source | Should -Match '-Source \(\[string\]\$entry.Source\)'
-        $source | Should -Not -Match '(?i)\bSet-OSDStageConfiguration\b'
-        $source | Should -Not -Match '(?i)\bRemove-OSDStageStaging\b'
-    }
-    It 'automatically requests Authenticode verification for full Windows Viewer snapshots' {
-        InModuleScope OSDStage {
-            Mock Get-OSDStage { }
-            Mock Get-OSDStageCachePath { throw 'USB not attached' }
-            Mock Test-OSDStageWinPE { $false }
-            Mock Get-OSDStageCache { }
-            Get-OSDStageUIReadOnlySnapshot -Offline | Out-Null
-            Should -Invoke Get-OSDStageCache -Exactly 1 -ParameterFilter {
-                $VerifySignatures -eq $true -and $ResolveVersions -eq $true
-            }
-        }
-    }
 
-    It 'skips Authenticode only when explicitly requested, but still resolves cached versions' {
-        InModuleScope OSDStage {
-            Mock Get-OSDStage { }
-            Mock Get-OSDStageCachePath { throw 'USB not attached' }
-            Mock Test-OSDStageWinPE { $false }
-            Mock Get-OSDStageCache { }
-            Get-OSDStageUIReadOnlySnapshot -Offline -SkipSignatureVerification | Out-Null
-            Should -Invoke Get-OSDStageCache -Exactly 1 -ParameterFilter {
-                $VerifySignatures -eq $false -and $ResolveVersions -eq $true
-            }
-        }
-    }
 
-    It 'reports signatures as unavailable in WinPE without trying to resolve MSI versions' {
-        InModuleScope OSDStage {
-            Mock Get-OSDStage { }
-            Mock Get-OSDStageCachePath { throw 'USB not attached' }
-            Mock Test-OSDStageWinPE { $true }
-            Mock Get-OSDStageCache { }
-            Get-OSDStageUIReadOnlySnapshot -Offline | Out-Null
-            Should -Invoke Get-OSDStageCache -Exactly 1 -ParameterFilter {
-                $VerifySignatures -eq $true -and $ResolveVersions -eq $false
-            }
-        }
-    }
 
-    It 'shows an explicit warning for publisher mismatch in the read-only cache' {
-        InModuleScope OSDStage {
-            (Get-OSDStageUISignatureLabel -Status PublisherMismatch -Source BuiltIn) |
-                Should -Be 'Wrong publisher'
-        }
-        $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "SignatureStatus -in @\('NotSigned'"
-        $source | Should -Match 'Firebrick'
-    }
 
 }
