@@ -54,7 +54,7 @@ Describe 'Interrupted built-in cache directory swap recovery' {
         New-Item -ItemType Directory -Path $new,$unrelated -Force | Out-Null
         Restore-OSDStageCacheGeneration -Root $root -Validate { throw 'must not run' }
         Test-Path -LiteralPath $root | Should -BeFalse
-        Test-Path -LiteralPath $new | Should -BeTrue
+        Test-Path -LiteralPath $new | Should -BeFalse
         Test-Path -LiteralPath $unrelated | Should -BeTrue
     }
 

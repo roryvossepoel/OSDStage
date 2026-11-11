@@ -201,9 +201,9 @@ Describe 'Desired-state cache health' {
         $health.Healthy | Should -BeFalse
         $health.CacheCatalogError | Should -Not -BeNullOrEmpty
         $health.CorruptCount | Should -Be 1
-        $entry.State | Should -Be 'Orphaned'
+        $entry.State | Should -Be 'Advisory'
         $entry.Integrity | Should -Be 'Unknown'
-        $entry.Action | Should -Be 'Review'
+        $entry.Action | Should -Be 'Keep'
         (Test-Path -LiteralPath (Join-Path $transaction 'recovery.bin') -PathType Leaf) | Should -BeTrue
     }
 

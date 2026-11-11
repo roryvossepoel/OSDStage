@@ -246,6 +246,29 @@ Describe 'Transactional desired-state cache reconciliation' {
             (Test-Path -LiteralPath $cache) | Should -BeFalse
         }
     }
+    It 'cleans owned stale transactions but preserves unknown staging content with a warning' {
+        InModuleScope OSDStage {
+            $cache = Join-Path $TestDrive 'SelfHealingRepositoryCache'
+            $catalog = New-ReconciliationCatalog -Root (Join-Path $TestDrive 'SelfHealingRepository') -Definitions @(
+                [pscustomobject]@{Id='AppA';Version='1.0.0'}
+            )
+            Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false | Out-Null
+
+            $owned = Join-Path $cache ('.staging\Sync-' + [guid]::NewGuid().ToString('N'))
+            $manual = Join-Path $cache '.staging\TechNotes'
+            New-Item -ItemType Directory -Path $owned,$manual -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $owned 'partial.bin') -Value partial
+            Set-Content -LiteralPath (Join-Path $manual 'readme.txt') -Value manual
+
+            $warnings = @()
+            Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false -WarningVariable warnings | Out-Null
+
+            Test-Path -LiteralPath $owned | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $manual 'readme.txt') | Should -BeTrue
+            ($warnings -join ' ') | Should -Match 'left untouched'
+        }
+    }
+
 }
 
 Describe 'Named cache clearing' {
@@ -277,27 +300,6 @@ Describe 'Named cache clearing' {
             @($catalog.Packages).Count | Should -Be 0
         }
     }
-    It 'cleans owned stale transactions but preserves unknown staging content with a warning' {
-        InModuleScope OSDStage {
-            $cache = Join-Path $TestDrive 'SelfHealingRepositoryCache'
-            $catalog = New-ReconciliationCatalog -Root (Join-Path $TestDrive 'SelfHealingRepository') -Definitions @(
-                [pscustomobject]@{Id='AppA';Version='1.0.0'}
-            )
-            Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false | Out-Null
 
-            $owned = Join-Path $cache ('.staging\Sync-' + [guid]::NewGuid().ToString('N'))
-            $manual = Join-Path $cache '.staging\TechNotes'
-            New-Item -ItemType Directory -Path $owned,$manual -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $owned 'partial.bin') -Value partial
-            Set-Content -LiteralPath (Join-Path $manual 'readme.txt') -Value manual
-
-            $warnings = @()
-            Sync-OSDStageCache -CatalogPath $catalog -CachePath $cache -Confirm:$false -WarningVariable warnings | Out-Null
-
-            Test-Path -LiteralPath $owned | Should -BeFalse
-            Test-Path -LiteralPath (Join-Path $manual 'readme.txt') | Should -BeTrue
-            ($warnings -join ' ') | Should -Match 'left untouched'
-        }
-    }
 
 }
