@@ -12,7 +12,7 @@ function Get-OSDStageUIManagerGroups {
         [Parameter(Mandatory)][object[]]$BuiltInMetadata
     )
     $keys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    foreach ($item in @($Snapshot.CatalogApps) + @($Snapshot.CacheEntries)) {
+    foreach ($item in @($Snapshot.CacheEntries)) {
         if (-not $item -or -not $item.Id -or -not $item.Source) { continue }
         [void]$keys.Add((Get-OSDStageUIManagerAppKey -Item $item))
     }
@@ -36,55 +36,88 @@ function Get-OSDStageUIManagerGroupSummary {
     param([Parameter(Mandatory)]$Group,[Parameter(Mandatory)][hashtable]$State)
 
     $cache=@($Group.CacheEntries)
-    $cachedLabel = if($cache.Count -eq 0){'Not cached'}elseif($cache.Count -eq 1){
-        $v=[string]$cache[0].Version; if([string]::IsNullOrWhiteSpace($v)-or $v -eq 'Current'){'Cached'}else{$v}
-    }else{"$($cache.Count) cached configurations"}
-
-    if($cache.Count -eq 0){
-        $status=if([string]$Group.Source -eq 'Repository'){if($State.CatalogMode -eq 'Online'){'Not cached'}else{'Catalog not configured'}}else{'Not cached - use CLI'}
-        return [pscustomobject]@{Cached=$cachedLabel;Available='-';Status=$status;UpdateCount=0;FailedCount=0}
+    $version = if($cache.Count -eq 1){
+        $v=[string]$cache[0].Version
+        if([string]::IsNullOrWhiteSpace($v)-or $v -eq 'Current'){'Not recorded'}else{$v}
+    }else{
+        "$($cache.Count) configurations"
     }
 
-    $results=@(foreach($entry in $cache){$k=Get-OSDStageUICacheUpdateKey -Entry $entry;if($State.CacheUpdateStatus.ContainsKey($k)){$State.CacheUpdateStatus[$k]}})
-    if($results.Count -eq 0){return [pscustomobject]@{Cached=$cachedLabel;Available='-';Status='Not checked yet';UpdateCount=0;FailedCount=0}}
+    $healthKey=[string]$Group.Key
+    if($State.ContainsKey('CacheHealthStatus') -and $State.CacheHealthStatus.ContainsKey($healthKey)){
+        $health=[string]$State.CacheHealthStatus[$healthKey]
+        if($health -and $health -ne 'Healthy'){
+            return [pscustomobject]@{Version=$version;Status=$health;UpdateCount=0;FailedCount=0}
+        }
+    }
+
+    $results=@(
+        foreach($entry in $cache){
+            $k=Get-OSDStageUICacheUpdateKey -Entry $entry
+            if($State.CacheUpdateStatus.ContainsKey($k)){$State.CacheUpdateStatus[$k]}
+        }
+    )
+    if($results.Count -eq 0){
+        return [pscustomobject]@{Version=$version;Status='Not checked';UpdateCount=0;FailedCount=0}
+    }
 
     $updateCount=@($results|Where-Object Status -eq 'Update available').Count
     $failedCount=@($results|Where-Object Status -eq 'Check failed').Count
     $catalogMissing=@($results|Where-Object Status -eq 'Catalog not configured').Count
     $allCurrent=($results.Count -eq $cache.Count -and @($results|Where-Object Status -eq 'Current').Count -eq $cache.Count)
-    $available=if($cache.Count -eq 1){
-        $single=$results|Select-Object -First 1
-        if($single.Latest){[string]$single.Latest}elseif($single.Status -eq 'Current'){[string]$cache[0].Version}elseif($single.Status -eq 'Update available'){'New release'}else{'-'}
-    }else{"$($cache.Count) configurations"}
-    $status=if($failedCount -gt 0){"Check failed ($failedCount)"}elseif($updateCount -gt 0){if($updateCount -eq 1){'Update available'}else{"Updates available ($updateCount)"}}elseif($catalogMissing -gt 0){'Catalog not configured'}elseif($allCurrent){'Current'}else{'Review details'}
-    [pscustomobject]@{Cached=$cachedLabel;Available=$available;Status=$status;UpdateCount=$updateCount;FailedCount=$failedCount}
+
+    $status=if($failedCount -gt 0){
+        'Check failed'
+    }elseif($updateCount -gt 0){
+        if($cache.Count -eq 1){
+            $latest=($results|Where-Object Status -eq 'Update available'|Select-Object -First 1).Latest
+            if($latest){"Update available - $latest"}else{'Update available'}
+        }else{
+            "$updateCount update(s) available"
+        }
+    }elseif($catalogMissing -gt 0){
+        'Catalog unavailable'
+    }elseif($allCurrent){
+        'Current'
+    }else{
+        'Checked'
+    }
+
+    [pscustomobject]@{Version=$version;Status=$status;UpdateCount=$updateCount;FailedCount=$failedCount}
 }
 
 function Update-OSDStageUIManagerRows {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][hashtable]$State,[switch]$PreserveChecks)
+    param([Parameter(Mandatory)][hashtable]$State)
+
     if(-not $State.ManagerList -or -not $State.Snapshot){return}
 
-    $checked=[System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    if($PreserveChecks){foreach($item in @($State.ManagerList.Items)){if($item.Checked -and $item.Tag -and $item.Tag.Key){[void]$checked.Add([string]$item.Tag.Key)}}}
-
     $groups=@(Get-OSDStageUIManagerGroups -Snapshot $State.Snapshot -BuiltInMetadata @(Get-OSDStageUIBuiltInMetadata))
-    $items=@(foreach($group in $groups){
-        $summary=Get-OSDStageUIManagerGroupSummary -Group $group -State $State
-        $item=[System.Windows.Forms.ListViewItem]::new([string]$group.DisplayName)
-        [void]$item.SubItems.Add($(if($group.Source -eq 'BuiltIn'){'Built-in'}else{'Repository'}))
-        [void]$item.SubItems.Add([string]$group.PackageType);[void]$item.SubItems.Add([string]$group.Vendor)
-        [void]$item.SubItems.Add([string]$summary.Cached);[void]$item.SubItems.Add([string]$summary.Available);[void]$item.SubItems.Add([string]$summary.Status)
-        $item.Tag=$group;$item.Checked=$checked.Contains([string]$group.Key)
-        if($summary.UpdateCount -gt 0){$item.ForeColor=[System.Drawing.Color]::DarkOrange}elseif($summary.FailedCount -gt 0){$item.ForeColor=[System.Drawing.Color]::Firebrick}elseif(@($group.CacheEntries).Count -eq 0){$item.ForeColor=[System.Drawing.Color]::DimGray}
-        $item
-    })
+    $items=@(
+        foreach($group in $groups){
+            $summary=Get-OSDStageUIManagerGroupSummary -Group $group -State $State
+            $item=[System.Windows.Forms.ListViewItem]::new([string]$group.DisplayName)
+            [void]$item.SubItems.Add([string]$summary.Version)
+            [void]$item.SubItems.Add([string]$summary.Status)
+            $item.Tag=$group
+            if($summary.UpdateCount -gt 0){$item.ForeColor=[System.Drawing.Color]::DarkOrange}
+            elseif($summary.FailedCount -gt 0 -or $summary.Status -match 'Needs attention|Corrupt|Incomplete|Orphaned'){$item.ForeColor=[System.Drawing.Color]::Firebrick}
+            $item
+        }
+    )
     $State.Rows['Packages']=$items
     Show-OSDStageUIRows -State $State -Key Packages
     Set-OSDStageUIColumnWidths -State $State -Key Packages
-    $cachedApps=@($groups|Where-Object{@($_.CacheEntries).Count -gt 0}).Count
-    $updates=0;foreach($group in $groups){$updates+=(Get-OSDStageUIManagerGroupSummary -Group $group -State $State).UpdateCount}
-    $State.ManagerInfo.Text="$($groups.Count) apps | $cachedApps cached | $updates update(s) available | New built-in cache configurations are created with the CLI"
+    $updates=0
+    foreach($group in $groups){$updates+=(Get-OSDStageUIManagerGroupSummary -Group $group -State $State).UpdateCount}
+    $State.ManagerInfo.Text="$($groups.Count) cached apps | $updates update(s) available"
+}
+
+function Get-OSDStageUIManagerSelectedKey {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][hashtable]$State)
+    if($State.ManagerList.SelectedItems.Count -eq 0){return $null}
+    [string]$State.ManagerList.SelectedItems[0].Tag.Key
 }
 
 function Format-OSDStageUIManagerDetails {
@@ -114,7 +147,7 @@ function Format-OSDStageUIManagerDetails {
 function Update-OSDStageUIManagerDetails {
     [CmdletBinding()]param([Parameter(Mandatory)][hashtable]$State)
     if(-not $State.ManagerDetails){return}
-    if($State.ManagerList.SelectedItems.Count -eq 0){$State.ManagerDetails.Text='Select an app to view its cached configurations.';return}
+    if($State.ManagerList.SelectedItems.Count -eq 0){return}
     $State.ManagerDetails.Text=Format-OSDStageUIManagerDetails -Group $State.ManagerList.SelectedItems[0].Tag -State $State
 }
 
@@ -162,7 +195,7 @@ function Invoke-OSDStageUIManagerCheckUpdates {
     $keys=@($AppKey|Where-Object{$_});$entries=@(foreach($entry in @($State.Snapshot.CacheEntries)){$k="$([string]$entry.Source):$([string]$entry.Id)";if($keys.Count -eq 0 -or $k -in $keys){$entry}})
     if($entries.Count -eq 0){[void][System.Windows.Forms.MessageBox]::Show('No cached configurations are in scope.','OSDStage - Check updates','OK','Information');return}
     $configured=(Get-OSDStageConfiguration).CatalogUri
-    $payload=[pscustomobject]@{ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1';CatalogUri=$(if($configured){$configured.AbsoluteUri}else{$null});Entries=$entries}
+    $payload=[pscustomobject]@{ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1';CatalogUri=$(if($configured){$configured.AbsoluteUri}else{$null});Entries=$entries;CachePath=[string]$State.Snapshot.CachePath;Offline=[bool]$State.Offline}
     $worker={
         param($Payload);$ErrorActionPreference='Stop';Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop;$module=Get-Module OSDStage;$catalog=$null
         if($Payload.CatalogUri){$catalog=& $module {param($uri)Get-OSDStageCatalogPackages -CatalogUri ([uri]$uri)} ([string]$Payload.CatalogUri)}
@@ -173,10 +206,25 @@ function Invoke-OSDStageUIManagerCheckUpdates {
             Write-Output([pscustomobject]@{RecordType='UpdateResult';Position=$position;Total=$total;Key=$variantKey;Latest=$result.Latest;Status=$result.Status;Detail=$result.Detail})
             Write-Output([pscustomobject]@{RecordType='Progress';Position=$position;Total=$total;Message="$($entry.DisplayName): $($result.Status)"})
         }
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=$total;Total=$total;Message='Checking cache health...'})
+        $health=Get-OSDStageCacheHealth -CachePath ([string]$Payload.CachePath) -Offline:([bool]$Payload.Offline)
+        Write-Output([pscustomobject]@{RecordType='HealthResult';Data=$health})
     }
     $records=@(Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Checking updates' -InitialActivity 'Checking cached app versions...' -Worker $worker -Payload $payload)
     foreach($record in @($records|Where-Object RecordType -eq 'UpdateResult')){$State.CacheUpdateStatus[[string]$record.Key]=[pscustomobject]@{Latest=$record.Latest;Status=[string]$record.Status;Detail=[string]$record.Detail}}
-    Update-OSDStageUIManagerRows -State $State -PreserveChecks;Update-OSDStageUIManagerDetails -State $State
+    $State.CacheHealthStatus=@{}
+    $healthRecord=@($records|Where-Object RecordType -eq 'HealthResult'|Select-Object -Last 1)
+    if($healthRecord.Count -eq 1){
+        foreach($entry in @($healthRecord[0].Data.Entries)){
+            $key="$([string]$entry.Source):$([string]$entry.Id)"
+            if([string]$entry.State -in @('Active','Pinned')){
+                if(-not $State.CacheHealthStatus.ContainsKey($key)){$State.CacheHealthStatus[$key]='Healthy'}
+            }else{
+                $State.CacheHealthStatus[$key]="$([string]$entry.State) - $([string]$entry.Action)"
+            }
+        }
+    }
+    Update-OSDStageUIManagerRows -State $State
     $scoped=@($records|Where-Object RecordType -eq 'UpdateResult');$updates=@($scoped|Where-Object Status -eq 'Update available').Count;$failed=@($scoped|Where-Object Status -eq 'Check failed').Count;$current=@($scoped|Where-Object Status -eq 'Current').Count
     $State.Status.Text="Update check complete | $current current | $updates update(s) available | $failed failed"
 }
@@ -203,15 +251,31 @@ function Invoke-OSDStageUIManagerHealthCheck {
 
 function Invoke-OSDStageUIManagerRemoveSelected {
     [CmdletBinding()]param([Parameter(Mandatory)][hashtable]$State)
-    $groups=@($State.ManagerList.Items|Where-Object Checked|ForEach-Object{$_.Tag}|Where-Object{@($_.CacheEntries).Count -gt 0})
-    if($groups.Count -eq 0){[void][System.Windows.Forms.MessageBox]::Show('Select one or more cached apps first.','OSDStage - Remove selected','OK','Information');return}
-    $duplicateIds=@($State.ManagerList.Items|ForEach-Object{$_.Tag}|Group-Object Id|Where-Object Count -gt 1|ForEach-Object Name);if(@($groups|Where-Object{$_.Id -in $duplicateIds}).Count -gt 0){[void][System.Windows.Forms.MessageBox]::Show('One or more selected Ids exist in both cache namespaces. Remove those with the CLI so the source can be specified safely.','OSDStage - Remove selected','OK','Warning');return}
-    $lines=[System.Collections.Generic.List[string]]::new();$lines.Add("Remove $($groups.Count) selected app(s) from the cache?");$lines.Add('')
-    foreach($group in $groups){$versions=@($group.CacheEntries|ForEach-Object{[string]$_.Version}|Select-Object -Unique);$size=[math]::Round([double](($group.CacheEntries|Measure-Object SizeMB -Sum).Sum),1);$lines.Add("- $($group.DisplayName) | $(@($group.CacheEntries).Count) configuration(s) | $($versions -join ', ') | $size MB")}
-    $answer=[System.Windows.Forms.MessageBox]::Show(($lines -join [Environment]::NewLine),'OSDStage - Remove selected','YesNo','Warning');if($answer -ne [System.Windows.Forms.DialogResult]::Yes){return}
-    $payload=[pscustomobject]@{ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1';Names=@($groups.Id)}
-    $worker={param($Payload);Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop;$position=0;$total=@($Payload.Names).Count;foreach($name in @($Payload.Names)){$position++;Write-Output([pscustomobject]@{RecordType='Progress';Position=$position-1;Total=$total;Message="Removing $name ($position of $total)"});Clear-OSDStageCache -Name ([string]$name) -Confirm:$false -ErrorAction Stop|Out-Null;Write-Output([pscustomobject]@{RecordType='Progress';Position=$position;Total=$total;Message="Removed $name"})}}
-    [void](Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Removing cache items' -InitialActivity 'Removing selected cache items...' -Worker $worker -Payload $payload)
+
+    if($State.ManagerList.SelectedItems.Count -eq 0){
+        [void][System.Windows.Forms.MessageBox]::Show('Select a cached app first.','OSDStage - Remove','OK','Information')
+        return
+    }
+    $group=$State.ManagerList.SelectedItems[0].Tag
+    $versions=@($group.CacheEntries|ForEach-Object{[string]$_.Version}|Select-Object -Unique)
+    $size=[math]::Round([double](($group.CacheEntries|Measure-Object SizeMB -Sum).Sum),1)
+    $nl=[Environment]::NewLine
+    $message="Remove '$($group.DisplayName)' from the cache?"+$nl+$nl+
+        "$(@($group.CacheEntries).Count) cached configuration(s)"+$nl+
+        "Version: $($versions -join ', ')"+$nl+
+        "Size: $size MB"
+    $answer=[System.Windows.Forms.MessageBox]::Show($message,'OSDStage - Remove','YesNo','Warning')
+    if($answer -ne [System.Windows.Forms.DialogResult]::Yes){return}
+
+    $payload=[pscustomobject]@{ModulePath=Join-Path $script:moduleRoot 'OSDStage.psd1';Name=[string]$group.Id}
+    $worker={
+        param($Payload)
+        Import-Module -Name ([string]$Payload.ModulePath) -Force -ErrorAction Stop
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=0;Total=1;Message="Removing $($Payload.Name)..."})
+        Clear-OSDStageCache -Name ([string]$Payload.Name) -Confirm:$false -ErrorAction Stop|Out-Null
+        Write-Output([pscustomobject]@{RecordType='Progress';Position=1;Total=1;Message='Removed'})
+    }
+    [void](Invoke-OSDStageUIManagerJob -State $State -Title 'OSDStage - Remove from cache' -InitialActivity 'Removing selected app...' -Worker $worker -Payload $payload)
 }
 
 function Invoke-OSDStageUIManagerClearEntireCache {
