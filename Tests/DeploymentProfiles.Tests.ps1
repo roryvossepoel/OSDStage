@@ -41,11 +41,6 @@ Describe 'OSDStage deployment profiles' {
     }
 
     It 'generates deterministic PowerShell without executing staging commands' {
-        InModuleScope OSDStage {
-            Mock Add-OSDStageMicrosoftTeams { throw 'STAGED' }
-            Mock Add-OSDStage { throw 'STAGED' }
-        }
-
         $profile = [pscustomobject]@{
             SchemaVersion = 1
             Name = "O'Brien Workplace"
@@ -54,11 +49,19 @@ Describe 'OSDStage deployment profiles' {
                 [pscustomobject]@{Source='Repository';Id='CustomTool'}
             )
         }
+
+        # Conversion only inspects exported command metadata and returns text.
+        # Do not mock the staging commands here: Pester proxy functions replace
+        # their parameter metadata and would make this a test of the mock rather
+        # than of the deployment profile generator.
         $scriptText = ConvertTo-OSDStageDeploymentScript -InputObject $profile
+
         $scriptText | Should -Match 'Add-OSDStageMicrosoftTeams -Architecture ''x64'''
         $scriptText | Should -Match "Add-OSDStage -Name 'CustomTool'"
         $scriptText | Should -Not -Match 'Invoke-Expression'
 
+        # If conversion had executed either staging command, it would require a
+        # deployment target/cache and would not reach this assertion successfully.
         $tokens=$null; $errors=$null
         [void][System.Management.Automation.Language.Parser]::ParseInput($scriptText,[ref]$tokens,[ref]$errors)
         @($errors).Count | Should -Be 0
