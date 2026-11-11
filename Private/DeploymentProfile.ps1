@@ -115,7 +115,7 @@ function Test-OSDStageDeploymentProfileInternal {
             continue
         }
 
-        $identity = "$source:$id"
+        $identity = "${source}:$id"
         if ($seen.ContainsKey($identity)) {
             $errors.Add("$prefix duplicates package '$identity'.")
             continue
@@ -126,7 +126,7 @@ function Test-OSDStageDeploymentProfileInternal {
             $command = Get-OSDStageDeploymentProfileCommand -Package $package
         }
         catch {
-            $errors.Add("$prefix: $($_.Exception.Message)")
+            $errors.Add("${prefix}: $($_.Exception.Message)")
             continue
         }
 
