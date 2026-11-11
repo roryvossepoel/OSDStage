@@ -84,3 +84,5 @@ Historical test results are not claims about every currently supported architect
 | Staged | Queued for SetupComplete; not evidence of successful installation |
 
 [Back to the project](../README.md)
+
+For mixed built-in/repository selections in current development, run the [repository availability check](repository-availability.md) before the first Add command.

@@ -38,6 +38,7 @@ Export-ModuleMember -Function @(
     'Get-OSDStageDeploymentResult',
     'Test-OSDStageCache',
     'Test-OSDStageDeployment',
+    'Test-OSDStageRepositoryAvailability',
     'Remove-OSDStageStaging',
     'Sync-OSDStageRepository',
     'Sync-OSDStageCMTraceOpen',

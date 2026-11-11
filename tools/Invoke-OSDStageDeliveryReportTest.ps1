@@ -30,6 +30,7 @@ $packages = @(
     @{Id='RepoTestRealtekUSB';Type='Driver'},
     @{Id='RepoTestWiFiProfile';Type='Script'}
 )
+Test-OSDStageRepositoryAvailability -Name $packages.Id -WindowsPath $target -ThrowOnFailure | Out-Null
 foreach ($package in $packages) {
     $matches = @(Get-OSDStage -Name $package.Id | Where-Object { $_.Id -eq $package.Id -and $_.Source -eq 'Repository' })
     if ($matches.Count -ne 1 -or $matches[0].PackageType -ne $package.Type) {

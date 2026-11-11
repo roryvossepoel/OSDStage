@@ -2,6 +2,8 @@
 
 ## Unreleased — 1.0 preparation
 
+- Add a read-only repository availability check before multi-package staging, including aggregate errors, aliases, architecture validation and verified offline fallback (#156).
+
 - Remove the Windows Viewer command, implementation, UI-only tests and screenshots. Use the CLI staging/cache/result checks and delivery report instead. The website catalog and public metadata remain available.
 - Withdraw the unmerged deployment-profile and Windows UI experiments from 1.0. Existing PowerShell runner configuration remains the deployment interface. Published release candidates are unchanged.
 
