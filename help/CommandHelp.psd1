@@ -530,6 +530,23 @@
             )
             Link = 'docs/getting-started.md'
         }
+        'Test-OSDStageRepositoryAvailability' = @{
+            Synopsis = 'Check the entire repository selection before any staging commands.'
+            Description = 'Reads configured catalog and selected package metadata with the same identity and architecture resolution as synchronization. If any online selection fails, every requested package must have a compatible SHA-256-validated cache fallback, matching Add-OSDStage batch behavior. Does not download archives, synchronize cache or modify the Windows target. This is a point-in-time availability check, not a guarantee of later downloads or installation. Built-in payloads are not part of this repository-only check.'
+            Environment = 'Full Windows preparation or WinPE before the first Add command. No target is needed when inspecting catalog or USB cache.'
+            Output = 'One OSDStage.RepositoryAvailability object with Valid, CatalogStatus, UsesCacheFallback and per-package diagnostics.'
+            Parameters = @{
+                Name = 'Complete selection of canonical repository IDs or declared aliases. Use the same selection for subsequent Add commands.'
+                WindowsPath = 'Optional offline Windows root used to inspect target-local RepositoryCache when no USB cache volume is available. No directory is created.'
+                SkipCacheRefresh = 'Skip catalog requests and require valid compatible cache for the whole selection. Match this option on subsequent repository Add commands.'
+                ThrowOnFailure = 'Throw an aggregate terminating error listing all unavailable selections. Place this call before all Add commands, including built-ins.'
+            }
+            Examples = @(
+                @{ Code = 'Test-OSDStageRepositoryAvailability -Name @(''ExampleApp'',''ExampleScript'') -ThrowOnFailure'; Remarks = 'Check your repository IDs before the first staging operation.' },
+                @{ Code = 'Test-OSDStageRepositoryAvailability -Name ''ExampleApp'' -WindowsPath ''C:\'' -SkipCacheRefresh -ThrowOnFailure'; Remarks = 'Validate existing USB or target-local cache without catalog access.' }
+            )
+            Link = 'docs/repository-availability.md'
+        }
         'Add-OSDStage' = @{
             Synopsis = 'Synchronize and stage repository apps for SetupComplete.'
             Description = 'Resolves exact Ids, validates SHA-256 and updates local payloads, ordered device manifest and OSDStage SetupComplete blocks. May fall back only when all requested cache entries are valid. Without USB, uses target-local repository cache. Built-ins require dedicated Add commands. Re-adding an Id moves it to the end without duplication.'

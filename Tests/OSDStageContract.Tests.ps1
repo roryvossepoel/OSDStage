@@ -15,6 +15,7 @@ Describe 'OSDStage product and schema contract' {
             'Get-OSDStageDeploymentResult',
             'Test-OSDStageCache',
             'Test-OSDStageDeployment',
+    'Test-OSDStageRepositoryAvailability',
             'Remove-OSDStageStaging',
             'Sync-OSDStageRepository',
             'Sync-OSDStageCMTraceOpen',

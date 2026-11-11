@@ -81,6 +81,7 @@ if ([IO.Path]::GetPathRoot($target).TrimEnd('\') -ieq ('{0}:' -f $volumes[0].Dri
 $stage = Join-Path $target 'Windows\Temp\OSDStage'
 if (Test-Path -LiteralPath $stage) { throw 'Existing staging found. Use a fresh deployment; this test does not remove or merge it.' }
 $destination = @{WindowsPath=$target}
+Test-OSDStageRepositoryAvailability -Name $packages.Id -WindowsPath $target -SkipCacheRefresh -ThrowOnFailure | Out-Null
 # All app installers precede association import. Select a harmless repository script.
 Add-OSDStage -Name @($AppId,$ScriptId) -SkipCacheRefresh @destination | Out-Null
 Add-OSDStageAdobeAcrobatUnified -Architecture x64 @destination | Out-Null

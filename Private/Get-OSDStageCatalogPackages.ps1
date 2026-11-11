@@ -7,11 +7,17 @@ function Get-OSDStageCatalogPackages {
         [Parameter(Mandatory, ParameterSetName = 'Path')]
         [string]$CatalogPath,
 
-        [string[]]$Name
+        [string[]]$Name,
+
+        # Allow a read-only batch preflight to reuse one catalog response.
+        [Parameter(ParameterSetName = 'Uri')]
+        [object]$Catalog
     )
 
     if ($PSCmdlet.ParameterSetName -eq 'Uri') {
-        $catalog = Get-OSDStageManifest -Uri $CatalogUri
+        if (-not $PSBoundParameters.ContainsKey('Catalog')) {
+            $Catalog = Get-OSDStageManifest -Uri $CatalogUri
+        }
         $catalogBaseUri = [uri]::new($CatalogUri, '.')
         $catalogRoot = $null
     }
@@ -82,7 +88,9 @@ function Get-OSDStageCatalogPackages {
         $apps = @($apps | Where-Object { $_.Id -in $resolvedNames })
         $missing = @($resolvedNames | Where-Object { $_ -notin @($apps.Id) })
         if ($missing.Count -gt 0) {
-            throw "Requested app(s) not found in catalog: $($missing -join ', ')"
+            $failure = [System.InvalidOperationException]::new("Requested app(s) not found in catalog: $($missing -join ', ')")
+            $failure.Data['OSDStageAvailabilityStatus'] = 'PackageNotFound'
+            throw $failure
         }
     }
 
