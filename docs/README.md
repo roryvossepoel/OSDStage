@@ -2,7 +2,7 @@
 
 ![OSDStage documentation — deploy, configure and verify before OOBE](images/osdstage-docs-banner.svg)
 
-Choose the task you want to complete. Start with the online WinPE workflow; cache preparation is optional unless the deployment must work offline. The Windows Viewer inspects your deployment without changing it.
+Choose the task you want to complete. Start with the online WinPE workflow; cache preparation is optional unless the deployment must work offline. PowerShell inspection commands read deployment and cache state without changing it.
 
 **Release candidate: RC4.** Check [release availability](release-status.md) when upgrading from RC1 or testing newer development changes.
 
@@ -17,12 +17,12 @@ See the [JSON/HTML delivery report](delivery-report.md) for deployment results, 
 | Stage apps after OSDCloud has applied Windows | [Online WinPE deployment](../Examples/WinPE-Online.md) | WinPE, before the first Windows boot |
 | Integrate staging with OSDT or another launcher | [Launcher integration](../Examples/Launcher-Integration.md) | WinPE; exit-code gate before the launcher reboots |
 | Deploy without network from prepared content | [Offline WinPE deployment](../Examples/WinPE-Offline.md) | WinPE and SetupComplete, with a complete matching cache |
-| Preflight staging and inspect cache, signatures and logs | [Getting started](getting-started.md#3-inspect-before-reboot) and [OSDStage Viewer](viewer.md) | WinPE or full Windows |
+| Preflight staging and inspect cache, signatures and logs | [Getting started](getting-started.md#3-inspect-before-reboot) and [Inspection and diagnostics](viewer.md) | WinPE or full Windows |
 | Choose a source, cache, release or deployment-result check | [Choose the right check](maintenance.md#choose-the-right-check) | Environment and effects listed per check |
 | Audit or reconcile long-lived repository cache content | [Cache health and reconciliation](repository.md#cache-health-and-reconciliation) | Full Windows preparation or WinPE cache session |
 | Package your own app or machine-context script | [Package authoring walkthrough](../Examples/Build-Repository-Package.md) | Full Windows authoring machine |
 
-**Do not run deployment staging examples against your preparation machine's Windows drive.** Each example identifies its environment and what it changes. The Viewer is read-only; the Add and Sync commands are not.
+**Do not run deployment staging examples against your preparation machine's Windows drive.** Each example identifies its environment and what it changes. Inspection commands are read-only; the Add and Sync commands are not.
 
 ## User guides
 
@@ -33,7 +33,7 @@ See the [JSON/HTML delivery report](delivery-report.md) for deployment results, 
 | [Acquisition and validation](built-in-acquisition.md) | Vendor sources, cache freshness, fallback and signature scope |
 | [Initial default apps](default-associations.md) | File/protocol associations from parameters or XML, one-shot DISM import and physical acceptance |
 | [Repository packages](repository.md) | Catalog/alias structure, package authoring, cache health, transactional reconciliation and SHA-256 integrity |
-| [Viewers](viewer.md) | Windows deployment inspector versus web catalog browser; read-only boundaries |
+| [Inspection and diagnostics](viewer.md) | CLI staging, cache, result and log inspection; web catalog boundaries |
 | [Registry](registry-staging.md), [variables](environment-variables.md), [services](services.md) | Explicit machine settings applied once during SetupComplete |
 | [Files and directories](file-system.md) (RC2) | Create directories, write or copy files, and explicitly remove selected paths |
 | [Certificates](certificate-staging.md), [drivers](driver-packages.md), [fonts](repository.md) | Typed repository payloads and machine-wide installation |

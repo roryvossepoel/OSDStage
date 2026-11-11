@@ -45,7 +45,7 @@ In the new session, from the repository root:
 
 ```powershell
 Import-Module ./dist/OSDStage/OSDStage.psd1 -Force
-Get-Help Show-OSDStageUI -Full
+Get-Help Get-OSDStageCache -Full
 Get-Help Add-OSDStage -Examples
 ./build/Test-PackagedHelp.ps1 -ModulePath ./dist/OSDStage
 ```

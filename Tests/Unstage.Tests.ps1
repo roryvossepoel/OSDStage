@@ -59,7 +59,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
             New-Item -Path (Join-Path $cache 'BuiltIn\MicrosoftTeams') -ItemType Directory -Force | Out-Null
             Set-Content -LiteralPath (Join-Path $cache 'BuiltIn\MicrosoftTeams\teams.msix') -Value 'cache' -Encoding ASCII
             Mock Test-OSDStageWinPE {$false}
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
 
             $result=Remove-OSDStageStaging -Name MicrosoftTeams -TestMode -Confirm:$false
             @($result.Removed) | Should -Be @('MicrosoftTeams')
@@ -80,7 +80,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
             $external= $original.Replace(':: OSDStage Begin',("echo external-between-blocks" + [Environment]::NewLine + ':: OSDStage Begin'))
             [IO.File]::WriteAllText($fixture.Setup,$external,[Text.Encoding]::ASCII)
             Mock Test-OSDStageWinPE {$false}
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
 
             Remove-OSDStageStaging -Name @('MicrosoftTeams','NotepadPlusPlus') -TestMode -Confirm:$false | Out-Null
 
@@ -103,7 +103,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
             $fixture=New-OSDStageStagingFixture -Root $root
             $original=Get-Content -LiteralPath $fixture.Manifest -Raw
             Mock Test-OSDStageWinPE {$false}
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
 
             Remove-OSDStageStaging -Name @('MicrosoftTeams','NotepadPlusPlus') -TestMode -WhatIf | Out-Null
             (Get-Content -LiteralPath $fixture.Manifest -Raw) | Should -Be $original
@@ -119,7 +119,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
                 Should -Throw '*requires -TestMode*'
             $root=Join-Path $TestDrive 'InvalidId'
             $fixture=New-OSDStageStagingFixture -Root $root
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
             {Remove-OSDStageStaging -Name '../Windows' -TestMode -Confirm:$false} |
                 Should -Throw '*Invalid app ID*'
             (Test-Path $fixture.Manifest) | Should -BeTrue
@@ -132,7 +132,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
             $fixture=New-OSDStageStagingFixture -Root $root
             [IO.File]::WriteAllText($fixture.Setup,':: OSDStage Begin',[Text.Encoding]::ASCII)
             Mock Test-OSDStageWinPE {$false}
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
             {Remove-OSDStageStaging -Name @('MicrosoftTeams','NotepadPlusPlus') -TestMode -Confirm:$false} |
                 Should -Throw '*missing or duplicate OSDStage markers*'
             (Test-Path -LiteralPath $fixture.Manifest) | Should -BeTrue
@@ -151,7 +151,7 @@ Describe 'Remove-OSDStageStaging CLI safety' {
             [IO.File]::WriteAllBytes($fixture.Setup,$newBytes)
 
             Mock Test-OSDStageWinPE {$false}
-            Mock Get-OSDStageUITestWindowsPath {$root}
+            Mock Get-OSDStageTestWindowsPath {$root}
             Remove-OSDStageStaging -Name @('MicrosoftTeams','NotepadPlusPlus') -TestMode -Confirm:$false | Out-Null
 
             $remaining=[IO.File]::ReadAllBytes($fixture.Setup)

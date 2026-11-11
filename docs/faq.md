@@ -1,6 +1,6 @@
 # FAQ and troubleshooting
 
-[Documentation](README.md) · [Getting started](getting-started.md) · [Viewer](viewer.md) · [Runtime](runtime.md)
+[Documentation](README.md) · [Getting started](getting-started.md) · [Inspection](viewer.md) · [Runtime](runtime.md)
 
 > Looking for a quick introduction? The [website FAQ](https://roryvossepoel.github.io/OSDStage/faq.html) covers general questions about OSDStage, privacy, networking, caching and deployment. This page focuses on technical behavior, edge cases and troubleshooting.
 
@@ -24,12 +24,9 @@ regional defaults, time zone and language-pack injection are outside the agreed 
 
 ## Staging and deployment
 
-## Which viewer do these instructions describe?
+## How do I inspect a deployment?
 
-`Show-OSDStageUI` opens the Windows deployment inspector. The separate web catalog
-viewer accepts a repository URL and supports tiles, lists and pagination, but
-cannot read local device staging, USB caches or installation results. Neither
-viewer deploys packages. See [the two viewers](viewer.md#two-different-viewers).
+Use `Test-OSDStageDeployment` before reboot and the delivery report after SetupComplete. Cache and discovery commands remain available in PowerShell. The web catalog only browses metadata; it does not read local disks or deploy packages. See [inspection and diagnostics](viewer.md).
 
 ## Are Windows features, capabilities and language packs the same thing?
 
@@ -71,13 +68,13 @@ Use a **full Windows preparation machine** to install/save the module, build rep
 
 The Add cmdlets write to a selected Windows target. Do not run deployment examples against your active preparation-machine Windows drive. The [examples](../Examples/README.md) state their environment. The short online example assumes you are already in WinPE; it does not check that for you.
 
-The Viewer is different: it can inspect current Windows, an explicit Windows root, or a supported WinPE target without modifying the deployment.
+Inspection commands read existing deployment and cache state; see [inspection and diagnostics](viewer.md).
 
 ## Does OSDStage need to be installed in Windows?
 
 Not in the deployed Windows installation for SetupComplete to work. The CLI stages `DeviceManifest.json`, the standalone PreInstall and Runner scripts, and the required available content. SetupComplete does not import the OSDStage module.
 
-The module is needed wherever you run its public CLI commands or open the Viewer.
+The module is needed wherever you run its public CLI commands.
 
 ## Intune and app lifecycle
 
@@ -137,11 +134,9 @@ Configuration is session-scoped. Starting a new PowerShell process or reloading 
 
 ## Why is my staging queue empty or already populated?
 
-An empty queue is expected before Add commands run, or after successful cleanup removes the temporary manifest. The Viewer also needs to be looking at the intended Windows target.
+An empty queue is expected before Add commands run, or after successful cleanup removes the temporary manifest. Pass the intended Windows target to `Test-OSDStageDeployment -WindowsPath`.
 
 An existing manifest means that target already has OSDStage staging; it does not by itself mean anything is installed. Inspect the target and entries before changing them. Re-adding an Id replaces its entry and moves it to the end of the queue. Use `Remove-OSDStageStaging` for intentional unstaging in WinPE; do not delete a whole SetupComplete file that may contain other commands.
-
-`Show-OSDStageUI -TestMode` inspects an existing isolated GUI test folder on full Windows. It does not create demonstration apps, and it must not be used for normal WinPE deployment.
 
 ## Do built-in apps require an OSDCloud USB flash drive?
 
@@ -243,9 +238,9 @@ The fully offline eight-app 0.34.0 test passed on the tested Windows trust confi
 
 ## Does -Offline disable internet access?
 
-No. On `Show-OSDStageUI` and app discovery it disables online repository lookup. It does not disconnect adapters, change a staged deployment's acquisition policy or suppress Windows trust/revocation network traffic.
+No. On `Get-OSDStage` app discovery it disables online repository lookup. It does not disconnect adapters, change a staged deployment's acquisition policy or suppress Windows trust/revocation network traffic.
 
-For the Viewer only, `-SkipSignatureVerification` suppresses its signature inspection. This does not relax Sync or SetupComplete enforcement. For an actual offline deployment test, disconnect networking and provide the required cache; see [Offline WinPE deployment](../Examples/WinPE-Offline.md).
+For an actual offline deployment test, disconnect networking and provide the required cache; see [Offline WinPE deployment](../Examples/WinPE-Offline.md).
 
 ## Integrity and trust
 
@@ -259,7 +254,7 @@ They describe different evidence:
 | SHA-256 verified | The checked file matches its referenced hash. Repository ZIPs use the catalog hash; some built-ins also check recorded release hashes. |
 | Signature valid | A supported cached MSI/EXE passed Windows Authenticode and the expected built-in publisher check. |
 
-A built-in `Valid=True` cache entry is not a claim that its whole package chain was signature-verified. Office data, Teams MSIX and Adobe's outer ZIP are outside the specific MSI/EXE signature scope. The exact local checks differ by app; `Healthy=True` does not establish vendor freshness or compatibility with every Office configuration. See [what a cache check proves](maintenance.md#what-a-cache-check-proves). Read the [Viewer status guide](viewer.md#integrity-and-signature-are-different-checks) and [publisher policy](built-in-acquisition.md#authenticode-and-publisher-policy-0340).
+A built-in `Valid=True` cache entry is not a claim that its whole package chain was signature-verified. Office data, Teams MSIX and Adobe's outer ZIP are outside the specific MSI/EXE signature scope. The exact local checks differ by app; `Healthy=True` does not establish vendor freshness or compatibility with every Office configuration. See [what a cache check proves](maintenance.md#what-a-cache-check-proves). Read the [cache inspection guide](viewer.md#cache-and-available-packages) and [publisher policy](built-in-acquisition.md#authenticode-and-publisher-policy-0340).
 
 ## Why did a signature or publisher check fail?
 
@@ -272,7 +267,7 @@ Get-OSDStageCache -VerifySignatures |
     Select-Object Id, Valid, SignatureStatus, SignatureScope, SignatureSigner, SignatureDetail
 ```
 
-The Viewer reports unsupported checks separately: WinPE does not invoke Windows Authenticode verification, repository ZIPs use their independent hash checks, and Adobe's outer ZIP is not assessed as a signed executable.
+Cache inspection reports unsupported checks separately: WinPE does not invoke Windows Authenticode verification, repository ZIPs use their independent hash checks, and Adobe's outer ZIP is not assessed as a signed executable.
 
 ## Failures and recovery
 
@@ -291,7 +286,7 @@ The usual locations are:
 | Module/cache work with USB | `<cache volume>:\OSDStage\Logs\Client.log` |
 | Standalone PreInstall and Runner | `%ProgramData%\OSDStage\Logs\Runtime.log` by default |
 
-Runtime `LogPath` is configurable; use the path written into the device manifest for that deployment. The Viewer discovers known default log locations, not every custom path. The runtime log rotates, so include relevant `.1`, `.2` or `.3` files if the events have moved there.
+Runtime `LogPath` is configurable; use the path written into the device manifest for that deployment. The runtime log rotates, so include relevant `.1`, `.2` or `.3` files if the events have moved there.
 
 See [Runtime logging](runtime.md#logging). Check the final event and individual installer/provisioning exit codes, not only a successful staging message.
 
@@ -304,7 +299,7 @@ Add-OSDStageMicrosoft365Apps -Verbose
 Add-OSDStageMicrosoftTeams -Verbose
 ```
 
-These commands **perform staging**; they are not read-only diagnostics. Their output identifies the Windows target, cache detection and intended acquisition path. For inspection without changes, use the Viewer or read the existing Client/Runtime logs.
+These commands **perform staging**; they are not read-only diagnostics. Their output identifies the Windows target, cache detection and intended acquisition path. For inspection without changes, use `Get-OSDStageCache` and `Test-OSDStageDeployment`, or read the existing Client/Runtime logs.
 
 ## Where is my delivery report?
 

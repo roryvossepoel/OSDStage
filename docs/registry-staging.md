@@ -47,7 +47,7 @@ The commands build one local, SHA-256-verified `RegistrySettings` Script package
 using the existing `RepositoryPackage` execution contract. It is generated
 locally; no repository URL or cache is involved. Thus it appears as
 `Source=Repository`, `PackageType=Script`, `Id=RegistrySettings` in the existing
-runner and Viewer. The internal Package.zip is an OSDStage-owned script archive,
+runner and inspection commands. The internal Package.zip is an OSDStage-owned script archive,
 not a renamed vendor download. It contains only code and registry configuration.
 The existing app installer runtime is unchanged by this feature.
 

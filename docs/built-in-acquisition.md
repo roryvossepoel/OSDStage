@@ -98,11 +98,7 @@ the limited bootstrapper/ODT EXE checks. Adobe ZIP is **not** reported as
 having a verified Authenticode signature. Certificate trust/revocation
 may require network access independently of vendor URL availability.
 
-The read-only OSDStage Viewer enables signature inspection by default on
-full Windows, reports it as unavailable in WinPE, and permits the optional
-`-SkipSignatureVerification` for isolated viewing only. This flag does not
-relax built-in sync or SetupComplete security policy. The existing
-`Get-OSDStageCache` CLI remains opt-in with `-VerifySignatures`.
+Use `Get-OSDStageCache -VerifySignatures` on full Windows to inspect supported publisher signatures. Trust inspection is reported as unavailable in WinPE. This read-only inspection does not relax built-in sync or SetupComplete security policy.
 
 ## How update freshness is determined
 

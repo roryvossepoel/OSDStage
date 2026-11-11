@@ -73,8 +73,7 @@ Describe 'Packaged command-help source contract' {
         $script:helpData.Commands['Test-OSDStageRepository'].Examples[0].Code | Should -Match '\$_\.Valid'
     }
 
-    It 'does not claim that Offline disables trust verification or that cached means installed' {
-        $script:helpData.Commands['Show-OSDStageUI'].Parameters.Offline | Should -Match 'signature checks stay enabled'
+    It 'keeps signature inspection separate from cache validity and staging from installation' {
         $script:helpData.Commands['Get-OSDStageCache'].Description | Should -Match 'SignatureStatus is separate'
         $script:helpData.Commands['Add-OSDStage'].Output | Should -Match 'not installation proof'
     }

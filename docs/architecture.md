@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Runtime](runtime.md)
 
-OSDStage separates content ownership, acquisition, device staging, installation and inspection. The CLI writes deployment state; the Viewer reads it. SetupComplete runs independently of the module.
+OSDStage separates content ownership, acquisition, device staging, installation and inspection. The CLI writes deployment state and provides inspection commands. SetupComplete runs independently of the module.
 
 ![OSDStage end-to-end architecture](images/osdstage-architecture.svg)
 
@@ -26,7 +26,7 @@ First Windows boot / SetupComplete
 OOBE / Autopilot continues
 ```
 
-The Viewer can inspect an existing Windows target and cache in full Windows or supported WinPE. It does not perform any of the acquisition, staging, installation or cleanup steps above.
+PowerShell inspection commands read an existing deployment or cache without performing acquisition, staging, installation or cleanup. See [inspection and diagnostics](viewer.md).
 
 ## Two source models
 
@@ -108,7 +108,7 @@ is busy. Do not delete or replace it to force an unlock. `-WhatIf` neither opens
 nor creates it, and unrelated cache roots can be written independently.
 
 This coordinates cooperating writers using this implementation. Older module
-versions, manual file operations and external tools do not participate. Viewer
+versions, manual file operations and external tools do not participate. Inventory
 and health inspection remain read-only and do not acquire a lock; they are not
 consistent snapshots during a concurrent write. Cache locking does not serialize
 separate device-staging operations or retry interrupted deployments.
@@ -186,7 +186,7 @@ Repository packages can be `App`, `Script`, `Font`, `Certificate` or `Driver`. A
 
 The manifest has a stable per-staging `DeploymentId` and one ordered `Packages` array containing `Source=BuiltIn` or `Source=Repository` entries. PreInstall filters the built-ins for preparation; Runner processes the full array from top to bottom and uses the identity to correlate phase results.
 
-Adding a new Id appends it. Re-adding an existing Id replaces its entry and moves it to the end, rather than creating a duplicate. Viewer sorting changes only the screen order; it never writes the manifest.
+Adding a new Id appends it. Re-adding an existing Id replaces its entry and moves it to the end, rather than creating a duplicate. Inspection commands do not reorder the manifest.
 
 `Set-OSDStageConfiguration` is session-scoped. Add commands capture runtime settings in the manifest so SetupComplete does not need the module or the original PowerShell session.
 

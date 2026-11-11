@@ -122,11 +122,6 @@ Describe 'Repository Font package contract' {
         }
     }
 
-    It 'labels Font packages separately in the read-only UI' {
-        InModuleScope OSDStage {
-            (Get-OSDStageUIPackageType -App ([pscustomobject]@{Source='Repository';PackageType='Font'})) | Should -Be 'Font'
-        }
-    }
 
     It 'routes Font packages before requiring Package Install.ps1 and stages the font runtime helper' {
         $runner = Get-Content -LiteralPath (Join-Path $script:root 'Runtime\Invoke-OSDStageRunner.ps1') -Raw

@@ -1,6 +1,6 @@
 # GitHub Pages
 
-[Documentation](README.md) · [Viewers](viewer.md)
+[Documentation](README.md) · [Inspection and diagnostics](viewer.md)
 
 The static website lives in `site/`. It contains Home, Get started, Catalog,
 Guides and FAQ. Detailed module reference remains in this repository.

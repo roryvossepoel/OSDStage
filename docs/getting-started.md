@@ -10,7 +10,7 @@ Run OSDStage after the Windows image has been applied and before the first Windo
 
 OSDStage 1.0.0-rc4 is the current release candidate. Check [release availability](release-status.md) when upgrading from RC1 or testing newer development changes. Preview installation requires PowerShellGet 1.6 or later and `-AllowPrerelease`.
 
-The examples target x64. Individual built-ins have different architecture options; consult [Built-in apps](built-in-apps.md) before changing them. The documented WinPE flow uses Windows PowerShell 5.1. The optional Viewer also needs Windows Forms, .NET and an STA PowerShell session.
+The examples target x64. Individual built-ins have different architecture options; consult [Built-in apps](built-in-apps.md) before changing them. The documented WinPE flow uses Windows PowerShell 5.1.
 
 Decide which source types you need:
 
@@ -96,11 +96,11 @@ Set-OSDStageConfiguration -EnableRepository $false
 Set-OSDStageConfiguration -EnableBuiltIns $false
 ```
 
-At least one source must remain enabled. Explicit Add commands fail clearly when their source is disabled, while `Get-OSDStage` and the Viewer omit disabled sources. Sync commands remain available for cache preparation: source selection controls deployment/discovery, not whether an operator may prepare cache content. Registry staging is an OSDStage-owned built-in feature and therefore follows `EnableBuiltIns`.
+At least one source must remain enabled. Explicit Add commands fail clearly when their source is disabled, while `Get-OSDStage` omits disabled sources. Sync commands remain available for cache preparation: source selection controls deployment/discovery, not whether an operator may prepare cache content. Registry staging is an OSDStage-owned built-in feature and therefore follows `EnableBuiltIns`.
 
 Runtime settings, including source selection, are copied into the device manifest during staging; changing the session afterward does not rewrite an existing manifest by itself. If multiple Windows installations are found, specify `-WindowsPath` on the Add and preflight commands.
 
-New app IDs are appended to `DeviceManifest.json` in staging order. Runtime prerequisites are placed before apps. Re-adding an existing app ID replaces its entry; it does not create a duplicate. Configuration commands can combine several operations into one entry; see each guide for its ordering rules. Sorting the Viewer table does not change that order.
+New app IDs are appended to `DeviceManifest.json` in staging order. Runtime prerequisites are placed before apps. Re-adding an existing app ID replaces its entry; it does not create a duplicate. Configuration commands can combine several operations into one entry; see each guide for its ordering rules.
 
 For repository apps, configure your actual catalog URL and use app IDs that it contains. `-SkipCacheRefresh` belongs to the generic repository `Add-OSDStage`; it does not control built-in freshness checks.
 
@@ -119,13 +119,7 @@ Test-OSDStageDeployment -ThrowOnFailure |
 Test-OSDStageDeployment -RequireOfflineReady -ThrowOnFailure
 ```
 
-Optional read-only visual inspection:
-
-```powershell
-Show-OSDStageUI -Offline
-```
-
-Check the Windows target, app count/order and actual staged configuration. The Viewer does not change the queue or cache. Its `-Offline` option only disables online catalog lookup; it is not a deployment mode or a switch that disconnects networking.
+Check the Windows target and package count in the validation result. Read `DeviceManifest.json` for the actual package order and settings. See [inspection and diagnostics](viewer.md) for cache and result commands.
 
 The staging directory is normally:
 
@@ -143,7 +137,7 @@ The staging directory is normally:
 
 Built-in payloads can still be absent before the first boot in an online cold deployment. That is different from an offline deployment, where matching content must already be available. Repository packages are downloaded/staged before reboot, not acquired later by SetupComplete.
 
-Close the Viewer before continuing the deployment. Keep the USB flash drive attached until OOBE is reached when it is part of the workflow. Use your existing deployment's reboot step, or the separate manual command in the online guide. Staging itself does not reboot the PC.
+Keep the USB flash drive attached until OOBE is reached when it is part of the workflow. Use your existing deployment's reboot step, or the separate manual command in the online guide. Staging itself does not reboot the PC.
 
 ## 4. First Windows boot — let SetupComplete run
 
@@ -155,7 +149,7 @@ A successful staging command is not a successful installation. SetupComplete is 
 
 ## 5. Check the outcome
 
-**Environment: deployed Windows after SetupComplete.** Start with the automatic [delivery report](delivery-report.md); installing the module or opening the Viewer is not required.
+**Environment: deployed Windows after SetupComplete.** Start with the automatic [delivery report](delivery-report.md); installing the module is not required.
 
 ```powershell
 $results = Join-Path $env:ProgramData 'OSDStage\Results'
@@ -223,4 +217,4 @@ With `CleanupMode OnSuccess`, the runtime schedules removal of temporary staging
 
 ## Next steps
 
-[Built-in configuration](built-in-apps.md) covers Office licensing flags, channels, language, Firefox variants, Webex options and Zoom settings. [Repository packages](repository.md) explains organization-managed packages and optional Vendor metadata. [Viewer](viewer.md) explains the difference between staged, cached, version and signature information.
+[Built-in configuration](built-in-apps.md) covers Office licensing flags, channels, language, Firefox variants, Webex options and Zoom settings. [Repository packages](repository.md) explains organization-managed packages and optional Vendor metadata. [Inspection and diagnostics](viewer.md) explains the available inspection commands.
