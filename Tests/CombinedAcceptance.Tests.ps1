@@ -139,6 +139,10 @@ Describe 'Combined staging orchestration with isolated dependencies' {
         Mock Add-OSDStageRegistryKey { }
         Mock Add-OSDStageDefaultAssociation { $global:OSDStageCombinedTestState.Order.Add('Association') }
         Mock Test-OSDStageDeployment { [pscustomobject]@{Valid=$true;NetworkRequired=$true} }
+        Mock Test-OSDStageRepositoryAvailability {
+            $global:OSDStageCombinedTestState.Order.Add('Preflight')
+            [pscustomobject]@{Valid=$true}
+        }
         Mock New-Item { }
         Mock Set-Content { }
         Mock Write-Host { }
@@ -168,12 +172,24 @@ Describe 'Combined staging orchestration with isolated dependencies' {
     }
     It 'stages the complete queue with installers before association import' {
         & $script:runner @script:parameters | Out-Null
+        $global:OSDStageCombinedTestState.Order[0] | Should -Be Preflight
+        Should -Invoke Test-OSDStageRepositoryAvailability -Times 1 -Exactly -ParameterFilter {
+            $Name.Count -eq 5 -and $SkipCacheRefresh -and $ThrowOnFailure
+        }
         $global:OSDStageCombinedTestState.Order.IndexOf('Association') | Should -BeGreaterThan $global:OSDStageCombinedTestState.Order.IndexOf('Chrome')
         $global:OSDStageCombinedTestState.Order.IndexOf('Association') | Should -BeGreaterThan $global:OSDStageCombinedTestState.Order.IndexOf('Adobe')
         Should -Invoke Add-OSDStageWindowsCapability -Times 2 -Exactly
         Should -Invoke Add-OSDStageEnvironmentVariable -Times 4 -Exactly
         Should -Invoke Add-OSDStageWiFiProfile -Times 1 -Exactly
         Should -Invoke Set-Content -Times 1 -Exactly -ParameterFilter { $LiteralPath -like '*Combined-Staging.json' }
+    }
+    It 'stops before all staging and result writes when repository availability fails' {
+        Mock Test-OSDStageRepositoryAvailability { throw 'Repository availability failure.' }
+        { & $script:runner @script:parameters } | Should -Throw '*Repository availability failure*'
+        $global:OSDStageCombinedTestState.Order.Count | Should -Be 0
+        Should -Invoke Add-OSDStage -Times 0 -Exactly
+        Should -Invoke Add-OSDStageGoogleChromeEnterprise -Times 0 -Exactly
+        Should -Invoke Set-Content -Times 0 -Exactly
     }
     It 'refuses corrupt cache before any installer is staged' {
         $global:OSDStageCombinedTestState.Cache[0].Valid = $false
