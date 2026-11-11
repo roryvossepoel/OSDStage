@@ -102,6 +102,8 @@ function Sync-OSDStageCache {
 
     $cacheLock = Enter-OSDStageCacheLock -CachePath $CachePath -Operation 'repository cache synchronization'
     try {
+    Repair-OSDStageRepositoryCacheResidue -CachePath $CachePath -LogPath $logPath | Out-Null
+
     # Never discard existing cache entries because a catalog is unreadable.
     $existingPackages = @()
     if (Test-Path -LiteralPath $cacheCatalogPath -PathType Leaf) {
@@ -432,6 +434,8 @@ function Sync-OSDStageCache {
     foreach ($entry in $toRemove) {
         Write-OSDStageLog -LogPath $logPath -Component 'Sync' -Event 'PackagePruned' -Message 'Stale cache package was removed after replacement validation and catalog commit.' -Data @{ Id = $entry.Id; Classification = $entry.Classification }
     }
+    Repair-OSDStageRepositoryCacheResidue -CachePath $CachePath -LogPath $logPath | Out-Null
+
     Write-OSDStageLog -LogPath $logPath -Component 'Sync' -Event 'SyncComplete' -Message 'Repository synchronization committed.' -Data @{
         Catalog = $cacheCatalogPath
         SyncedPackageCount = $packages.Count

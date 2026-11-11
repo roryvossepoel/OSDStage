@@ -201,3 +201,14 @@ A successful collection is not a successful deployment: a failed deployment can 
 The script returns one report object with `Mode`, `Status`, `Passed`, `CheckedAtUtc`, `Checks` and `Details`. It prints readable check messages as well. By default a report is returned without terminating the caller; `-ThrowOnFailure` throws after reporting whenever the status is not `Passed`, including `ReviewRequired`. Use that switch with `powershell.exe -File` when the process exit status is your automation gate.
 
 The tool does not update modules, modify or prune cache content, install apps, remove backups or publish releases. Any corrective action is a separate decision.
+
+## Automatic cache self-healing
+
+Mutating cache operations repair OSDStage-owned transaction residue automatically.
+
+- Completed or abandoned `.osdstage-new-*` / `.osdstage-old-*` generations are reconciled when the active built-in generation can be validated.
+- Repository `.staging\Sync-*` directories are removed automatically once the active repository cache and `CacheCatalog.json` can be proven consistent.
+- Unknown folders or files that cannot be proven to be OSDStage-owned are never deleted automatically. They produce an advisory warning and do not make an otherwise healthy cache unhealthy.
+- Ambiguous recovery state, such as multiple valid previous generations for one missing active path, remains a blocking error because OSDStage cannot safely choose which generation is authoritative.
+
+This keeps normal CLI workflows independent from a maintenance UI: mutating commands preserve cache consistency, while `Get-OSDStageCacheHealth` remains a diagnostic surface.

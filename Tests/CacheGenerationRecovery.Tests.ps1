@@ -30,21 +30,24 @@ Describe 'Interrupted built-in cache directory swap recovery' {
         $result.Recovered | Should -BeTrue
         (Get-FileHash -LiteralPath (Join-Path $root 'payload.txt')).Hash | Should -Be $hash
         Test-Path -LiteralPath $old | Should -BeFalse
-        Test-Path -LiteralPath $new | Should -BeTrue
+        Test-Path -LiteralPath $new | Should -BeFalse
         @(Restore-OSDStageCacheGeneration -Root $root -Validate { throw 'must not run twice' }).Count | Should -Be 0
     }
 
-    It 'does not replace active content when interruption was after promotion' {
+    It 'removes transaction residue when the active generation validates' {
         $root = Join-Path $TestDrive 'AfterPromotion\Active'
         $old = New-RecoveryFixture $root
-        New-Item -ItemType Directory -Path $root | Out-Null
-        Set-Content -LiteralPath (Join-Path $root 'payload.txt') -Value 'new-active'
-        Restore-OSDStageCacheGeneration -Root $root -Validate { throw 'must not inspect old while active exists' }
-        (Get-Content -LiteralPath (Join-Path $root 'payload.txt') -Raw).Trim() | Should -Be 'new-active'
-        Test-Path -LiteralPath $old | Should -BeTrue
+        $new = "$root.osdstage-new-$([guid]::NewGuid().ToString('N'))"
+        New-Item -ItemType Directory -Path $root,$new -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $root 'payload.txt') -Value 'valid-old'
+        Set-Content -LiteralPath (Join-Path $new 'partial.txt') -Value partial
+        $result = Restore-OSDStageCacheGeneration -Root $root -Validate $validate
+        Test-Path -LiteralPath $old | Should -BeFalse
+        Test-Path -LiteralPath $new | Should -BeFalse
+        $result.ResidueRemoved | Should -Be 2
     }
 
-    It 'never promotes only-new content or folders with unrelated backup names' {
+    It 'discards only-new transaction content and preserves unrelated backup names' {
         $root = Join-Path $TestDrive 'OnlyNew\Active'
         $new = "$root.osdstage-new-$([guid]::NewGuid().ToString('N'))"
         $unrelated = "$root.osdstage-old-user-backup"
@@ -65,10 +68,10 @@ Describe 'Interrupted built-in cache directory swap recovery' {
         Test-Path -LiteralPath $two | Should -BeTrue
     }
 
-    It 'preserves a rejected old generation without creating an empty active directory' {
+    It 'preserves a rejected old generation without blocking a fresh synchronization' {
         $root = Join-Path $TestDrive 'Invalid\Active'
         $old = New-RecoveryFixture $root
-        { Restore-OSDStageCacheGeneration -Root $root -Validate { throw 'bad signature or payload' } } | Should -Throw '*found 0*'
+        { Restore-OSDStageCacheGeneration -Root $root -Validate { throw 'bad signature or payload' } } | Should -Not -Throw
         Test-Path -LiteralPath $root | Should -BeFalse
         Test-Path -LiteralPath $old | Should -BeTrue
     }

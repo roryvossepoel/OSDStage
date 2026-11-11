@@ -121,12 +121,14 @@ Describe 'Desired-state cache health' {
         $byId.OldApp.State | Should -Be 'Renamed'
         $byId.OldApp.CanonicalId | Should -Be 'NewApp'
         $byId.GoneApp.State | Should -Be 'Obsolete'
-        $byId.LooseFolder.State | Should -Be 'Orphaned'
+        $byId.LooseFolder.State | Should -Be 'Advisory'
+        $byId.LooseFolder.Action | Should -Be 'Keep'
         $byId.NewApp.State | Should -Be 'Incomplete'
         $health.Healthy | Should -BeFalse
         $health.RenamedCount | Should -Be 1
         $health.ObsoleteCount | Should -Be 1
-        $health.OrphanedCount | Should -Be 1
+        $health.OrphanedCount | Should -Be 0
+        $health.AdvisoryCount | Should -Be 1
         $health.IncompleteCount | Should -Be 1
     }
 
@@ -222,4 +224,20 @@ Describe 'Desired-state cache health' {
         $health.ActiveCount | Should -Be 0
         $health.Healthy | Should -BeFalse
     }
+    It 'treats unknown technician-created package content as advisory only' {
+        $cache = Join-Path $TestDrive 'TechnicianContentCache'
+        $manual = Join-Path $cache 'Packages\ManualTool'
+        New-Item -ItemType Directory -Path $manual -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $manual 'notes.txt') -Value 'technician content' -Encoding UTF8
+
+        $health = Get-OSDStageCacheHealth -CachePath $cache -Offline
+        $entry = @($health.Entries | Where-Object Id -eq 'ManualTool')[0]
+
+        $health.Healthy | Should -BeTrue
+        $health.AdvisoryCount | Should -Be 1
+        $entry.State | Should -Be 'Advisory'
+        $entry.Action | Should -Be 'Keep'
+        (Test-Path -LiteralPath (Join-Path $manual 'notes.txt')) | Should -BeTrue
+    }
+
 }
