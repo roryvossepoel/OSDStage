@@ -374,15 +374,19 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         }
     }
 
-    It 'shows Staged plus an app-oriented Cache manager with Vendor metadata' {
+    It 'shows Staged plus a simple cached-app view' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "catalogTab = \[System.Windows.Forms.TabPage\]::new\('Cache manager'\)"
-        $source | Should -Match "catalogList.Columns.Add\('Vendor'"
+        $source | Should -Match "catalogTab = \[System.Windows.Forms.TabPage\]::new\('Cache'\)"
         $source | Should -Match "stagedList.Columns.Add\('Vendor'"
         $source | Should -Match 'Get-OSDStageUIDisplayInfo -App \$entry'
         $source | Should -Match 'Get-OSDStageUIDisplayInfo -App \$app'
         $source | Should -Match "cacheList.Columns.Add\('Vendor'"
         $source | Should -Match "catalogList.Columns.Add\('App'"
+        $source | Should -Match "catalogList.Columns.Add\('Version'"
+        $source | Should -Match "catalogList.Columns.Add\('Status'"
+        $source | Should -Not -Match "catalogList.Columns.Add\('Source'"
+        $source | Should -Not -Match "catalogList.Columns.Add\('Package Type'"
+        $source | Should -Not -Match "catalogList.Columns.Add\('Vendor'"
         $source | Should -Match "stagedList.Columns.Add\('Display Name'"
         $source | Should -Not -Match "catalogList.Columns.Add\('Display Name'"
         $source | Should -Match "cacheList.Columns.Add\('Display Name'"
@@ -405,7 +409,6 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
     It 'keeps cache integrity descriptions but shortens redundant read-only prose' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
         $source | Should -Match 'USB cache: \$\(\$data\.CachePath\)'
-        $source | Should -Match 'built-in and repository'
         $source | Should -Not -Match 'Sort: view only'
         $source | Should -Not -Match 'Read-only: built-in'
     }
@@ -422,9 +425,9 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         $source | Should -Match '\$State\.ContextToolTip\.SetToolTip'
     }
 
-    It 'keeps technical cache inventory internally while the Cache manager uses app summaries' {
+    It 'keeps technical cache inventory internal while the visible Cache view stays compact' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
-        $source | Should -Match "'Packages'\s+\{ @\(0,80,95,90,150,130,150\) \}"
+        $source | Should -Match "'Packages'\s+\{ @\(0,150,220\) \}"
         $source | Should -Match "'Cache'\s+\{ @\(0,75,95,88,145,90,105,70,105,105,120\) \}"
         $source | Should -Match "cacheList.Columns.Add\('Package Type',95\)"
         $source | Should -Match "cacheList.Columns.Add\('Vendor',88\)"
@@ -435,18 +438,18 @@ Describe 'Show-OSDStageUI - read-only device inspector' {
         $source | Should -Not -Match '(?i)\bSet-OSDStageConfiguration\b'
     }
 
-    It 'wires explicit Cache manager actions without adding deployment staging mutation' {
+    It 'wires only the simple Cache actions plus a More menu' {
         $source = Get-Content -LiteralPath (Join-Path $script:root 'Public\Show-OSDStageUI.ps1') -Raw
         $source | Should -Match "managerRefresh.Text = 'Refresh'"
-        $source | Should -Match "managerHealth.Text = 'Check health'"
-        $source | Should -Match "managerCheckUpdates.Text = 'Check updates'"
-        $source | Should -Match "managerCacheSelected.Text = 'Cache selected'"
-        $source | Should -Match "managerUpdateSelected.Text = 'Update selected'"
-        $source | Should -Match "managerUpdateAll.Text = 'Update all available'"
-        $source | Should -Match "managerRemoveSelected.Text = 'Remove selected\.\.\.'"
-        $source | Should -Match "managerClearAll.Text = 'Clear entire cache\.\.\.'"
+        $source | Should -Match "managerCheck.Text = 'Check cache'"
+        $source | Should -Match "managerUpdate.Text = 'Update'"
+        $source | Should -Match "managerMore.Text = 'More\.\.\.'"
+        $source | Should -Match "ToolStripMenuItem\]::new\('Health details\.\.\.'\)"
+        $source | Should -Match "ToolStripMenuItem\]::new\('Remove selected\.\.\.'\)"
+        $source | Should -Match "ToolStripMenuItem\]::new\('Clear entire cache\.\.\.'\)"
         $source | Should -Match 'Invoke-OSDStageUIManagerHealthCheck'
         $source | Should -Match 'Invoke-OSDStageUIManagerCheckUpdates'
+        $source | Should -Not -Match 'CheckBoxes = \$true'
         $source | Should -Not -Match '(?i)\bInvoke-OSDStageUIStage\b'
         $source | Should -Not -Match '(?i)\bRemove-OSDStageStaging\b'
     }
