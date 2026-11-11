@@ -12,7 +12,7 @@ function Set-OSDStageUIColumnWidths {
     # App / Message absorb remaining space on window resize.
     $fixed = switch ($Key) {
         'Staged'       { @(65,0,90,95,100,125,185,105) }
-        'Packages' { @(0,80,95,90,150,130,150) }
+        'Packages' { @(0,150,220) }
         'Cache'        { @(0,75,95,88,145,90,105,70,105,105,120) }
         'Logs'         { @(185,78,135,125,0) }
     }
@@ -671,7 +671,7 @@ function Show-OSDStageUI {
     $tabs.Dock = 'Fill'
     [void]$root.Controls.Add($tabs,0,3)
     $stagedTab = [System.Windows.Forms.TabPage]::new('Staged for device')
-    $catalogTab = [System.Windows.Forms.TabPage]::new('Cache manager')
+    $catalogTab = [System.Windows.Forms.TabPage]::new('Cache')
     $cacheTab = [System.Windows.Forms.TabPage]::new('Cache')
     $logsTab = [System.Windows.Forms.TabPage]::new('Logs')
     foreach ($tab in @($stagedTab,$catalogTab,$logsTab)) { [void]$tabs.TabPages.Add($tab) }
@@ -712,15 +712,14 @@ function Show-OSDStageUI {
 
     $catalogLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $catalogLayout.Dock = 'Fill'
-    $catalogLayout.RowCount = 4
+    $catalogLayout.RowCount = 3
     [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',34))
     [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',42))
     [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Percent',100))
-    [void]$catalogLayout.RowStyles.Add([System.Windows.Forms.RowStyle]::new('Absolute',145))
     $catalogTab.Controls.Add($catalogLayout)
 
     $catalogInfo = [System.Windows.Forms.Label]::new()
-    $catalogInfo.Text = 'Loading cache manager...'
+    $catalogInfo.Text = 'Loading cache...'
     $catalogInfo.Dock = 'Fill'
     $catalogInfo.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     $catalogInfo.AutoEllipsis = $true
@@ -738,67 +737,41 @@ function Show-OSDStageUI {
     $managerRefresh.AutoSize = $true
     $managerActions.Controls.Add($managerRefresh)
 
-    $managerHealth = [System.Windows.Forms.Button]::new()
-    $managerHealth.Text = 'Check health'
-    $managerHealth.AutoSize = $true
-    $managerActions.Controls.Add($managerHealth)
+    $managerCheck = [System.Windows.Forms.Button]::new()
+    $managerCheck.Text = 'Check cache'
+    $managerCheck.AutoSize = $true
+    $managerActions.Controls.Add($managerCheck)
 
-    $managerCheckUpdates = [System.Windows.Forms.Button]::new()
-    $managerCheckUpdates.Text = 'Check updates'
-    $managerCheckUpdates.AutoSize = $true
-    $managerActions.Controls.Add($managerCheckUpdates)
+    $managerUpdate = [System.Windows.Forms.Button]::new()
+    $managerUpdate.Text = 'Update'
+    $managerUpdate.AutoSize = $true
+    $managerActions.Controls.Add($managerUpdate)
 
-    $managerCacheSelected = [System.Windows.Forms.Button]::new()
-    $managerCacheSelected.Text = 'Cache selected'
-    $managerCacheSelected.AutoSize = $true
-    $managerActions.Controls.Add($managerCacheSelected)
+    $managerMore = [System.Windows.Forms.Button]::new()
+    $managerMore.Text = 'More...'
+    $managerMore.AutoSize = $true
+    $managerActions.Controls.Add($managerMore)
 
-    $managerUpdateSelected = [System.Windows.Forms.Button]::new()
-    $managerUpdateSelected.Text = 'Update selected'
-    $managerUpdateSelected.AutoSize = $true
-    $managerActions.Controls.Add($managerUpdateSelected)
-
-    $managerUpdateAll = [System.Windows.Forms.Button]::new()
-    $managerUpdateAll.Text = 'Update all available'
-    $managerUpdateAll.AutoSize = $true
-    $managerActions.Controls.Add($managerUpdateAll)
-
-    $managerRemoveSelected = [System.Windows.Forms.Button]::new()
-    $managerRemoveSelected.Text = 'Remove selected...'
-    $managerRemoveSelected.AutoSize = $true
-    $managerActions.Controls.Add($managerRemoveSelected)
-
-    $managerClearAll = [System.Windows.Forms.Button]::new()
-    $managerClearAll.Text = 'Clear entire cache...'
-    $managerClearAll.AutoSize = $true
-    $managerActions.Controls.Add($managerClearAll)
+    $managerMenu = [System.Windows.Forms.ContextMenuStrip]::new()
+    $managerMenuHealth = [System.Windows.Forms.ToolStripMenuItem]::new('Health details...')
+    $managerMenuRemove = [System.Windows.Forms.ToolStripMenuItem]::new('Remove selected...')
+    $managerMenuClear = [System.Windows.Forms.ToolStripMenuItem]::new('Clear entire cache...')
+    [void]$managerMenu.Items.Add($managerMenuHealth)
+    [void]$managerMenu.Items.Add($managerMenuRemove)
+    [void]$managerMenu.Items.Add([System.Windows.Forms.ToolStripSeparator]::new())
+    [void]$managerMenu.Items.Add($managerMenuClear)
 
     $catalogList = [System.Windows.Forms.ListView]::new()
     $catalogList.Dock = 'Fill'
     $catalogList.View = 'Details'
     $catalogList.FullRowSelect = $true
     $catalogList.MultiSelect = $false
-    $catalogList.CheckBoxes = $true
+    $catalogList.HideSelection = $false
     $catalogList.GridLines = $true
-    $catalogList.ShowItemToolTips = $true
-    [void]$catalogList.Columns.Add('App',260)
-    [void]$catalogList.Columns.Add('Source',80)
-    [void]$catalogList.Columns.Add('Package Type',95)
-    [void]$catalogList.Columns.Add('Vendor',90)
-    [void]$catalogList.Columns.Add('Cached version',150)
-    [void]$catalogList.Columns.Add('Available version',130)
-    [void]$catalogList.Columns.Add('Status',150)
+    [void]$catalogList.Columns.Add('App',320)
+    [void]$catalogList.Columns.Add('Version',160)
+    [void]$catalogList.Columns.Add('Status',260)
     [void]$catalogLayout.Controls.Add($catalogList,0,2)
-
-    $managerDetails = [System.Windows.Forms.TextBox]::new()
-    $managerDetails.Multiline = $true
-    $managerDetails.ReadOnly = $true
-    $managerDetails.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $managerDetails.Dock = 'Fill'
-    $managerDetails.BackColor = [System.Drawing.Color]::White
-    $managerDetails.Font = [System.Drawing.Font]::new('Consolas',9)
-    $managerDetails.Text = 'Select an app to view its cached configurations.'
-    [void]$catalogLayout.Controls.Add($managerDetails,0,3)
 
     $cacheLayout = [System.Windows.Forms.TableLayoutPanel]::new()
     $cacheLayout.Dock = 'Fill'
@@ -933,13 +906,12 @@ function Show-OSDStageUI {
         TargetKind=$targetKind; TargetDescription=$targetText
         CatalogMode=$catalogMode; CatalogDescription=$catalogDescription
         StagedList=$stagedList; CatalogList=$catalogList; CacheList=$cacheList
-        ManagerList=$catalogList; ManagerInfo=$catalogInfo; ManagerDetails=$managerDetails
-        ManagerRefresh=$managerRefresh; ManagerHealth=$managerHealth; ManagerCheckUpdates=$managerCheckUpdates
-        ManagerCacheSelected=$managerCacheSelected; ManagerUpdateSelected=$managerUpdateSelected; ManagerUpdateAll=$managerUpdateAll
-        ManagerRemoveSelected=$managerRemoveSelected; ManagerClearAll=$managerClearAll
+        ManagerList=$catalogList; ManagerInfo=$catalogInfo; ManagerDetails=$null
+        ManagerRefresh=$managerRefresh; ManagerCheck=$managerCheck; ManagerUpdate=$managerUpdate; ManagerMore=$managerMore
+        ManagerMenu=$managerMenu; ManagerMenuHealth=$managerMenuHealth; ManagerMenuRemove=$managerMenuRemove; ManagerMenuClear=$managerMenuClear
         StagedInfo=$stagedInfo; CacheInfo=$cacheInfo; Details=$details
         CacheRefresh=$cacheRefresh; CacheHealth=$cacheHealth; CacheCheckUpdates=$cacheCheckUpdates; CacheUpdate=$cacheUpdate; CacheClear=$cacheClear
-        CacheUpdateStatus=@{}
+        CacheUpdateStatus=@{}; CacheHealthStatus=@{}
         LogFiles=$logFiles; LogList=$logList; LogDetails=$logDetails; LogInfo=$logInfo
         LogEntries=@(); Status=$status; Snapshot=$null
         Lists=@{ Staged=$stagedList; Packages=$catalogList; Cache=$cacheList; Logs=$logList }
@@ -960,51 +932,46 @@ function Show-OSDStageUI {
     })
     $catalogList.Add_SelectedIndexChanged({
         $state=$script:OSDStageUIState
-        if ($state) { Update-OSDStageUIManagerDetails -State $state }
+        if(-not $state){return}
+        $selected=($state.ManagerList.SelectedItems.Count -gt 0)
+        $state.ManagerMenuRemove.Enabled=$selected
+        $state.ManagerUpdate.Text=if($selected){'Update selected'}else{'Update all'}
     })
     $managerRefresh.Add_Click({
         $state=$script:OSDStageUIState
-        if ($state) { Invoke-OSDStageUIManagerRefresh -State $state }
+        if($state){Invoke-OSDStageUIManagerRefresh -State $state}
     })
-    $managerHealth.Add_Click({
+    $managerCheck.Add_Click({
         $state=$script:OSDStageUIState
-        if ($state) { Invoke-OSDStageUIManagerHealthCheck -State $state }
+        if(-not $state){return}
+        $key=Get-OSDStageUIManagerSelectedKey -State $state
+        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey @($key)
     })
-    $managerCheckUpdates.Add_Click({
+    $managerUpdate.Add_Click({
         $state=$script:OSDStageUIState
-        if (-not $state) { return }
-        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey @(Get-OSDStageUIManagerCheckedKeys -State $state)
-    })
-    $managerCacheSelected.Add_Click({
-        $state=$script:OSDStageUIState
-        if ($state) { Invoke-OSDStageUIManagerCacheSelected -State $state }
-    })
-    $managerUpdateSelected.Add_Click({
-        $state=$script:OSDStageUIState
-        if (-not $state) { return }
-        $keys=@(Get-OSDStageUIManagerCheckedKeys -State $state)
-        if ($keys.Count -eq 0) {
-            [void][System.Windows.Forms.MessageBox]::Show('Select one or more cached apps first.','OSDStage - Update selected','OK','Information')
-            return
-        }
-        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey $keys
-        [void](Invoke-OSDStageUICacheUpdate -State $state -SelectedAppKey $keys -SkipRecheck)
+        if(-not $state){return}
+        $key=Get-OSDStageUIManagerSelectedKey -State $state
+        Invoke-OSDStageUIManagerCheckUpdates -State $state -AppKey @($key)
+        [void](Invoke-OSDStageUICacheUpdate -State $state -SelectedAppKey @($key) -SkipRecheck)
         Invoke-OSDStageUIManagerRefresh -State $state
     })
-    $managerUpdateAll.Add_Click({
+    $managerMore.Add_Click({
         $state=$script:OSDStageUIState
-        if (-not $state) { return }
-        Invoke-OSDStageUIManagerCheckUpdates -State $state
-        [void](Invoke-OSDStageUICacheUpdate -State $state -SkipRecheck)
-        Invoke-OSDStageUIManagerRefresh -State $state
+        if(-not $state){return}
+        $state.ManagerMenuRemove.Enabled=($state.ManagerList.SelectedItems.Count -gt 0)
+        $state.ManagerMenu.Show($state.ManagerMore,[System.Drawing.Point]::new(0,$state.ManagerMore.Height))
     })
-    $managerRemoveSelected.Add_Click({
+    $managerMenuHealth.Add_Click({
         $state=$script:OSDStageUIState
-        if ($state) { Invoke-OSDStageUIManagerRemoveSelected -State $state; Invoke-OSDStageUIManagerRefresh -State $state }
+        if($state){Invoke-OSDStageUIManagerHealthCheck -State $state}
     })
-    $managerClearAll.Add_Click({
+    $managerMenuRemove.Add_Click({
         $state=$script:OSDStageUIState
-        if ($state) { Invoke-OSDStageUIManagerClearEntireCache -State $state; Invoke-OSDStageUIManagerRefresh -State $state }
+        if($state){Invoke-OSDStageUIManagerRemoveSelected -State $state;Invoke-OSDStageUIManagerRefresh -State $state}
+    })
+    $managerMenuClear.Add_Click({
+        $state=$script:OSDStageUIState
+        if($state){Invoke-OSDStageUIManagerClearEntireCache -State $state;Invoke-OSDStageUIManagerRefresh -State $state}
     })
     $logFiles.Add_SelectedIndexChanged({
         $state=$script:OSDStageUIState
@@ -1020,7 +987,7 @@ function Show-OSDStageUI {
     $searchBox.Add_TextChanged({
         $state=$script:OSDStageUIState
         if (-not $state) { return }
-        foreach ($key in @('Staged','Packages','Cache','Logs')) {
+        foreach ($key in @('Staged','Packages','Logs')) {
             Show-OSDStageUIRows -State $state -Key $key
         }
     })
