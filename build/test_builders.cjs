@@ -20,5 +20,75 @@ test('MatchOS Office never downloads using the preparation host language',()=>{c
 test('unknown imported selections remain visible and block generation',()=>{const s={...base(),selected:['FutureApp']};const restored=C.importSettings(JSON.parse(JSON.stringify(s)),apps);assert.ok(restored.selected.includes('FutureApp'));assert.throws(()=>C.generate(restored,apps,'stage'));});
 test('deployment export retains the two-script layout',()=>{const files=C.packageFiles(base(),apps);assert.ok(files['Stage-OSDStage.ps1'].includes('ADD YOUR CONFIGURATION COMPONENTS HERE'));assert.ok(files['Prepare-OSDStage.ps1']);assert.ok(files['Files/README.txt']);assert.ok(Z.create(files).length>100);});
 test('component command and parameter contracts exist in module',()=>{const examples=[['wifi',{wifiMode:'settings',wifiSSID:'Example'}],['registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}],['certificates',{certificates:[{path:'Files\\a.cer',store:'CA'}]}]];for(const [type,input]of examples)for(const c of C.commands(B.state(type,input),[],'stage')){const src=fs.readFileSync(path.join(__dirname,'../Public',c.name+'.ps1'),'utf8');for(const k of Object.keys(c.params))assert.ok(src.includes('$'+k),c.name+' -'+k);}});
-if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{certificates:[{path:'Files\\root.cer',store:'Root'}]})];code=code.replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
+
+const componentExamples={
+ wifi:{wifiMode:'settings',wifiSSID:"Rory's Wi-Fi"},
+ registry:{registry:[{path:'HKLM:\\SOFTWARE\\Example',name:'Value',type:'QWord',value:'18446744073709551615',view:'Registry64'}]},
+ certificates:{certificates:[{path:'Files\\root.cer',store:'Root'}]},
+ variables:{variables:[{name:'Example',value:'%ProgramData%\\Example',expand:true,action:'Set'},{name:'OldExample',action:'Remove'}],appendPath:'C:\\Tools'},
+ filesystem:{files:[{action:'Copy',source:'Files\\settings.json',path:'C:\\ProgramData\\Example\\settings.json',force:true},{action:'Content',path:'C:\\Example.txt',content:"'; Stop-Computer; '",encoding:'UTF8',force:false},{action:'Remove',path:'C:\\Old.txt',force:false}],directories:[{path:'C:\\Tools',action:'Create',force:false},{path:'C:\\OldTools',action:'Remove',recurse:true,force:true}]},
+ services:{services:[{name:'Spooler',startup:'Manual',state:'Stopped',timeout:30}]},
+ desktop:{startEnabled:true,startPins:[{kind:'desktopAppId',value:'Microsoft.Windows.Explorer'}],taskbarEnabled:true,taskbarPins:[{kind:'desktopAppLink',value:'%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\Example.lnk'}]},
+ associations:{associations:[{identifiers:'.pdf',progId:'AcroExch.Document.DC',appName:'Adobe Acrobat'}]},
+ features:{featuresEnable:'NetFx3',featuresDisable:'SMB1Protocol'},
+ capabilities:{capabilitiesAdd:'OpenSSH.Client~~~~0.0.1.0',capabilitiesRemove:'OpenSSH.Server~~~~0.0.1.0'},
+ inbox:{inboxMode:'custom',inboxRemove:'Microsoft.BingWeather',inboxDiagnose:true},
+ updates:{drivers:true,driverClasses:'Firmware, Extension',scanOnly:true,updateTimeout:45},
+ fonts:{repositoryIds:'CorporateFonts',repositorySkipRefresh:true},
+ drivers:{repositoryIds:'RealtekDrivers'},
+ scripts:{repositoryIds:'ExampleScript\nSecondScript'}
+};
+test('every catalog configuration item has a builder with the exact catalog icon',()=>{
+ const metadata=JSON.parse(fs.readFileSync(path.join(__dirname,'../metadata/builtins.json'),'utf8'));
+ const config=metadata.Packages.filter(p=>!apps.some(a=>a.Id===p.Id));
+ const hub=fs.readFileSync(path.join(__dirname,'../site/builders/index.html'),'utf8');
+ for(const item of config){const entry=Object.entries(B.definitions).find(([,d])=>d.catalogId===item.Id);assert.ok(entry,item.Id);const [type,d]=entry;assert.ok(item.IconUrl.endsWith('/'+d.icon+'.svg'),item.Id);assert.ok(hub.includes('component.html?type='+type));assert.ok(hub.includes('../metadata/icons/'+d.icon+'.svg'));}
+ for(const d of Object.values(B.definitions))assert.ok(fs.existsSync(path.join(__dirname,'../metadata/icons',d.icon+'.svg')));
+ assert.equal(Object.keys(componentExamples).length,Object.keys(B.definitions).length);
+});
+test('all fifteen builders emit only supported cmdlets and parameters',()=>{
+ for(const [type,input]of Object.entries(componentExamples)){
+  assert.deepEqual(B.validate(type,input),[],type);const code=B.generate(type,input);
+  assert.doesNotMatch(code,/@destination|Out-Host|Get-Command|Install-Module|Set-OSDStageConfiguration/);
+  for(const c of B.commands(type,input)){const src=fs.readFileSync(path.join(__dirname,'../Public',c.name+'.ps1'),'utf8');for(const k of Object.keys(c.params))assert.ok(new RegExp('\\$'+k+'\\b','i').test(src),type+': '+c.name+' -'+k);}
+ }
+});
+test('every component ignores unrelated deployment settings',()=>{
+ for(const [type,input]of Object.entries(componentExamples))assert.equal(B.generate(type,{...input,selected:['7Zip'],final:'Shutdown',modulePath:'X:\\invalid',windowsPath:'Z:\\',baseOnly:true}),B.generate(type,input),type);
+ assert.throws(()=>B.generate('constructor',{}));assert.throws(()=>B.generate('__proto__',{}));
+});
+test('repository components preflight all IDs before staging and retain package-specific commands',()=>{
+ for(const [type,command]of [['fonts','Add-OSDStageFont'],['drivers','Add-OSDStageDriver'],['scripts','Add-OSDStage'],['certificates','Add-OSDStageCertificate']]){
+  const input={repositoryIds:'One\nTwo',certificateSource:'repository'},code=B.generate(type,input);
+  assert.ok(code.startsWith("Test-OSDStageRepositoryAvailability -Name @('One', 'Two') -ThrowOnFailure"));assert.ok(code.indexOf('\r\n'+command+' ')>0);
+  assert.throws(()=>B.generate(type,{...input,repositoryIds:''}));assert.throws(()=>B.generate(type,{...input,repositoryIds:'One\none'}));assert.throws(()=>B.generate(type,{...input,repositoryIds:"'; Stop-Computer; '"}));
+ }
+});
+test('required source files are listed while generated text and repository packages need no local source',()=>{
+ for(const [type,input,expected]of [
+  ['filesystem',componentExamples.filesystem,['Files\\settings.json']],
+  ['desktop',{startEnabled:true,startMode:'json',startJson:'Files\\Start.json'},['Files\\Start.json']],
+  ['associations',{associationXml:'Files\\Defaults.xml'},['Files\\Defaults.xml']],
+  ['certificates',{certificateSource:'repository',repositoryIds:'RootCA',certificates:componentExamples.certificates.certificates},[]]
+ ])assert.deepEqual(C.requiredFiles(B.state(type,input),[]).map(f=>f.path),expected);
+});
+test('desktop areas are explicit and empty pin arrays deliberately clear only enabled areas',()=>{
+ assert.throws(()=>B.generate('desktop',{}));assert.equal(B.generate('desktop',{startEnabled:true}),"Add-OSDStageStartPins -Pins @()\r\n");
+ assert.match(B.generate('desktop',{taskbarEnabled:true}),/^Add-OSDStageTaskbarPins -Pins @\(\)/);
+ assert.throws(()=>B.generate('desktop',{startEnabled:true,startMode:'json',startJson:'Files\\Start.txt'}));
+});
+test('conflicting or invalid configuration values cannot generate executable output',()=>{
+ for(const [type,input]of [
+  ['features',{featuresEnable:'NetFx3',featuresDisable:'netfx3'}],
+  ['services',{services:[{name:'Spooler',startup:'Disabled',state:'Running',timeout:30}]}],
+  ['services',{services:[{name:'Spooler',startup:'Manual',timeout:0}]}],
+  ['variables',{variables:[{name:'PATH',action:'Set',value:'C:\\Tools'}]}],
+  ['variables',{variables:[{name:'Example',action:'Typo',value:'Text'}]}],
+  ['associations',{associationXml:'Files\\Defaults.txt'}],
+  ['inbox',{inboxMode:'custom',inboxRemove:''}],
+  ['updates',{updateTimeout:1}],
+  ['filesystem',{files:[{action:'Copy',source:'Files\\..\\secret.txt',path:'C:\\target.txt'}]}]
+ ])assert.throws(()=>B.generate(type,input),type);
+});
+if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});for(const [type,input]of Object.entries(componentExamples))fs.writeFileSync(path.join(dir,'component-'+type+'.ps1'),B.generate(type,input));fs.writeFileSync(path.join(dir,'commands.json'),JSON.stringify(Object.entries(componentExamples).flatMap(([type,input])=>B.commands(type,input))));let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{certificates:[{path:'Files\\root.cer',store:'Root'}]})];code=code.replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
 console.log(tests+' builder checks passed.');
