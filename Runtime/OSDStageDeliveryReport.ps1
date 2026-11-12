@@ -131,6 +131,21 @@ function Get-OSDStageReportComponent {
     return $details
 }
 
+function ConvertTo-OSDStageReportFinalAction {
+    param($State)
+    if ($null -eq $State) { return $null }
+    $safe = Select-OSDStageReportField $State @('Action','Status','RequestedAtUtc')
+    $reason = switch ([string]$State.Status) {
+        'NotRequested' { 'No final action configured.' }
+        'Pending' { 'Deployment is still running.' }
+        'Waiting' { 'Waiting for Runner and Windows Setup to finish, then configured cleanup.' }
+        'Requested' { 'Power request is being submitted; restart or shutdown completion is not verified.' }
+        default { 'Final action was not requested. Inspect local finalization diagnostics for the reason.' }
+    }
+    $safe | Add-Member -NotePropertyName Reason -NotePropertyValue $reason
+    return $safe
+}
+
 function New-OSDStageDeliveryReport {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Builds an in-memory report object; no external state changes.')]
     [CmdletBinding()]
@@ -225,6 +240,14 @@ function New-OSDStageDeliveryReport {
     elseif ($Result.Status -eq 'Succeeded' -and $complete -and $knownStates -and $skipped -eq 0 -and
         @($checks | Where-Object Passed -eq $false).Count -eq 0 -and $reboot -eq $false -and
         ($null -eq $wu -or ($wu.FurtherScanRequired -eq $false -and $wu.ScanOnly -eq $false))) { $state = 'Succeeded' }
+    $finalAction = $null
+    if ($Result.PSObject.Properties['FinalAction'] -and $null -ne $Result.FinalAction) {
+        $finalAction = ConvertTo-OSDStageReportFinalAction -State $Result.FinalAction
+    }
+    elseif ($Phase -eq 'PreInstall' -and $Manifest -and $Manifest.Runtime -and $Manifest.Runtime.PSObject.Properties['FinalAction'] -and $Manifest.Runtime.FinalAction -in @('Reboot','Shutdown')) {
+        $finalAction = [pscustomobject]@{ Action=$Manifest.Runtime.FinalAction; Status='Skipped'; Reason='PreInstall failed; no final action was armed.'; RequestedAtUtc=$null }
+    }
+    if ($null -ne $finalAction -and $finalAction.Action -ne 'None' -and $finalAction.Status -in @('Skipped','Failed') -and $state -eq 'Succeeded') { $state = 'Attention' }
     $device = Get-OSDStageReportDevice
     if ($device.CollectionStatus -ne 'Available') {
         $checks.Add([pscustomobject]@{ Name='DeviceMetadata'; Passed=$false; Detail='Some device metadata could not be collected.' })
@@ -237,6 +260,7 @@ function New-OSDStageDeliveryReport {
         Module=[pscustomobject]@{ Name='OSDStage'; Version=$Manifest.Runtime.ModuleVersion; GalleryUrl='https://www.powershellgallery.com/packages/OSDStage'; GitHubUrl='https://github.com/roryvossepoel/OSDStage'; DocumentationUrl='https://roryvossepoel.github.io/OSDStage/' }
         Device=$device
         Counts=[pscustomobject]@{ Expected=$expected.Count; Succeeded=$succeeded; Failed=$failed; Skipped=$skipped; UnknownOrNotRun=@($packages | Where-Object { $_.Status -notin @('Succeeded','Failed','Skipped') }).Count }
+        FinalAction=$finalAction
         RebootRequired=$reboot; WindowsUpdate=$wu; Packages=@($packages); Checks=@($checks.ToArray())
         FailureType=(ConvertTo-OSDStageReportText $Result.FailureType); ErrorPresent=(-not [string]::IsNullOrWhiteSpace([string]$Result.Error))
         Scope='Execution evidence only. This report does not certify that Windows is fully patched or that Autopilot enrollment succeeded. Updates may become available after restart. Windows Update content is not cached by OSDStage.'
@@ -254,6 +278,7 @@ function Get-OSDStageReportSummary {
         $Report.Counts.Skipped -gt 0 -or $Report.Counts.UnknownOrNotRun -gt 0) {
         return 'Review the package results and evidence checks below.'
     }
+    if ($Report.PSObject.Properties['FinalAction'] -and $Report.FinalAction -and $Report.FinalAction.Action -ne 'None' -and $Report.FinalAction.Status -in @('Skipped','Failed')) { return 'Execution succeeded; the configured final action was not requested. Review final action details.' }
     if ($Report.RebootRequired -eq $true) {
         if ($Report.WindowsUpdate.FurtherScanRequired -eq $true) {
             return 'Execution succeeded; restart required. A follow-up update scan is recommended.'
@@ -368,6 +393,7 @@ $(if ($Report.ErrorPresent -or $Report.FailureType) { '<p class="muted">Failure 
 <div class="metrics"><div class="metric">Expected<strong>$(Format-ReportValue $Report.Counts.Expected)</strong></div><div class="metric">Succeeded<strong>$(Format-ReportValue $Report.Counts.Succeeded)</strong></div><div class="metric">Failed<strong>$(Format-ReportValue $Report.Counts.Failed)</strong></div><div class="metric">Skipped<strong>$(Format-ReportValue $Report.Counts.Skipped)</strong></div><div class="metric">Unknown / not run<strong>$(Format-ReportValue $Report.Counts.UnknownOrNotRun)</strong></div></div>
 <section class="panel"><h2>Device</h2>$deviceTable</section>
 $packageCards
+$(if ($Report.PSObject.Properties['FinalAction'] -and $null -ne $Report.FinalAction) { '<section class="panel"><h2>Final action</h2>' + (Format-ReportTable @($Report.FinalAction) @('Action','Status','RequestedAtUtc')) + '<p class="muted">' + (Format-ReportValue $Report.FinalAction.Reason) + '</p>' + '<p class="muted">Requested records submission of the power request; it does not verify that the computer restarted or shut down.</p></section>' })
 <p class="muted">Missing values are shown as Unknown. Raw error messages are retained in local runtime logs.</p>
 <details open><summary>Evidence checks</summary>$checkTable</details>
 <section class="panel"><h2>Scope and follow-up</h2><p>$(Format-ReportValue $Report.Scope)</p><p>$(Format-ReportValue $Report.Privacy)</p></section>

@@ -10,6 +10,9 @@ function Set-OSDStageConfiguration {
         [ValidateSet('OnSuccess','Never')]
         [string]$CleanupMode,
 
+        [ValidateSet('None','Reboot','Shutdown')]
+        [string]$FinalAction,
+
         [bool]$PreventSleep = $true,
 
         [ValidateNotNullOrEmpty()]
@@ -49,6 +52,10 @@ function Set-OSDStageConfiguration {
         $current.CleanupMode = $CleanupMode
     }
 
+    if ($PSBoundParameters.ContainsKey('FinalAction')) {
+        $current.FinalAction = $FinalAction
+    }
+
     if ($PSBoundParameters.ContainsKey('PreventSleep')) {
         $current.PreventSleep = $PreventSleep
     }
@@ -70,6 +77,7 @@ function Set-OSDStageConfiguration {
         EnableBuiltIns   = [bool]$current.EnableBuiltIns
         EnableRepository = [bool]$current.EnableRepository
         CleanupMode      = $current.CleanupMode
+        FinalAction      = $current.FinalAction
         PreventSleep     = $current.PreventSleep
         CacheVolumeLabel = $current.CacheVolumeLabel
         LogPath          = $current.LogPath

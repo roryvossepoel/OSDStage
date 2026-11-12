@@ -161,6 +161,8 @@ function Test-OSDStageDeployment {
         -not [string]::IsNullOrWhiteSpace([string]$manifest.Runtime.LogPath) -and
         -not [string]::IsNullOrWhiteSpace([string]$manifest.Runtime.ResultPath) -and
         -not [string]::IsNullOrWhiteSpace([string]$manifest.Runtime.CacheVolumeLabel) -and
+        ($null -eq $manifest.Runtime.PSObject.Properties['FinalAction'] -or
+            ($manifest.Runtime.FinalAction -is [string] -and $manifest.Runtime.FinalAction -in @('None','Reboot','Shutdown'))) -and
         ($null -eq $manifest.Runtime.PSObject.Properties['PreventSleep'] -or $manifest.Runtime.PreventSleep -is [bool])
     )
     Add-DeploymentCheck -Name 'RuntimeConfiguration' -Passed $runtimeValid -Required $true -Message $(
@@ -175,7 +177,7 @@ function Test-OSDStageDeployment {
         if ($queueValid) { "App queue contains $($apps.Count) unique valid entries." } else { 'App queue is empty, contains duplicate IDs, or contains an invalid ID.' }
     )
 
-    $runtimeFiles = @('OSDStageOnlineApps.ps1', 'Invoke-OSDStagePreInstall.ps1', 'Invoke-OSDStageRunner.ps1', 'Restore-OSDStageCacheGeneration.ps1', 'Assert-OSDStageTransactionSpace.ps1', 'Enter-OSDStageCacheLock.ps1', 'Test-OSDStageOfficeCacheCompatibility.ps1', 'OSDStageSleepPrevention.ps1', 'OSDStagePayloadFile.ps1','OSDStage7Zip.ps1','OSDStageVisualStudioCode.ps1','OSDStagePrerequisite.ps1','OSDStageFont.ps1','OSDStageCertificate.ps1','OSDStageDriver.ps1', 'Invoke-OSDStageBuiltInCacheTransaction.ps1')
+    $runtimeFiles = @('OSDStageFinalAction.ps1', 'Invoke-OSDStageFinalAction.ps1', 'OSDStageOnlineApps.ps1', 'Invoke-OSDStagePreInstall.ps1', 'Invoke-OSDStageRunner.ps1', 'Restore-OSDStageCacheGeneration.ps1', 'Assert-OSDStageTransactionSpace.ps1', 'Enter-OSDStageCacheLock.ps1', 'Test-OSDStageOfficeCacheCompatibility.ps1', 'OSDStageSleepPrevention.ps1', 'OSDStagePayloadFile.ps1','OSDStage7Zip.ps1','OSDStageVisualStudioCode.ps1','OSDStagePrerequisite.ps1','OSDStageFont.ps1','OSDStageCertificate.ps1','OSDStageDriver.ps1', 'Invoke-OSDStageBuiltInCacheTransaction.ps1')
     $runtimeMissing = @($runtimeFiles | Where-Object { -not (Test-Path -LiteralPath (Join-Path $stageRoot $_) -PathType Leaf) })
     Add-DeploymentCheck -Name 'RuntimeScripts' -Passed ($runtimeMissing.Count -eq 0) -Required $true -Message $(
         if ($runtimeMissing.Count -eq 0) { 'Standalone runtime scripts and shared cache helpers are staged.' } else { "Missing runtime script(s): $($runtimeMissing -join ', ')." }

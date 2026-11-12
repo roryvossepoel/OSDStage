@@ -11,6 +11,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'OSDStageFont.ps1')
 . (Join-Path $PSScriptRoot 'OSDStageCertificate.ps1')
 . (Join-Path $PSScriptRoot 'OSDStageDriver.ps1')
+. (Join-Path $PSScriptRoot 'OSDStageFinalAction.ps1')
+$finalActionState = New-OSDStageFinalActionState
 $sleepRequest = $null
 $sleepLog = $null
 $manifestPath = Join-Path $StagedPath 'DeviceManifest.json'
@@ -326,6 +328,9 @@ function Write-RunnerResult {
         DurationSeconds           = [math]::Round($runnerStopwatch.Elapsed.TotalSeconds, 1)
         StagedPath                = $StagedPath
         LogPath                   = $logPath
+        FinalAction               = if ($Status -eq 'Failed' -and $finalActionState.Action -ne 'None') {
+            New-OSDStageFinalActionState -Action $finalActionState.Action -Status Skipped -Reason 'Deployment did not complete successfully.'
+        } else { $finalActionState }
         CleanupMode               = $cleanupMode
         ExpectedPackageCount  = @($apps).Count
         SuccessfulPackageCount= $completed
@@ -394,6 +399,8 @@ try {
     if (-not $manifest.Runtime.CleanupMode) { throw 'Device manifest Runtime.CleanupMode is missing.' }
     if (-not $manifest.Runtime.LogPath) { throw 'Device manifest Runtime.LogPath is missing.' }
 
+    $finalAction = Get-OSDStageFinalAction -Runtime $manifest.Runtime
+    $finalActionState = New-OSDStageFinalActionState -Action $finalAction -Status $(if ($finalAction -eq 'None') { 'NotRequested' } else { 'Pending' })
     $cleanupMode = [string]$manifest.Runtime.CleanupMode
     if ($cleanupMode -notin @('OnSuccess','Never')) {
         throw "Unsupported CleanupMode '$cleanupMode'."
@@ -1517,13 +1524,33 @@ try {
         CleanupMode = $cleanupMode
         DurationSeconds = [math]::Round($runnerStopwatch.Elapsed.TotalSeconds, 1)
     }
+    if ($finalActionState.Action -ne 'None') {
+        $finalActionState.Status = if ($Name) { 'Skipped' } else { 'Waiting' }
+        $finalActionState.Reason = if ($Name) { 'A filtered runner invocation cannot request a deployment-wide final action.' } else { 'Waiting for runner and SetupComplete exit, then configured cleanup.' }
+    }
     Save-RunnerResult -Status Succeeded
 
-    if ($cleanupMode -eq 'Never') {
-        Write-RunnerLog -LogPath $logPath -Event 'CleanupSkipped' -Message 'Runtime source cleanup was skipped by configuration.' -Data @{ Path = $StagedPath; CleanupMode = $cleanupMode }
+    $deferredCleanup = $false
+    if ($finalActionState.Status -eq 'Waiting') {
+        try {
+            Start-OSDStageFinalAction -Action $finalActionState.Action -DeploymentId $manifest.DeploymentId `
+                -RunnerStartedAtUtc $runnerStartedAtUtc -StagedPath $StagedPath -ResultPath $resultPath -CleanupMode $cleanupMode
+            $deferredCleanup = $true
+            Write-RunnerLog -LogPath $logPath -Event 'FinalActionWaiting' -Message 'Final action will wait for runner and SetupComplete to exit successfully, then complete cleanup before requesting power.' -Data @{ Action=$finalActionState.Action }
+        }
+        catch {
+            $finalActionState = New-OSDStageFinalActionState -Action $finalActionState.Action -Status Skipped -Reason $_.Exception.Message
+            Write-RunnerLog -LogPath $logPath -Event 'FinalActionSkipped' -Level Warning -Message $_.Exception.Message
+            Save-RunnerResult -Status Succeeded
+        }
     }
-    else {
-        Start-RunnerCleanup -Path $StagedPath -LogPath $logPath
+    if (-not $deferredCleanup) {
+        if ($cleanupMode -eq 'Never') {
+            Write-RunnerLog -LogPath $logPath -Event 'CleanupSkipped' -Message 'Runtime source cleanup was skipped by configuration.' -Data @{ Path = $StagedPath; CleanupMode = $cleanupMode }
+        }
+        else {
+            Start-RunnerCleanup -Path $StagedPath -LogPath $logPath
+        }
     }
 
     exit 0
