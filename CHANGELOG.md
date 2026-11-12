@@ -2,7 +2,11 @@
 
 ## Unreleased — 1.0 preparation
 
-- Add optional deployment-wide `FinalAction` (`None`, `Reboot`, `Shutdown`). The existing successful Runner endpoint arms a one-shot finalizer that waits for SetupComplete to finish, completes cleanup and report writes, and submits the power request last. Default remains no action; failures or incomplete completion evidence suppress it. Physical deployment acceptance is pending.
+- Add optional deployment-wide `FinalAction` (`None`, `Reboot`, `Shutdown`). The existing successful Runner endpoint arms a one-shot finalizer that waits for SetupComplete to finish, completes cleanup and report writes, and submits the power request last. Default remains no action; failures or incomplete completion evidence suppress it. Both power choices have [physical x64 acceptance](docs/testing.md#combined-10-preparation-acceptance--12-november-2026) on the pinned 12 November test build.
+
+- Show app display names, including **7-Zip**, and concrete payload versions in the delivery report; display `n/a` for failure type after successful execution. Use the available page width and preserve readable table cells. Command names and app IDs remain unchanged.
+
+- Recover an unambiguous valid previous built-in cache generation and remove owned transaction residue after validation. Preserve ambiguous recovery evidence and unknown repository staging content; the ordinary warm-cache path remains reusable.
 
 - Add a read-only repository availability check before multi-package staging, including aggregate errors, aliases, architecture validation and verified offline fallback (#156).
 

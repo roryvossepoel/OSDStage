@@ -132,8 +132,9 @@ requirements independently of the chosen final action.
 
 Microsoft explicitly warns against rebooting **inside** SetupComplete. The worker
 therefore waits outside it; see [Windows Setup scripts](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/add-a-custom-script-to-windows-setup).
-Physical WinPE-to-OOBE validation of both power choices is still required before
-release acceptance; automated tests do not reboot or shut down their host.
+Both power choices passed the [12 November physical deployment tests](testing.md#combined-10-preparation-acceptance--12-november-2026)
+on the pinned x64 source, including maintainer confirmation of the actual restart
+and shutdown. Automated tests do not reboot or shut down their host.
 
 ## Automatic sleep prevention
 

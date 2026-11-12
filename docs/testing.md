@@ -12,6 +12,58 @@ This page records version-specific maintenance checks and real OSDStage deployme
 
 For current operating instructions, use [Choose the right check](maintenance.md#choose-the-right-check) and the [online WinPE example](../Examples/WinPE-Online.md). The [0.45.0 all-app cold procedure](all-apps-cold-validation.md) is retained as a historical, version-pinned test; it is not the next required test or a current-release quick start.
 
+## Combined 1.0 preparation acceptance — 12 November 2026
+
+The maintainer deployed source commit `4d89590b071bad28caa0893993715978fade6048`
+from [PR #162](https://github.com/roryvossepoel/OSDStage/pull/162) on two x64 Dell
+Pro Micro QCM1250 devices after OSDCloud. PC1 selected `FinalAction Reboot`; PC2
+selected `FinalAction Shutdown`. Both enabled Windows Update with drivers and
+used Microsoft 365 Apps, Teams, Acrobat, Chrome, 7-Zip and the repository package
+Omnissa Horizon Client. The internal manifest still identifies `1.0.0-rc4`;
+this record applies to the pinned development source, not the published RC4.
+
+| Check | PC1 — Reboot | PC2 — Shutdown |
+| --- | --- | --- |
+| Runtime queue | 7/7 succeeded, zero failed or skipped | 7/7 succeeded, zero failed or skipped |
+| PreInstall | 37.8 seconds; all five built-in payloads reused | 31.8 seconds; all five built-in payloads reused |
+| Runner | 1241.2 seconds | 1159.8 seconds |
+| Windows Update | 39/39 installed in 802.4 seconds | 39/39 installed in 817.8 seconds |
+| Report evidence checks | 7/7 passed | 7/7 passed |
+| Finalizer result | Reboot / Requested after process completion and cleanup | Shutdown / Requested after process completion and cleanup |
+| Maintainer observation | Automatic restart completed correctly | Automatic shutdown completed correctly |
+
+`Runtime.log`, `Latest.json`, `PreInstall.json`, the Windows Update results and
+both delivery-report formats agree for each deployment. Neither runtime log
+contains warning/error entries. All 39 update install results are 2 / HResult 0:
+four quality updates, 32 other drivers and three firmware entries. The November
+Windows cumulative update is KB5132061, targeting build 26300.9974.
+
+The retained worker and report scripts match the pinned source byte-for-byte.
+Each finalizer attached to the runner PowerShell process, SetupComplete's
+`cmd.exe` and `windeploy.exe`. `Finished.json` records `Requested` only after
+those processes exited successfully, the `OnSuccess` staging cleanup completed,
+and the one-shot task was unregistered. The maintainer's subsequent confirmation
+establishes the actual power outcome; `Requested` alone does not prove it.
+
+The supplied HTML shows app display names, including **7-Zip**, concrete Chrome
+`157.0.8103.79` and Acrobat `26.002.22031` payload versions, and `n/a` failure
+types for successful entries. Both reports contain the fluid-width layout.
+Office `16.0.20527.20194` reused its compatible cache; no Office redownload was
+required. The normal warm-cache path passed; transaction interruption/recovery
+failure scenarios remain automated coverage.
+
+The report's `Attention` status and revision 26300.9711 describe the state before
+the final power action: Windows Update required a restart and recommended a
+further scan. These files do not establish the post-startup OS revision, final
+firmware versions or absence of later update offers. Separate .NET cumulative
+servicing, ARM64 and additional hardware/parameter variants are not covered by
+these runs. Earlier BIOS observations below remain separate evidence.
+
+[CI on the accepted source](https://github.com/roryvossepoel/OSDStage/actions/runs/43221435808)
+passed 971 tests on each of Windows PowerShell 5.1 and PowerShell 7, with zero
+failures or skips, plus the analyzer, package/help and native process checks.
+Private logs, device identifiers and catalog details are not committed.
+
 ## PC2 Windows Update and firmware validation — 12 November 2026
 
 The maintainer supplied a successful x64 Dell Pro Micro QCM1250 deployment with
@@ -38,9 +90,9 @@ the update-package results. Other firmware entries and every peripheral's
 functionality were not independently checked. This was one update pass, not a
 claim that subsequent Windows Update scans have no more offers.
 
-Combined-build acceptance still requires physical `FinalAction Reboot` and
-`Shutdown` runs and inspection of the updated report and cleanup. No device logs,
-serial numbers or private catalog details are committed with this summary.
+The later [combined-build acceptance](#combined-10-preparation-acceptance--12-november-2026)
+records both final power actions, report details and cleanup separately. No device
+logs, serial numbers or private catalog details are committed with this summary.
 
 ## Reading this evidence
 

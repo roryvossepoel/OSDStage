@@ -71,8 +71,11 @@ OOBE/sign-in confirmation from the machine-readable execution evidence. Monthly
 cumulative Windows/.NET servicing was not offered in those original runs. The
 later [PC2 validation](testing.md#pc2-windows-update-and-firmware-validation--12-november-2026)
 records November Windows cumulative servicing, drivers and post-restart BIOS
-evidence. It does not establish acceptance of later code or separate .NET
-servicing coverage; record remaining coverage decisions before preparing GA.
+evidence. The [combined 12 November acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026)
+adds the pinned development build with successful Reboot/Shutdown final actions,
+warm cache, updated reports and cleanup. Separate .NET cumulative servicing and
+the remaining architecture/variant limits are still unrecorded; retain these
+limits in the GA scope decision.
 
 For GA, remove the `Prerelease` field,
 prepare a `1.0.0` changelog section and release notes, then review and run the
