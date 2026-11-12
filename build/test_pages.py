@@ -25,11 +25,11 @@ class PagesTests(unittest.TestCase):
         build()
         cls.docs={p:Document(p.read_text()) for p in OUT.rglob('*.html')}
     def test_navigation_and_local_links_under_project_subpath(self):
-        self.assertEqual(len(self.docs),7)
+        self.assertEqual(len(self.docs),10)
         for p,d in self.docs.items():
             with self.subTest(page=p.name):
                 self.assertEqual(d.lang,'en');self.assertEqual(d.h1,1);self.assertEqual(d.main,1)
-                self.assertEqual(d.current,0 if p.parent.name=='examples' else 1)
+                self.assertEqual(d.current,0 if p.parent.name in ('examples','builders') else 1)
                 self.assertEqual(len(d.ids),len(set(d.ids)))
                 for link in d.links:
                     u=urlsplit(link)
@@ -40,6 +40,14 @@ class PagesTests(unittest.TestCase):
                     self.assertTrue(target.is_relative_to(OUT),link)
                     self.assertTrue(target.is_file(),f'{p.name}: {link}')
                     if u.fragment and target in self.docs:self.assertIn(unquote(u.fragment),self.docs[target].ids)
+    def test_builders_are_direct_link_previews(self):
+        for name in ['index.html','deployment.html','component.html']:
+            html=(OUT/'builders'/name).read_text()
+            self.assertIn('noindex,nofollow', html)
+        for name in ['index.html','get-started.html','guides.html','faq.html','catalog/index.html']:
+            self.assertNotIn('builders/', (OUT/name).read_text())
+        self.assertIn('Choose what you need.', (OUT/'builders/index.html').read_text())
+
     def test_report_example_is_fictional_offline_and_linked(self):
         example=OUT/'examples/DeliveryReport.html'
         html=example.read_text()
