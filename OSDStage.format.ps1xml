@@ -117,7 +117,7 @@
             }
         }
         'OSDStage.Configuration' {
-            'Session configuration: built-ins {0}, repository {1}, cleanup {2}.' -f (Read-State 'EnableBuiltIns' 'on' 'off'), (Read-State 'EnableRepository' 'on' 'off'), (Read-Field 'CleanupMode')
+            'Session configuration: built-ins {0}, repository {1}, cleanup {2}, final action {3}.' -f (Read-State 'EnableBuiltIns' 'on' 'off'), (Read-State 'EnableRepository' 'on' 'off'), (Read-Field 'CleanupMode'), (Read-Field 'FinalAction')
         }
         'OSDStage.ConfigurationUpdated' { 'Session configuration updated.' }
         'OSDStage.DeploymentResult' {

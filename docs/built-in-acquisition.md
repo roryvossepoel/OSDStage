@@ -81,7 +81,7 @@ On full Windows, the publisher-validated integrations listed below require:
 | Visual C++ v14 | Redistributable EXE | Microsoft Corporation |
 | .NET runtimes | Runtime EXE | Microsoft Corporation |
 
-Other validation models are described separately: [7Zip](7zip.md) checks the official release SHA-256; [CMTrace Open](cmtrace-open.md) checks the upstream asset SHA-256 and Authenticode without this organization allowlist; [Company Portal](microsoft-company-portal.md) uses file hashes and native Appx provisioning validation. Adobe's outer ZIP is not Authenticode-assessed.
+Other validation models are described separately: [7-Zip](7zip.md) checks the official release SHA-256; [CMTrace Open](cmtrace-open.md) checks the upstream asset SHA-256 and Authenticode without this organization allowlist; [Company Portal](microsoft-company-portal.md) uses file hashes and native Appx provisioning validation. Adobe's outer ZIP is not Authenticode-assessed.
 
 For MSI/EXE synchronization, candidate downloads are checked **before**
 replacing an existing cached file. A rejected candidate leaves the previous
@@ -115,7 +115,7 @@ The freshness mechanism is product-specific:
 | Mozilla Firefox Enterprise | HTTP metadata for the Mozilla latest MSI endpoint: `ETag` preferred, otherwise `Last-Modified + Content-Length` | The vendor MSI is downloaded only when the remote metadata changed or no cached MSI exists. Channel, architecture, and language are cached separately. |
 | Cisco Webex | Cisco MSI HTTP metadata, `ETag` preferred, otherwise `Last-Modified + Content-Length` | Reuse the MSI when unchanged; download when missing or changed. Separate x64/ARM64 cache folders. |
 | Zoom Workplace | Official MSI HTTP metadata | Reuse unchanged validated content; separate x64/ARM64 generations. |
-| 7Zip | Official release version and SHA-256 | Reuse matching verified content; download and validate a changed release. |
+| 7-Zip | Official release version and SHA-256 | Reuse matching verified content; download and validate a changed release. |
 | Visual Studio Code | Microsoft stable system-installer metadata and SHA-256 | Reuse matching content after hash and publisher validation. |
 | Visual C++ v14 | Microsoft evergreen endpoint HTTP metadata | Verify a Microsoft-signed v14 installer before reuse or replacement. |
 | .NET runtimes | Microsoft release metadata, channel support and SHA-512 | Select a supported stable patch within the requested channel and runtime type. |

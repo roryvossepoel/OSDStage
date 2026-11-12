@@ -8,6 +8,7 @@ function Get-OSDStageConfiguration {
             EnableBuiltIns   = $true
             EnableRepository = $true
             CleanupMode      = 'OnSuccess'
+            FinalAction      = 'None'
             PreventSleep     = $true
             CacheVolumeLabel = 'OSDCloud'
             LogPath          = '%ProgramData%\OSDStage\Logs\Runtime.log'
@@ -21,6 +22,7 @@ function Get-OSDStageConfiguration {
         EnableBuiltIns   = [bool]$script:OSDStageConfiguration.EnableBuiltIns
         EnableRepository = [bool]$script:OSDStageConfiguration.EnableRepository
         CleanupMode      = $script:OSDStageConfiguration.CleanupMode
+        FinalAction      = $script:OSDStageConfiguration.FinalAction
         PreventSleep     = $script:OSDStageConfiguration.PreventSleep
         CacheVolumeLabel = $script:OSDStageConfiguration.CacheVolumeLabel
         LogPath          = $script:OSDStageConfiguration.LogPath

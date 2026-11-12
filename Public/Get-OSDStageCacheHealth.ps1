@@ -45,6 +45,7 @@ function Get-OSDStageCacheHealth {
             RenamedCount          = 0
             IncompleteCount       = 0
             CorruptCount          = 0
+            AdvisoryCount         = 0
             RemovableSizeMB       = 0
             Entries               = @()
             Healthy               = $false

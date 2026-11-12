@@ -33,7 +33,7 @@ App installers default to x64. Visual C++ and .NET require an explicit architect
 | [Mozilla Firefox Enterprise](mozilla-firefox.md) | x64, x86 | Rapid/ESR channel and language |
 | [Cisco Webex](cisco-webex.md) | x64, arm64 | MSI options and sign-in hints |
 | [Zoom Workplace](zoom-workplace.md) | x64, arm64 | SSO host, shortcut and settings |
-| [7Zip](7zip.md) | x64, x86, arm64 | Architecture and timeout |
+| [7-Zip](7zip.md) | x64, x86, arm64 | Architecture and timeout |
 | [Visual Studio Code](visual-studio-code.md) | x64, arm64 | Stable system installer |
 | [Visual C++ v14](runtime-prerequisites.md) | x64, x86 | Explicit architecture |
 | [.NET Runtime / Desktop Runtime](runtime-prerequisites.md) | x64, x86 | Runtime type, channel and explicit architecture |
@@ -115,7 +115,7 @@ These use separate commands and are not vendor app installers:
 
 <a id="7zip"></a>
 
-[Continue to 7zip](7zip.md#7zip).
+[Continue to 7-Zip](7zip.md#7zip).
 
 <a id="visual-studio-code"></a>
 

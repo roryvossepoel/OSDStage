@@ -301,9 +301,9 @@ function Get-OSDStageCacheHealthState {
             }
         }
         else {
-            $state = 'Orphaned'
-            $action = if ($DesiredStateAvailable) { 'Remove' } else { 'Review' }
-            $reason = 'A physical package folder exists without a CacheCatalog.json entry.'
+            $state = 'Advisory'
+            $action = 'Keep'
+            $reason = 'Unrecognized package folder has no OSDStage cache metadata. It was left untouched.'
         }
 
         $displayName = if ($desired -and $desired.DisplayName) { [string]$desired.DisplayName } elseif ($existing -and $existing.DisplayName) { [string]$existing.DisplayName } else { $id }
@@ -458,7 +458,7 @@ function Get-OSDStageCacheHealthState {
                 $state = 'Incomplete'; $action = 'Refresh'; $reason = 'The canonical built-in folder has no readable CacheInfo.json.'
             }
             else {
-                $state = 'Orphaned'; $action = 'Remove'; $reason = 'The folder is not registered as a current built-in app.'
+                $state = 'Advisory'; $action = 'Keep'; $reason = 'Unrecognized folder has no readable current built-in identity. It was left untouched.'
             }
             $entries.Add((New-CacheHealthEntry `
                 -Id $directory.Name -CanonicalId $canonicalId -DisplayName $directory.Name `
@@ -471,23 +471,23 @@ function Get-OSDStageCacheHealthState {
     $stagingRoot = Join-Path $CachePath '.staging'
     if (Test-Path -LiteralPath $builtInRoot -PathType Container) {
         foreach ($file in @(Get-ChildItem -LiteralPath $builtInRoot -File -Force -ErrorAction Stop)) {
-            $requiresReview = ($file.Name -match '\.osdstage-') -or
-                (($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
             $entries.Add((New-CacheHealthEntry `
                 -Id $file.Name -CanonicalId $file.Name -DisplayName $file.Name -Source 'BuiltIn' `
-                -State 'Orphaned' -Integrity 'Unknown' -Action $(if ($requiresReview) { 'Review' } else { 'Remove' }) `
-                -Reason 'Loose files do not belong in the managed BuiltIn root; preserve links and recovery content for review.' `
+                -State 'Advisory' -Integrity 'Unknown' -Action 'Keep' `
+                -Reason 'Unrecognized loose content exists in the BuiltIn root. OSDStage left it untouched.' `
                 -Path $file.FullName -Desired:$false -Pinned:$false))
         }
     }
 
     if (Test-Path -LiteralPath $stagingRoot -PathType Container) {
         foreach ($directory in @(Get-ChildItem -LiteralPath $stagingRoot -Directory -Force -ErrorAction SilentlyContinue)) {
+            $ownedTransaction = $directory.Name -match '^Sync-[0-9a-f]{32}$'
             $entries.Add((New-CacheHealthEntry `
                 -Id $directory.Name -CanonicalId $directory.Name `
-                -DisplayName 'Unfinished cache transaction' -Source 'Transaction' `
-                -State 'Orphaned' -Integrity 'Unknown' -Action 'Review' `
-                -Reason 'A cache transaction directory remains. Inspect its logs and recovery data before removing it.' `
+                -DisplayName $(if ($ownedTransaction) { 'Unfinished cache transaction' } else { $directory.Name }) -Source 'Transaction' `
+                -State $(if ($ownedTransaction) { 'Orphaned' } else { 'Advisory' }) -Integrity 'Unknown' `
+                -Action $(if ($ownedTransaction) { 'Remove' } else { 'Keep' }) `
+                -Reason $(if ($ownedTransaction) { 'OSDStage-owned transaction residue remains and can be removed after active cache validation.' } else { 'Unrecognized staging content was left untouched.' }) `
                 -Path $directory.FullName -Desired:$false -Pinned:$false))
         }
     }
@@ -512,13 +512,14 @@ function Get-OSDStageCacheHealthState {
         RenamedCount          = @($allEntries | Where-Object State -eq 'Renamed').Count
         IncompleteCount       = @($allEntries | Where-Object State -eq 'Incomplete').Count
         CorruptCount          = @($allEntries | Where-Object { $_.State -eq 'Corrupt' -or $_.Integrity -eq 'Corrupt' }).Count
+        AdvisoryCount         = @($allEntries | Where-Object State -eq 'Advisory').Count
         RemovableSizeMB       = [math]::Round([double](($removable | Measure-Object SizeMB -Sum).Sum), 1)
         Entries               = $allEntries
         Healthy               = (
             -not $CatalogError -and
             @($allEntries | Where-Object {
                 ($_.State -in $actionableStates -and -not ($_.State -eq 'Obsolete' -and $_.Pinned)) -or
-                $_.Integrity -in @('Missing','Corrupt','Unknown')
+                ($_.State -ne 'Advisory' -and $_.Integrity -in @('Missing','Corrupt','Unknown'))
             }).Count -eq 0
         )
     }

@@ -1,4 +1,6 @@
-# 7Zip
+<a id="7zip"></a>
+
+# 7-Zip
 
 [Documentation](README.md) · [Built-in apps](built-in-apps.md) · [Release availability](release-status.md)
 
@@ -42,12 +44,12 @@ This is **release SHA-256 validation, not Authenticode publisher validation**.
 The trust anchor for a new download is the official repository metadata over HTTPS.
 Offline validation compares against the locally recorded release digest; it does
 not protect against an attacker changing both the installer and its local metadata.
-`Get-OSDStageCache` also checks the recorded hash, size and architecture for 7Zip.
+`Get-OSDStageCache` also checks the recorded hash, size and architecture for 7-Zip.
 
 If the release API or download fails (including GitHub rate limits), PreInstall
 may use a valid staged generation, reporting `FallbackCacheUsed` and the refresh
 error. Without network it reports `OfflineCacheUsed`. With no valid fallback,
-7Zip fails acquisition and is skipped; other queued apps can continue.
+7-Zip fails acquisition and is skipped; other queued apps can continue.
 Keep access to `api.github.com`, `github.com` and GitHub's release asset CDN available.
 Use a custom repository package when you require a pinned release or custom setup.
 

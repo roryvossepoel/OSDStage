@@ -193,7 +193,7 @@ function Get-OSDStage {
         @{ Id='VisualCRedist'; DisplayName='Visual C++ v14 Redistributable'; Info=$visualCCacheInfo },
         @{ Id='DotNetRuntime'; DisplayName='.NET Runtime'; Info=$dotNetCacheInfo },
         @{ Id='VisualStudioCode'; DisplayName='Visual Studio Code'; Info=$visualStudioCodeCacheInfo },
-        @{ Id='7Zip'; DisplayName='7Zip'; Info=$sevenZipCacheInfo },
+        @{ Id='7Zip'; DisplayName='7-Zip'; Info=$sevenZipCacheInfo },
         @{ Id='ZoomWorkplace'; DisplayName='Zoom Workplace'; Info=$zoomCacheInfo },
         @{ Id='MozillaFirefoxEnterprise'; DisplayName='Mozilla Firefox Enterprise'; Info=$firefoxCacheInfo }
     )) {

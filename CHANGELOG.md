@@ -2,6 +2,8 @@
 
 ## Unreleased — 1.0 preparation
 
+- Add optional deployment-wide `FinalAction` (`None`, `Reboot`, `Shutdown`). The existing successful Runner endpoint arms a one-shot finalizer that waits for SetupComplete to finish, completes cleanup and report writes, and submits the power request last. Default remains no action; failures or incomplete completion evidence suppress it. Physical deployment acceptance is pending.
+
 - Add a read-only repository availability check before multi-package staging, including aggregate errors, aliases, architecture validation and verified offline fallback (#156).
 
 - Remove the Windows Viewer command, implementation, UI-only tests and screenshots. Use the CLI staging/cache/result checks and delivery report instead. The website catalog and public metadata remain available.

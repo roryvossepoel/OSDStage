@@ -82,9 +82,11 @@ Describe 'Explicit managed built-in namespace pruning' {
             $file = Join-Path $cache 'BuiltIn\notes.txt'
             Set-Content $file 'unmanaged'
             $health = Get-OSDStageCacheHealth -CachePath $cache -Offline
-            $health.Healthy | Should -BeFalse
-            $health.OrphanedCount | Should -Be 1
-            $health.Entries[0].Action | Should -Be 'Remove'
+            $health.Healthy | Should -BeTrue
+            $health.OrphanedCount | Should -Be 0
+            $health.AdvisoryCount | Should -Be 1
+            $health.Entries[0].State | Should -Be 'Advisory'
+            $health.Entries[0].Action | Should -Be 'Keep'
             Test-Path $file | Should -BeTrue
         }
     }

@@ -95,7 +95,7 @@ The optional Windows Inbox Cleanup script is staged with `Add-OSDStageWindowsInb
 | Mozilla Firefox Enterprise | `Add-OSDStageMozillaFirefoxEnterprise` |
 | Cisco Webex | `Add-OSDStageCiscoWebex` |
 | Zoom Workplace | `Add-OSDStageZoomWorkplace` |
-| 7Zip | `Add-OSDStage7Zip` |
+| 7-Zip | `Add-OSDStage7Zip` |
 | Visual Studio Code | `Add-OSDStageVisualStudioCode` |
 | Visual C++ v14 (x86 or x64) | `Add-OSDStageVisualCRedist -Architecture x64` |
 | .NET Runtime / Desktop Runtime | `Add-OSDStageDotNetRuntime -Architecture x64` |

@@ -32,7 +32,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-OSDStage-Ve
 
 Use full Windows on the preparation PC with internet access and PowerShellGet's `Save-Module` available. The script refuses WinPE. No USB flash drive or test deployment is required; connected USB flash drives are neither inspected nor changed. No GitHub Action or scheduled task is needed.
 
-This is a **version-pinned diagnostic for OSDStage 0.49.1**, not a latest-module or all-variants check. It saves that exact Gallery module in a new temporary directory and imports it only in the child PowerShell process. It does not install or replace the preparation PC's module. Fixed source URLs match 0.49.1; 7Zip, VS Code and prerequisite releases use that module's resolvers, and the Office descriptor uses its parser. Review the pin and source list before using this tool to validate a future implementation.
+This is a **version-pinned diagnostic for OSDStage 0.49.1**, not a latest-module or all-variants check. It saves that exact Gallery module in a new temporary directory and imports it only in the child PowerShell process. It does not install or replace the preparation PC's module. Fixed source URLs match 0.49.1; 7-Zip, VS Code and prerequisite releases use that module's resolvers, and the Office descriptor uses its parser. Review the pin and source list before using this tool to validate a future implementation.
 
 The 15 checks cover these selections:
 
@@ -40,7 +40,7 @@ The 15 checks cover these selections:
 | --- | --- |
 | Microsoft 365 Apps | ODT download endpoint and MonthlyEnterprise x64 version descriptor; no Office payload download |
 | Microsoft Teams | x64 MSIX and bootstrapper endpoints |
-| Adobe Acrobat Unified, Chrome, Webex, Zoom, 7Zip, Visual Studio Code | x64 default sources; VS Code uses the system installer |
+| Adobe Acrobat Unified, Chrome, Webex, Zoom, 7-Zip, Visual Studio Code | x64 default sources; VS Code uses the system installer |
 | Firefox | Rapid, en-US, x64 |
 | VisualCRedist | v14 x86 and x64 |
 | .NET | 10.0 Runtime x86 and 10.0 Desktop Runtime x64 |
@@ -92,18 +92,18 @@ These are the checks used by cache inventory and inherited by cache health. They
 | Microsoft Teams | Bootstrapper plus the recorded MSIX filename, SHA-256 and size. Optional Authenticode inspection covers the bootstrapper only. |
 | Chrome, Firefox, Webex and Zoom | Recorded MSI filename, identity, SHA-256 and size. Optional Authenticode inspection covers the MSI and expected publisher. |
 | Adobe Acrobat Unified | Recorded ZIP filename, identity, SHA-256 and size. The outer ZIP is not Authenticode-assessed by cache inspection. |
-| 7Zip | Recorded release identity/source, file size, SHA-256 and executable architecture. Its digest comes from release metadata; Authenticode is not assessed. |
+| 7-Zip | Recorded release identity/source, file size, SHA-256 and executable architecture. Its digest comes from release metadata; Authenticode is not assessed. |
 | Visual Studio Code | Recorded release identity/platform/source, file size and SHA-256. Optional Authenticode inspection adds the Microsoft publisher check. |
 | VisualCRedist | Recorded variant/version/source, file size and SHA-256. Optional Authenticode inspection adds the Microsoft publisher check. |
 | .NET runtimes | Recorded variant/channel/version/source, supported-channel policy, file size, SHA-256 and recorded release SHA-512. Optional Authenticode inspection adds the Microsoft publisher check. |
 
-`SizeMB` and `TotalSizeMB` report observed disk usage. They are not universal completeness checks. The explicit recorded-size comparisons for 7Zip, VS Code and runtimes are separate checks. A hash match proves equality with the referenced metadata, not that the local metadata itself was independently revalidated online.
+`SizeMB` and `TotalSizeMB` report observed disk usage. They are not universal completeness checks. The explicit recorded-size comparisons for 7-Zip, VS Code and runtimes are separate checks. A hash match proves equality with the referenced metadata, not that the local metadata itself was independently revalidated online.
 
 ### Reading the summary safely
 
 - `Healthy=True` means no failing health condition was found under those rules. It is not proof of vendor freshness, all publisher signatures or compatibility with a future app selection. Check `CacheAvailable`, `EntryCount` and the individual entries; an existing empty cache can be healthy without containing deployable apps.
 - An entry's `Valid=True` means its app-specific local checks passed. `Get-OSDStageCache -VerifySignatures` reports the signature separately; it does not turn the entry's `Valid` field into a publisher result. `Test-OSDStageCache -VerifySignatures` also requires supported signature checks to complete for its overall `Valid` result.
-- `SignatureChecksComplete=True` covers the supported signature candidates, not every cached file. Repository ZIPs, Adobe's outer ZIP and 7Zip are outside that Authenticode scope. WinPE cannot complete supported Authenticode inspection.
+- `SignatureChecksComplete=True` covers the supported signature candidates, not every cached file. Repository ZIPs, Adobe's outer ZIP and 7-Zip are outside that Authenticode scope. WinPE cannot complete supported Authenticode inspection.
 - `Version=Current` is a policy/metadata value, not confirmation that the vendor still advertises that release.
 
 For a local inspection on full Windows:
@@ -201,3 +201,14 @@ A successful collection is not a successful deployment: a failed deployment can 
 The script returns one report object with `Mode`, `Status`, `Passed`, `CheckedAtUtc`, `Checks` and `Details`. It prints readable check messages as well. By default a report is returned without terminating the caller; `-ThrowOnFailure` throws after reporting whenever the status is not `Passed`, including `ReviewRequired`. Use that switch with `powershell.exe -File` when the process exit status is your automation gate.
 
 The tool does not update modules, modify or prune cache content, install apps, remove backups or publish releases. Any corrective action is a separate decision.
+
+## Automatic cache self-healing
+
+Mutating cache operations repair OSDStage-owned transaction residue automatically.
+
+- Completed or abandoned `.osdstage-new-*` / `.osdstage-old-*` generations are reconciled when the active built-in generation can be validated.
+- Repository `.staging\Sync-*` directories are removed automatically once the active repository cache and `CacheCatalog.json` can be proven consistent.
+- Unknown folders or files that cannot be proven to be OSDStage-owned are never deleted automatically. They produce an advisory warning and do not make an otherwise healthy cache unhealthy.
+- Ambiguous recovery state, such as multiple valid previous generations for one missing active path, remains a blocking error because OSDStage cannot safely choose which generation is authoritative.
+
+This keeps normal CLI workflows independent from a maintenance UI: mutating commands preserve cache consistency, while `Get-OSDStageCacheHealth` remains a diagnostic surface.

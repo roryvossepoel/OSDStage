@@ -68,9 +68,11 @@ After a verified RC publication, test installation from Gallery in WinPE and
 complete the normal deployment once. The [RC4 Gallery acceptance record](rc4-gallery-acceptance.md)
 documents that path on two x64 devices and separates the maintainer's successful
 OOBE/sign-in confirmation from the machine-readable execution evidence. Monthly
-cumulative Windows/.NET servicing was not offered in those runs and remains an
-explicit field-coverage item; record the decision on outstanding coverage before
-preparing GA.
+cumulative Windows/.NET servicing was not offered in those original runs. The
+later [PC2 validation](testing.md#pc2-windows-update-and-firmware-validation--12-november-2026)
+records November Windows cumulative servicing, drivers and post-restart BIOS
+evidence. It does not establish acceptance of later code or separate .NET
+servicing coverage; record remaining coverage decisions before preparing GA.
 
 For GA, remove the `Prerelease` field,
 prepare a `1.0.0` changelog section and release notes, then review and run the

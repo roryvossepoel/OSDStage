@@ -402,6 +402,7 @@
                 CatalogUri = 'HTTP/HTTPS repository catalog.json URL; supply $null to clear it. Built-ins do not require a repository catalog.'
                 EnableBuiltIns = 'Enable or disable built-in apps and OSDStage-owned staging features for Add/discovery. Default is True.'
                 EnableRepository = 'Enable or disable repository/catalog packages for Add/discovery. Default is True.'
+                FinalAction = 'None (default), Reboot or Shutdown after the complete successful deployment. Set before staging. A one-shot SYSTEM worker waits for Runner, SetupComplete and Windows Setup to exit successfully, then completes cleanup and report writes before submitting the power request. Failures, filtered runs, incomplete evidence or a 30-minute wait timeout skip the action. No startup trigger or retry.'
                 CleanupMode = 'OnSuccess schedules local staging cleanup after installation success; Never retains it. Failures retain source. Does not clear USB cache.'
                 CacheVolumeLabel = 'Label used to find the cache volume; default configuration is OSDCloud. Does not rename or format a volume.'
                 LogPath = 'Runtime log path recorded during staging. Default configuration is %ProgramData%\OSDStage\Logs\Runtime.log.'
@@ -411,6 +412,7 @@
             Examples = @(
                 @{ Code = 'Set-OSDStageConfiguration -CleanupMode OnSuccess -CacheVolumeLabel ''OSDCloud'' -PassThru'; Remarks = 'Windows or WinPE: configure the session without staging.' },
                 @{ Code = 'Set-OSDStageConfiguration -CatalogUri ''https://example.org/osdstage/catalog.json'''; Remarks = 'Replace the URL with your own published repository.' },
+                @{ Code = 'Set-OSDStageConfiguration -FinalAction Shutdown -PassThru'; Remarks = 'Configure shutdown after successful deployment; this command alone never shuts down the preparation PC.' },
                 @{ Code = 'Set-OSDStageConfiguration -EnableRepository $false'; Remarks = 'Use built-ins only for this module session.' },
                 @{ Code = 'Set-OSDStageConfiguration -EnableBuiltIns $false'; Remarks = 'Use repository/catalog packages only for this module session.' }
             )
@@ -418,7 +420,7 @@
         }
         'Get-OSDStageConfiguration' = @{
             Synopsis = 'Read the effective session configuration.'
-            Description = 'Returns CatalogUri, source enablement, CleanupMode, CacheVolumeLabel, LogPath, ResultPath and Scope. Initializes in-memory defaults when needed. Does not read a device manifest or persist configuration.'
+            Description = 'Returns CatalogUri, source enablement, CleanupMode, FinalAction, PreventSleep, CacheVolumeLabel, LogPath, ResultPath and Scope. Initializes in-memory defaults when needed. Does not read a device manifest or persist configuration.'
             Environment = 'Full Windows or WinPE; current module session.'
             Output = 'OSDStage.Configuration with Scope=Session.'
             Examples = @(@{ Code = 'Get-OSDStageConfiguration | Format-List'; Remarks = 'Inspect effective settings before staging.' })

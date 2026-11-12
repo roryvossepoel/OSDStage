@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Release availability](release-status.md)
 
-> Historical device evidence below was recorded with OSDApps, before the rename. Command and path examples are now written for OSDStage; the recorded commit IDs and deployment IDs refer to the original tests. This is not acceptance evidence for the renamed candidate.
+> Older OSDApps entries on this page predate the rename. Their recorded commit IDs and deployment IDs refer to those original tests, not acceptance of a current OSDStage candidate. Newer OSDStage evidence is identified separately.
 
 For the published OSDStage candidate, see the [RC4 Gallery acceptance on Dell and Surface](rc4-gallery-acceptance.md).
 The earlier [broad delivery-report test](delivery-report.md#broad-component-acceptance-3-november-2026)
@@ -11,6 +11,36 @@ records the separate 19-package component scenario.
 This page records version-specific maintenance checks and real OSDStage deployment scenarios after OSDCloud applies Windows. **Staging success alone is not an installation success**: the Windows `SetupComplete.cmd` phases must finish and the individual app results must be checked.
 
 For current operating instructions, use [Choose the right check](maintenance.md#choose-the-right-check) and the [online WinPE example](../Examples/WinPE-Online.md). The [0.45.0 all-app cold procedure](all-apps-cold-validation.md) is retained as a historical, version-pinned test; it is not the next required test or a current-release quick start.
+
+## PC2 Windows Update and firmware validation — 12 November 2026
+
+The maintainer supplied a successful x64 Dell Pro Micro QCM1250 deployment with
+`IncludeDrivers=True`, followed by post-restart BIOS and device-status evidence.
+This run predates the combined FinalAction/report test build. Its exact source
+commit is not independently established by the supplied results; it must not be
+used as acceptance of later code changes.
+
+| Check | Recorded result |
+| --- | --- |
+| App/runtime queue | 7/7 succeeded: Microsoft 365 Apps, Teams, Chrome, Acrobat, 7-Zip, Omnissa Horizon Client and Windows Update |
+| PreInstall | Succeeded in 111.9 seconds |
+| Runner | Succeeded in 1099.1 seconds |
+| Windows Update | 39 found, selected and installed; all update install results 2 / HResult 0 |
+| Update categories | 4 quality updates, 32 other driver updates and 3 firmware entries |
+| Windows Update duration | 756.5 seconds; restart and another scan requested by the result |
+| BIOS after restart | SMBIOS reports 1.19.3; the BIOS resource reports LastAttemptStatus 0 |
+| Device errors after restart | The query for nonzero ConfigManagerErrorCode returned no devices |
+
+The update results include the November Windows cumulative update KB5132061.
+The pre-restart OS revision is not proof of the final serviced build. The BIOS
+result confirms 1.19.3 is active despite both 1.19.3.0 and 1.18.2.0 appearing in
+the update-package results. Other firmware entries and every peripheral's
+functionality were not independently checked. This was one update pass, not a
+claim that subsequent Windows Update scans have no more offers.
+
+Combined-build acceptance still requires physical `FinalAction Reboot` and
+`Shutdown` runs and inspection of the updated report and cleanup. No device logs,
+serial numbers or private catalog details are committed with this summary.
 
 ## Reading this evidence
 
@@ -55,7 +85,7 @@ These observations validate the tested x64 deployment path and chosen 13-package
 | Metadata source | Advertised version |
 | --- | --- |
 | Office MonthlyEnterprise x64 descriptor | `16.0.20430.20180` |
-| 7Zip x64 stable release | `26.05` |
+| 7-Zip x64 stable release | `26.05` |
 | Visual Studio Code x64 stable system installer | `1.143.1` |
 | .NET 10.0 Runtime x86 / Desktop Runtime x64 | `10.0.13` |
 
@@ -515,11 +545,11 @@ Implementation commit: `53f229e7b235e289a703fe7211d8f78e84125958` ([PR #47](http
 This deployment verifies power-request registration and release within both real runtime phases, successful installations and cleanup. It does not independently demonstrate an actual idle sleep transition; the earlier prototype idle comparison is separate evidence. Manual sleep, lid actions and battery-policy limitations remain as documented in [Runtime](runtime.md).
 
 
-### 7Zip physical candidate validation (2026-10-20)
+### 7-Zip physical candidate validation (2026-10-20)
 
 The x64 candidate at `de96798dd5a549b13855cf78cf184ec6010995e0` passed a
 clean WinPE-to-OOBE test (deployment `3d547621-288f-400f-95fd-33698a42c15a`).
-7Zip 26.04 was downloaded, installed machine-wide with exit code 0, and its
+7-Zip 26.04 was downloaded, installed machine-wide with exit code 0, and its
 registered and executable versions matched. PreInstall took 4.5 seconds and
 Runner 3.1 seconds; staging cleanup passed. This was a download test, not a
 warm-cache reuse test. Native ARM64/x86 installation has not been physically tested.
@@ -549,7 +579,7 @@ The candidate retained module version 0.46.0; this built-in ships in 0.47.0.
 [Candidate CI](https://github.com/roryvossepoel/OSDStage/actions/runs/39479913392)
 passed on Windows PowerShell 5.1 and PowerShell 7. This physical result covers
 x64 download and installation, not ARM64 installation, warm-cache reuse or
-interactive editor behavior. The 0.47.0 release includes 7Zip's physical
+interactive editor behavior. The 0.47.0 release includes 7-Zip's physical
 candidate evidence and naming limitation documented above.
 
 ## Visual C++ and .NET prerequisite candidate

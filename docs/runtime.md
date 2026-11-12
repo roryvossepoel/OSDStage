@@ -66,6 +66,7 @@ Installer/provisioning success is not independent evidence of app activation, us
 ```powershell
 Set-OSDStageConfiguration `
     -CleanupMode OnSuccess `
+    -FinalAction None `
     -CacheVolumeLabel 'OSDCloud' `
     -LogPath '%ProgramData%\OSDStage\Logs\Runtime.log' `
     -ResultPath '%ProgramData%\OSDStage\Results\Latest.json'
@@ -73,7 +74,7 @@ Set-OSDStageConfiguration `
 
 Configure a real `CatalogUri` in the same session when staging online repository apps. It is not needed for built-ins-only deployment.
 
-The session's `CleanupMode`, `PreventSleep`, `CacheVolumeLabel`, `LogPath` and `ResultPath` are written into the device manifest by the Add commands. A unique `DeploymentId` is also added when the manifest is first staged. SetupComplete therefore does not depend on the preparation machine's session or on importing the module. Changing session configuration alone does not retroactively rewrite an existing device manifest.
+The session's `CleanupMode`, `FinalAction`, `PreventSleep`, `CacheVolumeLabel`, `LogPath` and `ResultPath` are written into the device manifest by the Add commands. A unique `DeploymentId` is also added when the manifest is first staged. SetupComplete therefore does not depend on the preparation machine's session or on importing the module. Changing session configuration alone does not retroactively rewrite an existing device manifest.
 
 | CleanupMode | Behavior |
 | --- | --- |
@@ -81,6 +82,58 @@ The session's `CleanupMode`, `PreventSleep`, `CacheVolumeLabel`, `LogPath` and `
 | `Never` | Retain staging, payloads and Work for troubleshooting. |
 
 On failure, source is retained automatically.
+
+## Final action
+
+`FinalAction` is a deployment-wide setting: `None` (default), `Reboot` or `Shutdown`.
+Set it **before the Add commands**, in the same staging session:
+
+```powershell
+Set-OSDStageConfiguration -FinalAction Shutdown
+```
+
+This only configures the staged deployment; it never powers off the preparation PC
+or WinPE. A missing field in an older manifest means `None`. Unsupported values are
+rejected. `Reboot` always requests a restart after success, even if no installer
+reported that one was required. A successful `3010` result is still eligible.
+
+The existing Runner success decision remains the boundary: all selected packages
+must have succeeded. Failed/skipped packages, PreInstall failures and filtered
+`-Name` runner invocations never arm a final action. Existing result and report
+files must match the same deployment **and execution**; missing/stale evidence
+suppresses the action without changing successful app installation results.
+
+A one-shot SYSTEM task attaches to the live Runner, SetupComplete command process
+and its Windows Setup (`windeploy.exe`) ancestors before Runner exits. It waits for
+all captured process handles to signal a successful exit. There is no fixed delay
+that is treated as proof of completion. This supports the standard SetupComplete
+execution context; an unrecognized host, inaccessible/reused process identity,
+nonzero exit or 30-minute wait timeout leaves the device running. The task has no
+startup/time trigger and does not retry on the next boot.
+
+Only **after those processes finish**, the finalizer performs `OnSuccess` source
+cleanup synchronously (`Never` retains source), removes its scheduled task, updates
+`Latest.json` and both delivery-report files, then submits the power request as its
+last operation. Cleanup or report-write failure suppresses the power request.
+Reports/results must remain outside staging. The USB cache is never removed.
+The finalizer does not force-close apps. Repository scripts must continue
+to wait for their own work; intentionally detached third-party/background services
+are not a deployment-completion signal.
+
+`FinalAction` in the result/report shows `NotRequested`, `Waiting`, `Requested` or
+`Skipped`. `Requested` records submission intent immediately before the Windows
+power command; it is not proof that the machine subsequently restarted or shut
+down. Windows command rejection is recorded as `Skipped`, without automatic retry.
+Failure reasons are kept in local diagnostics, not copied verbatim into HTML.
+Per-deployment diagnostics and the one-attempt marker are retained under
+`%ProgramData%\OSDStage\FinalActions\<DeploymentId>`, accessible only to SYSTEM
+and local administrators. `RebootRequired` continues to describe installation
+requirements independently of the chosen final action.
+
+Microsoft explicitly warns against rebooting **inside** SetupComplete. The worker
+therefore waits outside it; see [Windows Setup scripts](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/add-a-custom-script-to-windows-setup).
+Physical WinPE-to-OOBE validation of both power choices is still required before
+release acceptance; automated tests do not reboot or shut down their host.
 
 ## Automatic sleep prevention
 
@@ -181,7 +234,7 @@ the `AppAcquisitionComplete` log event. For example:
 | Office build mismatch | The compatible generation does not match the explicit build pin or CDN-advertised build. |
 | HTTP metadata changed | The ETag or last-modified/length comparison differs. This does **not** prove a newer app version. |
 | HTTP metadata insufficient | Comparable metadata is unavailable, so currency cannot be established. |
-| Release-validated package rejected | The existing 7Zip, Visual Studio Code or prerequisite generation failed current-release validation; the original validation message is retained. |
+| Release-validated package rejected | The existing 7-Zip, Visual Studio Code or prerequisite generation failed current-release validation; the original validation message is retained. |
 | Confirmed reuse | The applicable current-build, HTTP or release checks accepted the existing payload. |
 | Offline or fallback use | Content passed the applicable fallback checks, but currency was not established. Refresh failures retain their original error. |
 | Acquisition failed | The final failure is reported, even if an earlier comparison would have allowed reuse. |
@@ -210,7 +263,9 @@ Result writing is best effort so an evidence-path problem does not convert an ot
 
 ## Cleanup policy
 
-With `OnSuccess`, Runner writes its final events, starts a cleanup helper and exits only after every selected app succeeded; the helper removes the staging directory and itself. With `Never`, cleanup is skipped. A failed or skipped app also produces `CleanupSkipped` and retains staging regardless of the configured mode.
+With `FinalAction None` and `OnSuccess`, Runner writes its final events, starts a cleanup helper and exits only after every selected app succeeded; the helper removes the staging directory and itself. With `Never`, cleanup is skipped. A failed or skipped app also produces `CleanupSkipped` and retains staging regardless of the configured mode.
+
+With `FinalAction Reboot` or `Shutdown`, the finalizer instead performs cleanup synchronously after SetupComplete has exited, before the power request.
 
 The USB cache is separate and is not deleted by local source cleanup. The persistent log should be outside the staging directory; the default ProgramData path is retained. A completion line containing `CleanupMode=OnSuccess` identifies the selected policy. Check cleanup events or filesystem state when you need to prove that cleanup itself finished.
 
