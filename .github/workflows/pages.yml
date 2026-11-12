@@ -2,10 +2,10 @@ name: GitHub Pages
 
 on:
   pull_request:
-    paths: ['site/**', 'metadata/**', 'build/build_pages.py', 'build/test_pages.py', 'build/test_catalog.cjs', '.github/workflows/pages.yml']
+    paths: ['site/**', 'metadata/**', 'build/build_pages.py', 'build/test_pages.py', 'build/test_catalog.cjs', 'build/test_builders.cjs', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['site/**', 'metadata/**', 'build/build_pages.py', 'build/test_pages.py', 'build/test_catalog.cjs', '.github/workflows/pages.yml']
+    paths: ['site/**', 'metadata/**', 'build/build_pages.py', 'build/test_pages.py', 'build/test_catalog.cjs', 'build/test_builders.cjs', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -27,10 +27,13 @@ jobs:
         run: python3 -m unittest discover -s build -p test_pages.py -v
       - name: Check catalog behavior
         run: node build/test_catalog.cjs
+      - name: Check builder generation
+        run: node build/test_builders.cjs
       - name: Check JavaScript syntax
         run: |
           node --check site/assets/site.js
           node --check site/catalog/app.js
+          for file in site/builders/*.js; do node --check "$file"; done
       - name: Upload review artifact
         uses: actions/upload-artifact@v7
         with:
