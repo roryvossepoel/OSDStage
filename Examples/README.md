@@ -1,6 +1,6 @@
 # Examples
 
-> Install the published preview with `-AllowPrerelease`. Check [release availability](../docs/release-status.md) when selecting a module version.
+> Install the stable module from PowerShell Gallery. Check [release availability](../docs/release-status.md) when selecting a module version.
 
 [Project](../README.md) · [Getting started](../docs/getting-started.md) · [Documentation](../docs/README.md)
 

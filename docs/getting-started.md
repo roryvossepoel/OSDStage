@@ -8,7 +8,7 @@ Run the Add commands in WinPE after Windows has been applied. The documented exa
 
 Run OSDStage after the Windows image has been applied and before the first Windows boot. OSDStage does not replace Windows image deployment, Microsoft Entra join, Intune enrollment or Autopilot. OSDCloud is the primary documented companion workflow, but another deployment method can be used when it leaves a supported offline Windows target available for staging before first boot.
 
-OSDStage 1.0.0-rc4 is the current release candidate. Check [release availability](release-status.md) when upgrading from RC1 or testing newer development changes. Preview installation requires PowerShellGet 1.6 or later and `-AllowPrerelease`.
+OSDStage 1.0.0 is the stable release. Check [release availability](release-status.md) when upgrading from a release candidate. Stable installation does not require `-AllowPrerelease`.
 
 The examples target x64. Individual built-ins have different architecture options; consult [Built-in apps](built-in-apps.md) before changing them. The documented WinPE flow uses Windows PowerShell 5.1.
 
@@ -38,7 +38,7 @@ If the same app is also managed by Intune or another MDM/app-management platform
 **Environment: full Windows.** Saving the module is optional for online deployment: the WinPE example below loads it directly from Gallery. Company Portal and CMTrace Open support automatic online acquisition. Preparation can write module files and USB cache content. It must not stage apps against the preparation machine's Windows installation.
 
 ```powershell
-Install-Module OSDStage -Repository PSGallery -AllowPrerelease -Force -ErrorAction Stop
+Install-Module OSDStage -Repository PSGallery -Force -ErrorAction Stop
 Import-Module OSDStage -Force
 ```
 
@@ -70,7 +70,7 @@ Load the module from Gallery and add the intended apps. OSDStage discovers the o
 This complete online example needs PowerShellGet and Gallery access in WinPE:
 
 ```powershell
-Install-Module OSDStage -Repository PSGallery -AllowPrerelease -Force -ErrorAction Stop
+Install-Module OSDStage -Repository PSGallery -Force -ErrorAction Stop
 Import-Module OSDStage -Force
 
 Add-OSDStageMicrosoft365Apps -Channel MonthlyEnterprise -Language en-us

@@ -2,76 +2,62 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Changelog](../CHANGELOG.md)
 
-**Release candidate: OSDStage 1.0.0-rc4 (3 November 2026).** This is not GA.
-RC4 adds automatic JSON/HTML delivery reports and continues to the final Windows
-Update pass after individual package failures. It includes the existing apps,
-configuration, file operations, automatic content acquisition/caching and compact output.
+**OSDStage 1.0.0 — stable release.** The module and website Configuration Builders
+have separate release scopes. Builders remain a preview and are not included in
+the PowerShell module package.
 
-The GitHub prerelease is published and the [Gallery publication and package verification](https://github.com/roryvossepoel/OSDStage/actions/runs/41699262042)
-succeeded. A merge alone does not publish a package. Exact version links:
-[PowerShell Gallery](https://www.powershellgallery.com/packages/OSDStage/1.0.0-rc4) ·
-[GitHub prerelease](https://github.com/roryvossepoel/OSDStage/releases/tag/v1.0.0-rc4).
+Exact version links: [PowerShell Gallery](https://www.powershellgallery.com/packages/OSDStage/1.0.0) ·
+[GitHub release](https://github.com/roryvossepoel/OSDStage/releases/tag/v1.0.0).
+Publication is performed by the [release workflow](https://github.com/roryvossepoel/OSDStage/actions/workflows/release.yml)
+and [Gallery publish/verification workflow](https://github.com/roryvossepoel/OSDStage/actions/workflows/publish.yml).
+A merge alone does not publish a package; the publish workflow verifies the
+exact downloaded Gallery package against the tagged build using SHA-256.
 
-| Capability | RC3 | RC4 |
-| --- | --- | --- |
-| Apps, repository packages and device configuration | Available | Available |
-| Automatic Company Portal/CMTrace acquisition and USB caching | Available | Available |
-| File/directory commands and compact output | Available | Available |
-| One Windows Update pass last in SetupComplete | Available | Available |
-| Opt-in all-class drivers/firmware and optional class selection | Available | Available |
-| JSON/HTML delivery report with component evidence | Not included | Available |
-| Attempt Windows Update after an earlier individual package failure | Skipped | Attempted; earlier failure preserved |
+## Included in 1.0.0
 
-## Install the release candidate
+- Built-in apps, schema 2 repository packages and device configuration.
+- Automatic content acquisition, optional USB caching and validated offline fallback.
+- Repository availability checks before multi-package staging and conservative built-in cache recovery.
+- JSON/HTML delivery reports with app display names, payload versions, readable tables and component evidence.
+- One final Windows Update pass, including opt-in drivers and firmware.
+- Optional `FinalAction None`, `Reboot` or `Shutdown`. Default is `None`; a power request happens only after successful completion, process exit, cleanup and report writes. Failed or incomplete deployments suppress it.
+
+The Windows Viewer and deployment-profile experiments are excluded. Use
+PowerShell commands for staging and configuration, and delivery reports for results.
+
+## Install or upgrade
 
 On full Windows or online WinPE with PowerShellGet:
 
 ```powershell
-Install-Module OSDStage -Repository PSGallery -RequiredVersion '1.0.0-rc4' `
-    -AllowPrerelease -Force -ErrorAction Stop
+Install-Module OSDStage -Repository PSGallery -RequiredVersion '1.0.0' -Force -ErrorAction Stop
 Import-Module OSDStage -RequiredVersion '1.0.0' -Force
-```
-
-PowerShell uses numeric module version `1.0.0`; `rc4` is separate prerelease
-metadata. RC1 through RC4 share that numeric folder. Close existing PowerShell
-sessions before upgrading, then verify the identity and loaded path in a fresh session:
-
-```powershell
 Get-Module OSDStage | Select-Object Name, Version, Path,
     @{Name='Prerelease';Expression={$_.PrivateData.PSData.Prerelease}}
 ```
 
-## Published RC4 acceptance
+The loaded version should be `1.0.0` with an empty prerelease label. Stable
+installation does not require `-AllowPrerelease`. RC1 through RC4 share the
+numeric `1.0.0` module folder: close sessions using the old module before upgrading,
+then install and verify in a fresh session. Existing schema 2 catalogs and cache
+paths are retained. GitHub RC tags and their Gallery packages remain unchanged.
 
-The [3 November Gallery acceptance record](rc4-gallery-acceptance.md) covers the
-published package on two physical x64 devices running Windows 11 26H2 build
-26300.9711. Both used the same three-entry profile: 7-Zip, XPS Viewer and Windows
-Update last, with driver updates enabled.
+## Acceptance and limits
 
-| Result | Dell Pro Micro QCM1250 | Surface Laptop Go 2 |
-| --- | --- | --- |
-| OSDStage packages | 3/3 succeeded; no failures or skips | 3/3 succeeded; no failures or skips |
-| Delivery-report checks | 8/8 passed | 8/8 passed |
-| Selected Windows Updates | 36/36 installed | 4/4 installed |
-| Restart required by this OSDStage run | Yes | No |
-| Restart requested by OSDStage | No | No |
+The [published RC4 acceptance](rc4-gallery-acceptance.md) covers the Gallery-to-WinPE
+route on two physical x64 devices. The [broad component acceptance](delivery-report.md#broad-component-acceptance-3-november-2026)
+records 19 successful packages, 36 installed updates and 18 passing report checks.
 
-The maintainer separately confirmed normal OOBE completion and first sign-in on
-both devices, with Autopilot/Intune proceeding normally where applicable. This is
-operator-confirmed handoff evidence; the supplied OSDStage reports do not audit
-enrollment or identify which device was registered in Autopilot.
+The [12 November combined source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026)
+covers the runtime changes included in stable 1.0.0: two x64 Dell deployments,
+7/7 successful packages on each, 39/39 installed updates on each, warm-cache
+reuse, report checks, cleanup and maintainer-confirmed automatic restart/shutdown.
+The separate [PC2 validation](testing.md#pc2-windows-update-and-firmware-validation--12-november-2026)
+records November Windows cumulative servicing and post-restart BIOS evidence.
+These records retain their original tested version/commit; they are not relabeled
+as deployments of the final Gallery package.
 
-The [delivery report guide](delivery-report.md#broad-component-acceptance-3-november-2026)
-retains the earlier broad 19-package test, all 18 report checks and confirmed
-manual checks. That source test and the two published-package runs cover
-different scopes; the broad test does not need repeating solely for closeout.
-
-Monthly cumulative Windows/.NET updates were not offered in the two RC4 runs.
-The later [12 November source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026)
-records November Windows servicing, warm-cache reuse, report improvements,
-cleanup and maintainer-confirmed automatic restart/shutdown. These source changes
-are not part of the published RC4. Separate .NET servicing remains unrecorded,
-along with the explicit variant limits in the [validation register](feature-status.md). Neither an empty future
-update scan nor every architecture/hardware combination is implied. RC4 remains
-a prerelease; a stable 1.0.0 version requires a separate reviewed release decision
-and the [release procedure](releasing.md).
+ARM64, separate .NET cumulative servicing and the additional variants in the
+[validation register](feature-status.md) remain outside recorded physical coverage.
+A completed update pass does not guarantee that a later scan offers no more updates.
+Reports captured before reboot can show the previous active Windows revision.

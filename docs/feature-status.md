@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Release availability](release-status.md)
 
-**Status baseline: 12 November 2026.** OSDStage `1.0.0-rc4` remains published on PowerShell Gallery and GitHub as a release candidate. Windows Update and automatic JSON/HTML delivery reports are included; see [release availability](release-status.md). The [combined source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026) additionally covers report improvements and both final power actions; these changes are not yet published. A stable `1.0.0` release remains a separate decision.
+**Status baseline: 12 November 2026.** OSDStage `1.0.0` is the stable release line. It includes Windows Update, JSON/HTML delivery reports, repository availability preflight, cache recovery and optional final power actions. See [release availability](release-status.md) for exact package links and [combined source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026) for the accepted deployment evidence.
 
 The combined, repository-only, renamed empty-cache and published RC4 deployments have recorded acceptance within their stated limits. Identify development test modules by commit and published packages by release version and tag. No migration or old-command aliases are planned.
 
@@ -12,14 +12,14 @@ The combined, repository-only, renamed empty-cache and published RC4 deployments
    changed behavior or a specific remaining coverage gap.
 2. Preserve the recorded November Windows cumulative-update results and final
    power-action acceptance. Separate .NET servicing remains unrecorded.
-3. Review the documented scope and limits, then explicitly decide whether to
-   prepare a stable `1.0.0` release using the [release procedure](releasing.md).
+3. Maintain the stable `1.0.0` scope using the [release procedure](releasing.md);
+   keep website builder development independent of the module.
 
 The Windows Viewer and deployment-profile experiments have been withdrawn from the 1.0 scope. Configuration and staging use PowerShell; the web catalog remains a read-only metadata browser. See [inspection and diagnostics](viewer.md).
 
 The OSDStage name and public GitHub Pages site at [osdstage.com](https://osdstage.com/)
 are delivered, including the mobile navigation in
-[PR #124](https://github.com/roryvossepoel/OSDStage/pull/124). A website code-generation wizard is under consideration, not implemented.
+[PR #124](https://github.com/roryvossepoel/OSDStage/pull/124). Website Configuration Builders are available as an independent preview; they are not packaged in the module.
 
 The tables retain earlier device evidence with its original commit and deployment
 IDs. Earlier test completion does not establish every architecture or variant.
@@ -54,7 +54,8 @@ limits below remain outside the recorded physical coverage.
 - Execute once during the normal deployment flow. The optional [final action](runtime.md#final-action)
   runs after successful completion and cleanup; it defaults to no power action.
   No scheduled retry, post-sign-in correction or recurring enforcement is added.
-  Report a Windows restart requirement without arranging the restart.
+  Report a Windows restart requirement; only an explicitly selected final action
+  requests a restart or shutdown.
 - Manual observation during a test is evidence collection, not a new automated
   deployment step. Do not introduce post-reboot repair to make a test pass.
 - Keep the module international: no implicit regional defaults, organization
@@ -84,7 +85,7 @@ to complete this table.
 | Cache, source acquisition and offline readiness | Built. Version selection, integrity, reusable USB content, preflight and per-deployment reporting. Recorded online/offline and cold/warm scenarios in [testing](testing.md). | Legacy metadata recovery was merged in [PR #94](https://github.com/roryvossepoel/OSDStage/pull/94), tracked by [issue #92](https://github.com/roryvossepoel/OSDStage/issues/92). Both Windows CI hosts passed on `71ae31f49cfb6f16e93f8ec61454a57120cca5f2`. **Operator-confirmed, 30 October:** the production Sync helper refreshed an isolated Chrome cache with the three legacy metadata fields removed; hash/size validation and Google signature validation passed, and original cache hashes remained unchanged. This is a full-Windows helper test, not a physical public-wrapper, WinPE or PreInstall run. The fix is included in this baseline; the physical acceptance limits remain unchanged. Offline readiness still requires verified content. |
 | Built-in-only / repository-only selection | Built in [PR #80](https://github.com/roryvossepoel/OSDStage/pull/80). Session options control deployment/discovery; both disabled is refused. The [RC4 Gallery runs](rc4-gallery-acceptance.md) used built-ins with repository integration disabled; the repository-only path is recorded in the 31 October acceptance below. Sync remains available for preparation. | Physical results cover those selected source combinations. The both-disabled refusal remains automated coverage. |
 | Ordered runtime, fault isolation, logs and cleanup | Built. [Runtime guide](runtime.md) and [testing history](testing.md) describe one-shot execution and retained failure evidence. The 31 October acceptance below records operator-confirmed OnSuccess staging removal; both RC4 Gallery runs record OnSuccess cleanup scheduling. | Scheduling alone does not prove removal. Continuation to Windows Update after failed or skipped packages has automated coverage; the two successful Gallery runs do not exercise those failure paths. |
-| Windows Update: `Add-OSDStageWindowsUpdate` | Included in RC3 and RC4. One optional pass runs last in SetupComplete, with opt-in drivers/firmware and no automatic restart. The [RC4 Gallery runs](rc4-gallery-acceptance.md) installed 36/36 offers on Dell and 4/4 on Surface; [contract and earlier evidence](windows-update.md). | Monthly cumulative Windows/.NET field coverage remains open. A successful pass does not mean no updates remain after a restart or later scan. |
+| Windows Update: `Add-OSDStageWindowsUpdate` | Included in RC3 and RC4. One optional pass runs last in SetupComplete, with opt-in drivers/firmware. The deployment-wide final action defaults to no restart. The [RC4 Gallery runs](rc4-gallery-acceptance.md) installed 36/36 offers on Dell and 4/4 on Surface; [contract and earlier evidence](windows-update.md). | November Windows cumulative servicing and drivers/firmware are recorded in the [12 November acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026); separate .NET cumulative servicing remains unrecorded. A successful pass does not mean no updates remain after a restart or later scan. |
 | Delivery reports | Included in RC4. Standalone JSON/HTML reports correlate package and component results; [broad report acceptance](delivery-report.md#broad-component-acceptance-3-november-2026) and [published Gallery acceptance](rc4-gallery-acceptance.md) record matching evidence and report checks. | Reports describe execution and follow-up requirements; they do not certify hardware health, complete patching or Autopilot enrollment. |
 | Inspection and diagnostics | Built. CLI cache health, deployment-result inspection and [maintenance diagnostics](maintenance.md). | Windows UI experiments #39/#149 and deployment profiles #154 are closed; they are not required for CLI inspection. |
 

@@ -1,6 +1,6 @@
 # OSDStage
 
-> **Release candidate: 1.0.0-rc4.** Install with `-AllowPrerelease`. Documentation on `main` also covers merged changes that are not yet in the Gallery; check [release availability](docs/release-status.md). Repository and package manifests use schema 2.
+> **OSDStage 1.0.0 — stable release.** See [release availability](docs/release-status.md) for exact package links, upgrade guidance and validation scope. Repository and package manifests use schema 2.
 
 ![OSDStage — Your deployment. Ready before OOBE. Software and device configuration with optional USB caching.](docs/images/osdstage-banner.svg)
 
@@ -26,7 +26,7 @@ Stage software and device configuration in WinPE **after OSDCloud has applied Wi
 Run in PowerShell on your Windows preparation machine, or in online WinPE with PowerShellGet available.
 
 ```powershell
-Install-Module OSDStage -Repository PSGallery -AllowPrerelease -Force -ErrorAction Stop
+Install-Module OSDStage -Repository PSGallery -Force -ErrorAction Stop
 Import-Module OSDStage -Force
 ```
 
@@ -39,7 +39,7 @@ For WinPE without Gallery access, [save the module to your USB flash drive](Exam
 **Run this complete example in online WinPE, after OSDCloud has applied Windows and before the first reboot.** It stages three apps for the target PC:
 
 ```powershell
-Install-Module OSDStage -Repository PSGallery -AllowPrerelease -Force -ErrorAction Stop
+Install-Module OSDStage -Repository PSGallery -Force -ErrorAction Stop
 Import-Module OSDStage -Force
 
 Add-OSDStageMicrosoft365Apps -Channel MonthlyEnterprise -Language en-us

@@ -1,6 +1,6 @@
 # From Install.ps1 to a repository package
 
-> Install the published preview with `-AllowPrerelease`. Check [release availability](../docs/release-status.md) when selecting a module version.
+> Install the stable module from PowerShell Gallery. Check [release availability](../docs/release-status.md) when selecting a module version.
 
 [Examples](README.md) · [Repository contract](../docs/repository.md)
 
@@ -36,7 +36,7 @@ upload anything to your hosting.
 ```powershell
 $ErrorActionPreference = 'Stop'
 
-Install-Module OSDStage -AllowPrerelease -Force -SkipPublisherCheck
+Install-Module OSDStage -Force -SkipPublisherCheck
 Import-Module OSDStage -Force
 
 $Id = 'YourPackage'
@@ -127,7 +127,7 @@ In WinPE after OSDCloud has applied Windows, load OSDStage and use the actual UR
 and ID from your repository:
 
 ```powershell
-Install-Module OSDStage -AllowPrerelease -Force -SkipPublisherCheck
+Install-Module OSDStage -Force -SkipPublisherCheck
 Import-Module OSDStage -Force
 
 Set-OSDStageConfiguration -CatalogUri 'https://packages.example.com/osdstage/catalog.json'
