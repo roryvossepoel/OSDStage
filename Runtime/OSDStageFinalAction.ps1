@@ -206,7 +206,7 @@ function Invoke-OSDStageFinalPowerAction {
     param([ValidateSet('Reboot','Shutdown')][string]$Action)
     $operation = if ($Action -eq 'Reboot') { '/r' } else { '/s' }
     # /t 0 avoids the implicit force-close behavior of a positive shutdown timeout.
-    # No /f: unrelated applications are not forcibly terminated.
+    # No /f: unrelated apps are not forcibly terminated.
     $process = Start-Process -FilePath (Join-Path $env:windir 'System32\shutdown.exe') -ArgumentList @($operation,'/t','0') -Wait -PassThru -ErrorAction Stop
     if ($process.ExitCode -ne 0) { throw "Windows rejected the final action (exit code $($process.ExitCode))." }
 }

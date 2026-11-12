@@ -116,7 +116,7 @@ cleanup synchronously (`Never` retains source), removes its scheduled task, upda
 `Latest.json` and both delivery-report files, then submits the power request as its
 last operation. Cleanup or report-write failure suppresses the power request.
 Reports/results must remain outside staging. The USB cache is never removed.
-The finalizer does not force-close applications. Repository scripts must continue
+The finalizer does not force-close apps. Repository scripts must continue
 to wait for their own work; intentionally detached third-party/background services
 are not a deployment-completion signal.
 
