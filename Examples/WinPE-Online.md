@@ -1,6 +1,6 @@
 # Online WinPE deployment
 
-> Install the published preview with `-AllowPrerelease`. Check [release availability](../docs/release-status.md) when selecting a module version.
+> Install the stable module from PowerShell Gallery. Check [release availability](../docs/release-status.md) when selecting a module version.
 
 [Examples](README.md) · [USB preparation](Prepare-UsbCache.md) · [Offline alternative](WinPE-Offline.md)
 
@@ -11,7 +11,7 @@ This example uses the current PowerShell Gallery release and three x64 built-ins
 ## 1. Import the module and stage built-ins
 
 ```powershell
-Install-Module OSDStage -AllowPrerelease -Force -SkipPublisherCheck
+Install-Module OSDStage -Force -SkipPublisherCheck
 Import-Module OSDStage -Force
 
 Add-OSDStageMicrosoft365Apps -Channel MonthlyEnterprise -Language en-us

@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased — 1.0 preparation
+## 1.0.0
+
+- First stable OSDStage release. Stage built-in apps, repository packages and device configuration in WinPE after Windows is applied; execute before OOBE with optional validated USB caching. Includes automatic JSON/HTML delivery reports and one final Windows Update pass with opt-in drivers/firmware.
+- Release scope retains the recorded x64 acceptance: published RC4 Gallery-to-WinPE tests and the [12 November combined source-build acceptance](docs/testing.md#combined-10-preparation-acceptance--12-november-2026). Both final actions, November Windows servicing, drivers, warm-cache reuse, cleanup and report checks passed in their documented scenarios. ARM64, separate .NET cumulative servicing and untested hardware/parameter variants remain outside recorded physical coverage; see the [validation register](docs/feature-status.md).
+- Install the stable module with `Install-Module OSDStage -Repository PSGallery -RequiredVersion '1.0.0' -Force`. No `-AllowPrerelease` is needed. RCs share the numeric `1.0.0` module folder; upgrade in a fresh PowerShell session and verify that the loaded module has no prerelease label. Existing repository schema 2 and cache paths are retained.
+- Website Configuration Builders remain a separate preview, are not packaged in the module and can evolve independently.
 
 - Add optional deployment-wide `FinalAction` (`None`, `Reboot`, `Shutdown`). The existing successful Runner endpoint arms a one-shot finalizer that waits for SetupComplete to finish, completes cleanup and report writes, and submits the power request last. Default remains no action; failures or incomplete completion evidence suppress it. Both power choices have [physical x64 acceptance](docs/testing.md#combined-10-preparation-acceptance--12-november-2026) on the pinned 12 November test build.
 

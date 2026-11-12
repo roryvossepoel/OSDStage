@@ -3,22 +3,22 @@ Describe 'Release identity' {
         $script:root = Split-Path $PSScriptRoot -Parent
         $script:resolver = Join-Path $script:root 'build/Get-ReleaseVersion.ps1'
     }
-    It 'resolves the real candidate consistently' {
-        $result = & $script:resolver -ExpectedVersion '1.0.0-rc4'
+    It 'resolves the real stable release consistently' {
+        $result = & $script:resolver -ExpectedVersion '1.0.0'
         $result.ModuleVersion | Should -Be '1.0.0'
-        $result.Version | Should -Be '1.0.0-rc4'
-        $result.Tag | Should -Be 'v1.0.0-rc4'
-        $result.IsPrerelease | Should -BeTrue
-    }
-    It 'resolves stable releases without a suffix' {
-        $path = Join-Path $TestDrive 'stable.psd1'
-        Set-Content $path "@{ModuleVersion='1.0.0'}"
-        $result = & $script:resolver -ManifestPath $path -ExpectedVersion '1.0.0'
+        $result.Version | Should -Be '1.0.0'
         $result.Tag | Should -Be 'v1.0.0'
         $result.IsPrerelease | Should -BeFalse
     }
+    It 'still resolves prerelease manifests with a suffix' {
+        $path = Join-Path $TestDrive 'candidate.psd1'
+        Set-Content $path "@{ModuleVersion='1.0.0';PrivateData=@{PSData=@{Prerelease='rc4'}}}"
+        $result = & $script:resolver -ManifestPath $path -ExpectedVersion '1.0.0-rc4'
+        $result.Tag | Should -Be 'v1.0.0-rc4'
+        $result.IsPrerelease | Should -BeTrue
+    }
     It 'rejects the wrong channel or candidate' {
-        { & $script:resolver -ExpectedVersion '1.0.0' } | Should -Throw '*does not match*'
+        { & $script:resolver -ExpectedVersion '1.0.1' } | Should -Throw '*does not match*'
         { & $script:resolver -ExpectedVersion '1.0.0-rc1' } | Should -Throw '*does not match*'
     }
     It 'rejects invalid prerelease manifests' -ForEach @(

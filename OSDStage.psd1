@@ -76,11 +76,10 @@
     AliasesToExport   = @()
     PrivateData = @{
         PSData = @{
-            Prerelease = 'rc4'
             Tags = @('PowerShell','OSDCloud','OSDCloudV2','WinPE','WindowsDeployment','AppDeployment','ScriptDeployment','OOBE','Autopilot','SetupComplete','OfflineCache','AppCache','AppPackaging','Repository')
             ProjectUri = 'https://github.com/roryvossepoel/OSDStage'
             LicenseUri = 'https://github.com/roryvossepoel/OSDStage/blob/main/LICENSE'
-            ReleaseNotes = 'OSDStage 1.0.0-rc4: automatic JSON and offline HTML delivery reports, separate built-in and repository app groups, per-component evidence and readable durations. Windows Update remains last and is attempted after individual package failures. Broad x64 acceptance passed: 19/19 packages, 36/36 updates and 18/18 report checks; no automatic restart.'
+            ReleaseNotes = 'OSDStage 1.0.0: first stable release. Built-in apps and repository packages, device configuration, validated USB caching, Windows Update with optional drivers/firmware, JSON/HTML delivery reports and optional final Reboot/Shutdown after successful completion. Includes repository availability preflight, cache recovery and report improvements. Physical acceptance covers x64; see the validation register for remaining variant limits.'
             RequireLicenseAcceptance = $false
         }
     }

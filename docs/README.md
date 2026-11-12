@@ -56,7 +56,7 @@ See the [JSON/HTML delivery report](delivery-report.md) for deployment results, 
 | [Public metadata](public-metadata.md) | `metadata/builtins.json`, icons and external Viewer consumers |
 | [Contributing](../CONTRIBUTING.md) | Contribution and built-in app request policy |
 | [Maintenance](maintenance.md) | Source metadata, USB, release and saved-result checks; diagnostic bundle collection and their limits |
-| [Release availability](release-status.md) | Published preview versus merged development changes |
+| [Release availability](release-status.md) | Stable release, upgrade guidance and validation scope |
 | [Releasing](releasing.md) | CI, module build, release tags and verified PowerShell Gallery publication |
 
 ## Evidence and history
