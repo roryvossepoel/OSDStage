@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Getting started](getting-started.md) · [Release availability](release-status.md)
 
-**Status baseline: 3 November 2026.** OSDStage `1.0.0-rc4` is published on PowerShell Gallery and GitHub as a release candidate. Windows Update and automatic JSON/HTML delivery reports are included; see [release availability](release-status.md). A stable `1.0.0` release remains a separate decision.
+**Status baseline: 12 November 2026.** OSDStage `1.0.0-rc4` remains published on PowerShell Gallery and GitHub as a release candidate. Windows Update and automatic JSON/HTML delivery reports are included; see [release availability](release-status.md). The [combined source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026) additionally covers report improvements and both final power actions; these changes are not yet published. A stable `1.0.0` release remains a separate decision.
 
 The combined, repository-only, renamed empty-cache and published RC4 deployments have recorded acceptance within their stated limits. Identify development test modules by commit and published packages by release version and tag. No migration or old-command aliases are planned.
 
@@ -10,8 +10,8 @@ The combined, repository-only, renamed empty-cache and published RC4 deployments
 
 1. Preserve the accepted deployment evidence and technical contracts; investigate
    changed behavior or a specific remaining coverage gap.
-2. Collect targeted monthly cumulative Windows/.NET update evidence when those
-   updates are offered on a test device.
+2. Preserve the recorded November Windows cumulative-update results and final
+   power-action acceptance. Separate .NET servicing remains unrecorded.
 3. Review the documented scope and limits, then explicitly decide whether to
    prepare a stable `1.0.0` release using the [release procedure](releasing.md).
 
@@ -51,8 +51,9 @@ limits below remain outside the recorded physical coverage.
 - Repository payloads use `Package.zip` with the existing catalog, version,
   cache and SHA-256 checks. Use WinPE-compatible ZIP handling, not a dependency
   on `Expand-Archive` being loadable there.
-- Execute once during the normal deployment flow. No forced extra reboot,
-  scheduled retry, post-sign-in correction or recurring enforcement is added.
+- Execute once during the normal deployment flow. The optional [final action](runtime.md#final-action)
+  runs after successful completion and cleanup; it defaults to no power action.
+  No scheduled retry, post-sign-in correction or recurring enforcement is added.
   Report a Windows restart requirement without arranging the restart.
 - Manual observation during a test is evidence collection, not a new automated
   deployment step. Do not introduce post-reboot repair to make a test pass.
@@ -91,7 +92,7 @@ to complete this table.
 
 The existing set is Microsoft 365 Apps, Microsoft Teams, Adobe Acrobat Unified,
 Google Chrome Enterprise, Mozilla Firefox Enterprise, Cisco Webex, Zoom
-Workplace, 7Zip, Visual Studio Code, Visual C++ redistributables, .NET runtimes,
+Workplace, 7-Zip, Visual Studio Code, Visual C++ redistributables, .NET runtimes,
 Microsoft Company Portal and CMTrace Open. See [per-app contracts](built-in-apps.md),
 [metadata](../metadata/builtins.json) and [version-specific test evidence](testing.md).
 
@@ -209,10 +210,10 @@ coverage limits, not reasons to repeat these completed installations.
 1. Preserve the published RC4 Gallery acceptance, broad 19-package report
    acceptance and earlier operator confirmations. No additional installation is
    required solely to repeat those completed scenarios.
-2. Collect a targeted physical result for monthly cumulative Windows/.NET
-   updates when offered, recording the actual installation and restart outcome.
-   An offer set containing only other software and drivers does not establish
-   that coverage.
+2. Preserve the [12 November combined acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026):
+   November Windows cumulative servicing, both final power actions, warm-cache
+   reuse, report improvements and cleanup. Separate .NET servicing and independent
+   post-startup build verification remain outside that record.
 3. Keep parameter-generated Wi-Fi and Start/taskbar editability marked as
    unconfirmed in practice, alongside the architecture and variant limits in
    this register. If separately selected, collect only the relevant observation;

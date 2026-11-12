@@ -177,7 +177,7 @@ Describe '7Zip runtime dispatch' {
     }
     BeforeEach {
         $script:StagedPath = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
-        $script:app = [pscustomobject]@{Id='7Zip';Type='7ZipExe';DisplayName='7Zip';Architecture='x64';Package='BuiltIn/7Zip/x64/7z2604-x64.exe';InstallTimeoutMinutes=10}
+        $script:app = [pscustomobject]@{Id='7Zip';Type='7ZipExe';DisplayName='7-Zip';Architecture='x64';Package='BuiltIn/7Zip/x64/7z2604-x64.exe';InstallTimeoutMinutes=10}
         $script:acquisition = @{}
         $script:usbRoot = $null
         $script:networkAvailable = $true

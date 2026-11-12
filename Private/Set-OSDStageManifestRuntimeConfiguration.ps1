@@ -16,6 +16,7 @@ function Set-OSDStageManifestRuntimeConfiguration {
         EnableBuiltIns   = Test-OSDStageSourceEnabled -Source BuiltIn -Configuration $configuration
         EnableRepository = Test-OSDStageSourceEnabled -Source Repository -Configuration $configuration
         CleanupMode      = $configuration.CleanupMode
+        FinalAction      = $configuration.FinalAction
         PreventSleep     = $configuration.PreventSleep
         CacheVolumeLabel = $configuration.CacheVolumeLabel
         LogPath          = $configuration.LogPath

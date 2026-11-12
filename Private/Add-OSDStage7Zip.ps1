@@ -36,7 +36,7 @@ function Add-OSDStage7ZipInternal {
     $manifestApp = [pscustomobject]@{
         Source = 'BuiltIn'
         Id = '7Zip'
-        DisplayName = '7Zip'
+        DisplayName = '7-Zip'
         Type = '7ZipExe'
         Package = $null
         Architecture = $Architecture

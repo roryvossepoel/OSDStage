@@ -32,6 +32,8 @@ Describe 'Operational readiness and deployment results' {
             Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\OSDStageFont.ps1') -Destination $stage
             Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\OSDStageCertificate.ps1') -Destination $stage
             Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\OSDStageDriver.ps1') -Destination $stage
+            Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\OSDStageFinalAction.ps1') -Destination $stage
+            Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\Invoke-OSDStageFinalAction.ps1') -Destination $stage
             Copy-Item -LiteralPath (Join-Path $script:moduleRoot 'Runtime\Invoke-OSDStageBuiltInCacheTransaction.ps1') -Destination $stage
 
             $archive = Join-Path $packageDirectory 'Package.zip'

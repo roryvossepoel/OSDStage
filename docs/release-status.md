@@ -67,8 +67,11 @@ manual checks. That source test and the two published-package runs cover
 different scopes; the broad test does not need repeating solely for closeout.
 
 Monthly cumulative Windows/.NET updates were not offered in the two RC4 runs.
-Their physical servicing test remains open, along with the explicit variant
-limits in the [validation register](feature-status.md). Neither an empty future
+The later [12 November source-build acceptance](testing.md#combined-10-preparation-acceptance--12-november-2026)
+records November Windows servicing, warm-cache reuse, report improvements,
+cleanup and maintainer-confirmed automatic restart/shutdown. These source changes
+are not part of the published RC4. Separate .NET servicing remains unrecorded,
+along with the explicit variant limits in the [validation register](feature-status.md). Neither an empty future
 update scan nor every architecture/hardware combination is implied. RC4 remains
 a prerelease; a stable 1.0.0 version requires a separate reviewed release decision
 and the [release procedure](releasing.md).

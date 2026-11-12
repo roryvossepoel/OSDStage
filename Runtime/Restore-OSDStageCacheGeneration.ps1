@@ -7,47 +7,94 @@ function Restore-OSDStageCacheGeneration {
         [Parameter(Mandatory)][scriptblock]$Validate
     )
 
-    # Never replace an existing active generation, even if it is incomplete.
-    # Recovery is only for the gap between the two directory renames.
-    if (Test-Path -LiteralPath $Root) { return }
     $parent = Split-Path -Path $Root -Parent
     $leaf = Split-Path -Path $Root -Leaf
     if (-not (Test-Path -LiteralPath $parent -PathType Container)) { return }
-    $pattern = '^' + [regex]::Escape($leaf) + '\.osdstage-old-[0-9a-f]{32}$'
-    $backups = @(Get-ChildItem -LiteralPath $parent -Directory -ErrorAction Stop |
-        Where-Object { $_.Name -match $pattern })
-    if ($backups.Count -eq 0) { return }
 
-    $validBackups = @(
-        foreach ($backup in $backups) {
+    $oldPattern = '^' + [regex]::Escape($leaf) + '\.osdstage-old-[0-9a-f]{32}$'
+    $newPattern = '^' + [regex]::Escape($leaf) + '\.osdstage-new-[0-9a-f]{32}$'
+    $children = @(Get-ChildItem -LiteralPath $parent -Directory -Force -ErrorAction Stop)
+    $backups = @($children | Where-Object { $_.Name -match $oldPattern })
+    $candidates = @($children | Where-Object { $_.Name -match $newPattern })
+
+    function Test-RecoveryGeneration {
+        param([Parameter(Mandatory)][string]$Path)
+        try {
+            $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+            if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Recovery does not follow directory links.' }
+            $links = @(Get-ChildItem -LiteralPath $Path -Recurse -Force -ErrorAction Stop | Where-Object { ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 })
+            if ($links.Count -gt 0) { throw 'Recovery generation contains a file or directory link.' }
+            & $Validate $Path | Out-Null
+            return $true
+        }
+        catch {
+            Write-Verbose "Recovery validation rejected '$Path': $($_.Exception.Message)"
+            return $false
+        }
+    }
+
+    function Remove-TransactionDirectory {
+        param([Parameter(Mandatory)][string]$Path)
+        if (Test-Path -LiteralPath $Path -PathType Container) {
+            Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+            Write-Verbose "Removed completed or abandoned OSDStage cache transaction directory '$Path'."
+            return 1
+        }
+        return 0
+    }
+
+    if (Test-Path -LiteralPath $Root -PathType Container) {
+        $activeValid = Test-RecoveryGeneration -Path $Root
+        if ($activeValid) {
+            $removed = 0
+            foreach ($item in @($backups) + @($candidates)) { $removed += Remove-TransactionDirectory -Path $item.FullName }
+            if ($removed -gt 0) { return [pscustomobject]@{Root=$Root;Recovered=$false;ResidueRemoved=$removed;ActiveValidated=$true} }
+            return
+        }
+
+        $validBackups = @($backups | Where-Object { Test-RecoveryGeneration -Path $_.FullName })
+        if ($validBackups.Count -gt 1) {
+            throw "Cache recovery for '$Root' is ambiguous: found $($validBackups.Count) valid previous generations. Transaction directories were preserved."
+        }
+        if ($validBackups.Count -eq 1) {
+            $quarantine = "$Root.osdstage-bad-$([guid]::NewGuid().ToString('N'))"
+            Move-Item -LiteralPath $Root -Destination $quarantine -ErrorAction Stop
             try {
-                if (($backup.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
-                    throw 'Recovery does not follow directory links.'
-                }
-                $links = @(Get-ChildItem -LiteralPath $backup.FullName -Recurse -Force -ErrorAction Stop |
-                    Where-Object { ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 })
-                if ($links.Count -gt 0) { throw 'Recovery generation contains a file or directory link.' }
-                # Validation callbacks must throw on invalid content.
-                & $Validate $backup.FullName | Out-Null
-                $backup
+                Move-Item -LiteralPath $validBackups[0].FullName -Destination $Root -ErrorAction Stop
+                if (-not (Test-RecoveryGeneration -Path $Root)) { throw 'Restored previous generation failed validation.' }
+                Remove-Item -LiteralPath $quarantine -Recurse -Force -ErrorAction Stop
+                $removed = 0
+                foreach ($item in @($backups | Where-Object FullName -ne $validBackups[0].FullName) + @($candidates)) { $removed += Remove-TransactionDirectory -Path $item.FullName }
+                return [pscustomobject]@{Root=$Root;PreviousPath=$validBackups[0].FullName;Recovered=$true;ResidueRemoved=$removed;ActiveValidated=$true}
             }
             catch {
-                Write-Verbose "Preserving rejected recovery candidate '$($backup.FullName)': $($_.Exception.Message)"
+                $restoreError = $_
+                if (-not (Test-Path -LiteralPath $Root) -and (Test-Path -LiteralPath $quarantine)) { Move-Item -LiteralPath $quarantine -Destination $Root -ErrorAction SilentlyContinue }
+                throw $restoreError
             }
         }
-    )
 
-    if ($validBackups.Count -ne 1) {
-        throw "Cache recovery requires exactly one valid previous generation for '$Root'; found $($validBackups.Count). All transaction directories were preserved."
+        $removed = 0
+        foreach ($item in $candidates) { $removed += Remove-TransactionDirectory -Path $item.FullName }
+        if ($removed -gt 0) { return [pscustomobject]@{Root=$Root;Recovered=$false;ResidueRemoved=$removed;ActiveValidated=$false} }
+        return
     }
-    # Do not guess by version or timestamp and do not promote an uncommitted
-    # .new directory. Keep all other residue for validation/cleanup after sync.
-    if (Test-Path -LiteralPath $Root) {
-        throw "Cache recovery stopped because the active path appeared during validation: $Root"
+
+    $validBackups = @($backups | Where-Object { Test-RecoveryGeneration -Path $_.FullName })
+    if ($validBackups.Count -gt 1) {
+        throw "Cache recovery requires an unambiguous previous generation for '$Root'; found $($validBackups.Count) valid generations. Transaction directories were preserved."
     }
-    $source = $validBackups[0].FullName
-    Move-Item -LiteralPath $source -Destination $Root -ErrorAction Stop
-    [pscustomobject]@{ Root = $Root; PreviousPath = $source; Recovered = $true }
+    if ($validBackups.Count -eq 1) {
+        $source = $validBackups[0].FullName
+        Move-Item -LiteralPath $source -Destination $Root -ErrorAction Stop
+        $removed = 0
+        foreach ($item in @($backups | Where-Object FullName -ne $source) + @($candidates)) { $removed += Remove-TransactionDirectory -Path $item.FullName }
+        return [pscustomobject]@{Root=$Root;PreviousPath=$source;Recovered=$true;ResidueRemoved=$removed;ActiveValidated=$true}
+    }
+
+    $removed = 0
+    foreach ($item in $candidates) { $removed += Remove-TransactionDirectory -Path $item.FullName }
+    if ($removed -gt 0) { return [pscustomobject]@{Root=$Root;Recovered=$false;ResidueRemoved=$removed;ActiveValidated=$false} }
 }
 
 function Assert-OSDStageRecoverableBuiltInGeneration {

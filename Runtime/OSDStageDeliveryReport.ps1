@@ -131,6 +131,21 @@ function Get-OSDStageReportComponent {
     return $details
 }
 
+function ConvertTo-OSDStageReportFinalAction {
+    param($State)
+    if ($null -eq $State) { return $null }
+    $safe = Select-OSDStageReportField $State @('Action','Status','RequestedAtUtc')
+    $reason = switch ([string]$State.Status) {
+        'NotRequested' { 'No final action configured.' }
+        'Pending' { 'Deployment is still running.' }
+        'Waiting' { 'Waiting for Runner and Windows Setup to finish, then configured cleanup.' }
+        'Requested' { 'Power request is being submitted; restart or shutdown completion is not verified.' }
+        default { 'Final action was not requested. Inspect local finalization diagnostics for the reason.' }
+    }
+    $safe | Add-Member -NotePropertyName Reason -NotePropertyValue $reason
+    return $safe
+}
+
 function New-OSDStageDeliveryReport {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification='Builds an in-memory report object; no external state changes.')]
     [CmdletBinding()]
@@ -225,6 +240,14 @@ function New-OSDStageDeliveryReport {
     elseif ($Result.Status -eq 'Succeeded' -and $complete -and $knownStates -and $skipped -eq 0 -and
         @($checks | Where-Object Passed -eq $false).Count -eq 0 -and $reboot -eq $false -and
         ($null -eq $wu -or ($wu.FurtherScanRequired -eq $false -and $wu.ScanOnly -eq $false))) { $state = 'Succeeded' }
+    $finalAction = $null
+    if ($Result.PSObject.Properties['FinalAction'] -and $null -ne $Result.FinalAction) {
+        $finalAction = ConvertTo-OSDStageReportFinalAction -State $Result.FinalAction
+    }
+    elseif ($Phase -eq 'PreInstall' -and $Manifest -and $Manifest.Runtime -and $Manifest.Runtime.PSObject.Properties['FinalAction'] -and $Manifest.Runtime.FinalAction -in @('Reboot','Shutdown')) {
+        $finalAction = [pscustomobject]@{ Action=$Manifest.Runtime.FinalAction; Status='Skipped'; Reason='PreInstall failed; no final action was armed.'; RequestedAtUtc=$null }
+    }
+    if ($null -ne $finalAction -and $finalAction.Action -ne 'None' -and $finalAction.Status -in @('Skipped','Failed') -and $state -eq 'Succeeded') { $state = 'Attention' }
     $device = Get-OSDStageReportDevice
     if ($device.CollectionStatus -ne 'Available') {
         $checks.Add([pscustomobject]@{ Name='DeviceMetadata'; Passed=$false; Detail='Some device metadata could not be collected.' })
@@ -237,6 +260,7 @@ function New-OSDStageDeliveryReport {
         Module=[pscustomobject]@{ Name='OSDStage'; Version=$Manifest.Runtime.ModuleVersion; GalleryUrl='https://www.powershellgallery.com/packages/OSDStage'; GitHubUrl='https://github.com/roryvossepoel/OSDStage'; DocumentationUrl='https://roryvossepoel.github.io/OSDStage/' }
         Device=$device
         Counts=[pscustomobject]@{ Expected=$expected.Count; Succeeded=$succeeded; Failed=$failed; Skipped=$skipped; UnknownOrNotRun=@($packages | Where-Object { $_.Status -notin @('Succeeded','Failed','Skipped') }).Count }
+        FinalAction=$finalAction
         RebootRequired=$reboot; WindowsUpdate=$wu; Packages=@($packages); Checks=@($checks.ToArray())
         FailureType=(ConvertTo-OSDStageReportText $Result.FailureType); ErrorPresent=(-not [string]::IsNullOrWhiteSpace([string]$Result.Error))
         Scope='Execution evidence only. This report does not certify that Windows is fully patched or that Autopilot enrollment succeeded. Updates may become available after restart. Windows Update content is not cached by OSDStage.'
@@ -254,6 +278,7 @@ function Get-OSDStageReportSummary {
         $Report.Counts.Skipped -gt 0 -or $Report.Counts.UnknownOrNotRun -gt 0) {
         return 'Review the package results and evidence checks below.'
     }
+    if ($Report.PSObject.Properties['FinalAction'] -and $Report.FinalAction -and $Report.FinalAction.Action -ne 'None' -and $Report.FinalAction.Status -in @('Skipped','Failed')) { return 'Execution succeeded; the configured final action was not requested. Review final action details.' }
     if ($Report.RebootRequired -eq $true) {
         if ($Report.WindowsUpdate.FurtherScanRequired -eq $true) {
             return 'Execution succeeded; restart required. A follow-up update scan is recommended.'
@@ -276,14 +301,25 @@ function ConvertTo-OSDStageReportHtml {
     function Format-ReportTable {
         param([object[]]$Rows, [string[]]$Fields)
         $header = ($Fields | ForEach-Object {
-            $label = if ($_ -eq 'DurationSeconds') { 'Duration' } else { $_ -creplace '([a-z])([A-Z])', '$1 $2' }
+            $label = if ($_ -eq 'DisplayName') { 'App' } elseif ($_ -eq 'DurationSeconds') { 'Duration' } else { $_ -creplace '([a-z])([A-Z])', '$1 $2' }
             '<th scope="col">' + (Format-ReportValue $label) + '</th>'
         }) -join ''
         $body = ($Rows | ForEach-Object {
             $row = $_
             '<tr>' + (($Fields | ForEach-Object {
-                $value = if ($_ -eq 'DurationSeconds') { Format-ReportDuration $row.$_ } else { Format-ReportValue $row.$_ }
-                '<td>' + $value + '</td>'
+                $value = if ($_ -eq 'DurationSeconds') { Format-ReportDuration $row.$_ }
+                elseif ($_ -eq 'DisplayName') {
+                    $name = if ([string]::IsNullOrWhiteSpace([string]$row.DisplayName)) { $row.Id } else { $row.DisplayName }
+                    Format-ReportValue $name
+                }
+                elseif ($_ -eq 'FailureType' -and [string]::IsNullOrWhiteSpace([string]$row.FailureType) -and
+                    $row.Status -eq 'Succeeded' -and $row.ErrorPresent -ne $true) { 'n/a' }
+                elseif ($_ -eq 'Version' -and $row.Version -eq 'Current') { 'Unknown' }
+                else { Format-ReportValue $row.$_ }
+                $cellClass = if ($_ -eq 'Title') { ' class="title-cell"' }
+                    elseif ($_ -in @('DisplayName','Name','Detail','Subject','Path','Inf','FileName','RegistrationName','Identifier','ProgId','AppName')) { ' class="text-cell"' }
+                    else { '' }
+                '<td' + $cellClass + '>' + $value + '</td>'
             }) -join '') + '</tr>'
         }) -join ''
         if (-not $body) { return '<p>No recorded items.</p>' }
@@ -317,7 +353,7 @@ function ConvertTo-OSDStageReportHtml {
             })
             if ($rows.Count -gt 0) {
                 '<h3>' + $group.Title + '</h3>' +
-                    (Format-ReportTable $rows @('Id','Status','Version','ExitCode','DurationSeconds','AcquisitionOutcome','RebootRequired','FailureType','ErrorPresent'))
+                    (Format-ReportTable $rows @('DisplayName','Status','Version','ExitCode','DurationSeconds','AcquisitionOutcome','RebootRequired','FailureType','ErrorPresent'))
             }
         }
         '<section class="panel apps-card"><h2>Apps</h2>' + ($appGroups -join '') + '</section>'
@@ -350,15 +386,15 @@ function ConvertTo-OSDStageReportHtml {
 :root{color-scheme:light;--ink:#182f3d;--soft:#60737f;--accent:#126854;--edge:#dce5e8;--paper:#fff;--wash:#f4f7f8}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#eaf5ef 0%,#f1f8f7 34%,#f7fafb 68%,#fff 100%);color:var(--ink);font:16px/1.65 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 a{color:var(--accent);text-underline-offset:4px}a:focus-visible,summary:focus-visible,.scroll:focus-visible{outline:3px solid #12816b;outline-offset:4px}
-.site-header{background:#ffffffed;border-top:3px solid #187b66;border-bottom:1px solid var(--edge)}.nav-wrap{max-width:1240px;margin:auto;min-height:88px;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:11px;color:var(--ink);font-size:1.35rem;font-weight:750;letter-spacing:-.04em;text-decoration:none;white-space:nowrap}.brand-mark{width:35px;height:35px;flex-shrink:0}.header-label{font-size:.8rem;color:var(--soft)}
-main{max-width:1240px;margin:auto;padding:0 28px 48px}.report-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:center;padding:58px 0 40px}.eyebrow{display:inline-flex;align-items:center;gap:9px;margin:0 0 22px;padding:5px 12px;background:#ffffffc9;border:1px solid #e0ede6;border-radius:999px;font-size:.65rem;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:#22765b;box-shadow:0 2px 8px #1e695108}.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:#21a783;box-shadow:0 0 0 4px #ddf4eb}
+.site-header{background:#ffffffed;border-top:3px solid #187b66;border-bottom:1px solid var(--edge)}.nav-wrap{max-width:none;margin:auto;min-height:88px;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:11px;color:var(--ink);font-size:1.35rem;font-weight:750;letter-spacing:-.04em;text-decoration:none;white-space:nowrap}.brand-mark{width:35px;height:35px;flex-shrink:0}.header-label{font-size:.8rem;color:var(--soft)}
+main{max-width:none;margin:auto;padding:0 28px 48px}.report-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:center;padding:58px 0 40px}.eyebrow{display:inline-flex;align-items:center;gap:9px;margin:0 0 22px;padding:5px 12px;background:#ffffffc9;border:1px solid #e0ede6;border-radius:999px;font-size:.65rem;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:#22765b;box-shadow:0 2px 8px #1e695108}.eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:#21a783;box-shadow:0 0 0 4px #ddf4eb}
 h1,h2{margin:0;line-height:1.15;letter-spacing:-.035em}h1{font-size:clamp(2.4rem,4vw,3.5rem);font-weight:800;line-height:1.06;letter-spacing:-.055em;color:#132f2c}h1 span{display:block;color:#147d5e;background:linear-gradient(110deg,#16704e,#139d88);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}h2{font-size:1.35rem;font-weight:700}p{max-width:90ch;color:var(--soft)}.lead{font-size:1.02rem;line-height:1.8;margin:22px 0 0}.execution-card{min-width:0;border:1px solid #dae7e1;border-radius:19px;background:#ffffffeb;box-shadow:0 24px 55px #1b54451a;overflow:hidden}.card-heading{padding:17px 22px;border-bottom:1px solid #e6eee9;display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:.85rem;font-weight:700}.card-heading .brand{font-size:.9rem}.card-heading .brand-mark{width:25px;height:25px}.run-facts{margin:0;padding:12px 22px 20px}.run-facts>div{display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid #edf2ef;font-size:.84rem}.run-facts>div:last-child{border:0}.run-facts dt{color:var(--soft)}.run-facts dd{margin:0;font-weight:650;text-align:right;overflow-wrap:anywhere}.badge{display:inline-flex;align-items:center;background:#eaf6ef;color:#176448;border:1px solid #cde8db;padding:5px 12px;border-radius:999px;font-size:.75rem;font-weight:750;white-space:nowrap}.Attention{background:#fff3d9;color:#76520e;border-color:#f0dca8}.Failed{background:#fbe6e4;color:#8b2823;border-color:#ecc3bf}
 .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin:0 0 26px}.metric{background:#ffffffd9;border:1px solid #dfe9e3;border-radius:17px;padding:20px 22px;box-shadow:0 8px 28px #1b483106;font-size:.78rem;color:var(--soft)}.metric strong{display:block;font-size:2rem;line-height:1.25;letter-spacing:-.04em;color:#173c30;margin-top:6px}
-section.panel,details{min-width:0;background:#ffffffeb;border:1px solid #dfe9e3;border-radius:17px;padding:25px 26px;margin:18px 0;box-shadow:0 8px 28px #1b483106}summary{cursor:pointer;font-size:1.15rem;font-weight:700;letter-spacing:-.025em}summary::marker{color:#187358}.scroll{overflow:auto;margin-top:18px}table{border-collapse:collapse;width:100%;font-size:.8rem}th,td{text-align:left;padding:12px;border-bottom:1px solid #e2eae5;vertical-align:top;overflow-wrap:anywhere}th{background:#eff6f2;color:#345d50;font-size:.7rem;font-weight:750}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#f7faf8}code{font-family:ui-monospace,Consolas,monospace;font-size:.82em;overflow-wrap:anywhere}.muted{font-size:.8rem;color:var(--soft)}.deployment-meta{padding:18px 0 4px;font-size:.78rem;color:var(--soft)}.deployment-meta p{margin:5px 0}.site-footer{border-top:1px solid #d9e7df;background:linear-gradient(110deg,#edf6f0,#edf4f8)}.footer-wrap{max-width:1240px;padding:30px 28px;margin:auto;display:flex;justify-content:space-between;gap:30px;align-items:center}.footer-wrap p{font-size:.78rem;margin:6px 0 0}.footer-links{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:.8rem}.footer-links a{text-decoration:none}.footer-links a:hover{text-decoration:underline}
+section.panel,details{min-width:0;background:#ffffffeb;border:1px solid #dfe9e3;border-radius:17px;padding:25px 26px;margin:18px 0;box-shadow:0 8px 28px #1b483106}summary{cursor:pointer;font-size:1.15rem;font-weight:700;letter-spacing:-.025em}summary::marker{color:#187358}.scroll{overflow:auto;margin-top:18px}table{border-collapse:collapse;width:100%;font-size:.8rem}th,td{text-align:left;padding:12px;border-bottom:1px solid #e2eae5;vertical-align:top;overflow-wrap:normal;word-break:normal}td{white-space:nowrap}td.text-cell,td.title-cell{white-space:normal;overflow-wrap:anywhere;min-width:14rem}td.title-cell{min-width:26rem}th{background:#eff6f2;color:#345d50;font-size:.7rem;font-weight:750}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#f7faf8}code{font-family:ui-monospace,Consolas,monospace;font-size:.82em;overflow-wrap:anywhere}.muted{font-size:.8rem;color:var(--soft)}.deployment-meta{padding:18px 0 4px;font-size:.78rem;color:var(--soft)}.deployment-meta p{margin:5px 0}.site-footer{border-top:1px solid #d9e7df;background:linear-gradient(110deg,#edf6f0,#edf4f8)}.footer-wrap{max-width:none;padding:30px 28px;margin:auto;display:flex;justify-content:space-between;gap:30px;align-items:center}.footer-wrap p{font-size:.78rem;margin:6px 0 0}.footer-links{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:.8rem}.footer-links a{text-decoration:none}.footer-links a:hover{text-decoration:underline}
 details.component-details{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:16px 0 0}details.component-details>summary{padding:8px 0;font-size:1rem}
 @media(max-width:850px){.report-hero{grid-template-columns:1fr;gap:26px;padding:36px 0 28px}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.footer-wrap{align-items:flex-start;flex-direction:column}table{min-width:640px}}
 @media(max-width:480px){main{padding:0 16px 28px}.nav-wrap{padding:12px 16px;min-height:76px;gap:12px}.header-label{font-size:.7rem}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{padding:16px}section.panel,details{padding:20px 16px}.run-facts>div{flex-wrap:wrap;gap:4px 16px}.footer-wrap{padding:26px 16px}}
-@media print{body{background:#fff}.site-header,.site-footer{background:#fff}.nav-wrap{min-height:60px}main{max-width:none;padding:0}.report-hero{padding:20px 0;gap:20px;grid-template-columns:1fr 1fr}h1{font-size:28px}h1 span{-webkit-text-fill-color:#147d5e;background:none}.execution-card,.metric,section.panel,details{box-shadow:none}.metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.metric{padding:12px}.metric strong{font-size:22px}details>*{display:block!important}.scroll{overflow:visible}table{min-width:0;font-size:9px}th{font-size:9px}th,td{padding:6px}header,.report-hero,.metrics{break-inside:avoid}a{color:inherit}.footer-wrap{padding:18px 0}.site-footer .brand-mark{width:24px;height:24px}}
+@media print{body{background:#fff}.site-header,.site-footer{background:#fff}.nav-wrap{min-height:60px}main{max-width:none;padding:0}.report-hero{padding:20px 0;gap:20px;grid-template-columns:1fr 1fr}h1{font-size:28px}h1 span{-webkit-text-fill-color:#147d5e;background:none}.execution-card,.metric,section.panel,details{box-shadow:none}.metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.metric{padding:12px}.metric strong{font-size:22px}details>*{display:block!important}.scroll{overflow:visible}table{min-width:0;font-size:9px}th{font-size:9px}th,td{padding:6px}td.text-cell,td.title-cell{min-width:0}header,.report-hero,.metrics{break-inside:avoid}a{color:inherit}.footer-wrap{padding:18px 0}.site-footer .brand-mark{width:24px;height:24px}}
 </style></head><body>
 <header class="site-header"><div class="nav-wrap"><a class="brand" href="https://roryvossepoel.github.io/OSDStage/">$brandMark<span>OSDStage</span></a><span class="header-label">Delivery report &middot; $(Format-ReportValue $Report.Module.Version)</span></div></header>
 <main><div class="report-hero"><div><div class="eyebrow">Your deployment, recorded</div><h1>$headline<span>Your results.</span></h1><p class="lead">$(Format-ReportValue $Report.Summary)</p>
@@ -368,7 +404,8 @@ $(if ($Report.ErrorPresent -or $Report.FailureType) { '<p class="muted">Failure 
 <div class="metrics"><div class="metric">Expected<strong>$(Format-ReportValue $Report.Counts.Expected)</strong></div><div class="metric">Succeeded<strong>$(Format-ReportValue $Report.Counts.Succeeded)</strong></div><div class="metric">Failed<strong>$(Format-ReportValue $Report.Counts.Failed)</strong></div><div class="metric">Skipped<strong>$(Format-ReportValue $Report.Counts.Skipped)</strong></div><div class="metric">Unknown / not run<strong>$(Format-ReportValue $Report.Counts.UnknownOrNotRun)</strong></div></div>
 <section class="panel"><h2>Device</h2>$deviceTable</section>
 $packageCards
-<p class="muted">Missing values are shown as Unknown. Raw error messages are retained in local runtime logs.</p>
+$(if ($Report.PSObject.Properties['FinalAction'] -and $null -ne $Report.FinalAction) { '<section class="panel"><h2>Final action</h2>' + (Format-ReportTable @($Report.FinalAction) @('Action','Status','RequestedAtUtc')) + '<p class="muted">' + (Format-ReportValue $Report.FinalAction.Reason) + '</p>' + '<p class="muted">Requested records submission of the power request; it does not verify that the computer restarted or shut down.</p></section>' })
+<p class="muted">Missing values are shown as Unknown; Failure Type is n/a for successful entries without an error. Versions describe the recorded package payload. Raw error messages are retained in local runtime logs.</p>
 <details open><summary>Evidence checks</summary>$checkTable</details>
 <section class="panel"><h2>Scope and follow-up</h2><p>$(Format-ReportValue $Report.Scope)</p><p>$(Format-ReportValue $Report.Privacy)</p></section>
 <div class="deployment-meta"><p>Deployment <code>$(Format-ReportValue $Report.DeploymentId)</code></p><p>Started: $(Format-ReportValue $Report.StartedAtUtc) &middot; Completed: $(Format-ReportValue $Report.CompletedAtUtc)</p><p>Report <code>$(Format-ReportValue $Report.ReportId)</code> &middot; Generated: $(Format-ReportValue $Report.GeneratedAtUtc)</p></div>

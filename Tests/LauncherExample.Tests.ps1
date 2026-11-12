@@ -5,14 +5,15 @@ Describe 'Launcher staging example process contract' {
     }
 
     It 'returns the expected exit code and stops at <Failure>' -TestCases @(
-        @{ Failure = 'None'; ExitCode = 0; Expected = 'Environment,Gallery,Import,Office,Adobe,Chrome,Preflight' }
+        @{ Failure = 'None'; ExitCode = 0; Expected = 'Environment,Gallery,Import,Configuration,Office,Adobe,Chrome,Preflight' }
         @{ Failure = 'Environment'; ExitCode = 1; Expected = 'Environment' }
         @{ Failure = 'Gallery'; ExitCode = 1; Expected = 'Environment,Gallery' }
         @{ Failure = 'Import'; ExitCode = 1; Expected = 'Environment,Gallery,Import' }
-        @{ Failure = 'Office'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Office' }
-        @{ Failure = 'Adobe'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Office,Adobe' }
-        @{ Failure = 'Chrome'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Office,Adobe,Chrome' }
-        @{ Failure = 'Preflight'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Office,Adobe,Chrome,Preflight' }
+        @{ Failure = 'Configuration'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Configuration' }
+        @{ Failure = 'Office'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Configuration,Office' }
+        @{ Failure = 'Adobe'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Configuration,Office,Adobe' }
+        @{ Failure = 'Chrome'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Configuration,Office,Adobe,Chrome' }
+        @{ Failure = 'Preflight'; ExitCode = 1; Expected = 'Environment,Gallery,Import,Configuration,Office,Adobe,Chrome,Preflight' }
     ) {
         param($Failure, $ExitCode, $Expected)
         $wrapper = Join-Path $TestDrive "$Failure.ps1"
@@ -42,6 +43,11 @@ function Import-Module {
     param($Name, [switch]$Force)
     if ($Name -ne 'OSDStage' -or -not $Force) { throw 'Wrong module import.' }
     Invoke-Stub Import
+}
+function Set-OSDStageConfiguration {
+    param($FinalAction)
+    if ($FinalAction -ne 'None') { throw 'The default must not request a power action.' }
+    Invoke-Stub Configuration
 }
 function Add-OSDStageMicrosoft365Apps {
     param($Channel, $Language)
