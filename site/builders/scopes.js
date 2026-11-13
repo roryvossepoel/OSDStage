@@ -4,7 +4,7 @@ const BuilderScopes=(()=>{
  const baseKeys=['mode','moduleSource','moduleVersion','modulePath','cache','windowsPath','source','catalog','final','cleanup','preventSleep','logPath','resultPath'];
  const appKeys=['mode','source','catalog','repoSelected','repoItems','selected','skipRefresh','appOptions','officeMode','officeFallback','officeXmlPath','officeDevice','officeUpdates','officeArchitecture','officeAddonLanguage','officeChannel','officeProduct','officeLanguages','officeShared','officeVisio','officeProject','officeExclude','firefoxChannel','firefoxLanguage','dotnetType','dotnetChannel','dotnetRuntime','dotnetDesktop'];
  function pick(input,keys){const s=C.defaults();for(const k of keys)if(Object.hasOwn(input,k))s[k]=input[k];return s;}
- function baseState(input){return {...pick(input,baseKeys),baseOnly:true};}
+ function baseState(input){return {...pick({moduleVersion:'current',...input},baseKeys),baseOnly:true};}
  function appState(input){return pick(input,appKeys);}
  function validateBase(input){const s=baseState(input),errors=C.validate({...s,source:'builtin'},[]);if(!['builtin','both','repository'].includes(s.source))errors.push({step:0,message:'Choose a supported repository setting.'});if(s.source!=='builtin')try{C.url(s.catalog)}catch{errors.push({step:0,message:'Enter the HTTPS catalog URL used by your repository components.'})}return errors;}
  function validateApps(input,apps){const s=appState(input);return C.validate(s.mode==='offline'?{...s,moduleSource:'local',modulePath:'Files\\OSDStage\\OSDStage.psd1'}:s,apps);}
