@@ -1,12 +1,12 @@
 /* Website-only separation between module setup and optional app components. */
 const BuilderScopes=(()=>{
  const C=typeof BuilderCore!=='undefined'?BuilderCore:require('./core.js');
- const baseKeys=['mode','moduleSource','moduleVersion','modulePath','cache','windowsPath','source','catalog','final','cleanup','preventSleep','logPath','resultPath'];
+ const baseKeys=['mode','moduleSource','moduleVersion','modulePath','cache','windowsPath','source','catalog','final','cleanup','preventSleep','enableBuiltIns','logPath','resultPath'];
  const appKeys=['mode','source','catalog','repoSelected','repoItems','selected','skipRefresh','appOptions','officeMode','officeFallback','officeXmlPath','officeDevice','officeUpdates','officeArchitecture','officeAddonLanguage','officeChannel','officeProduct','officeLanguages','officeShared','officeVisio','officeProject','officeExclude','firefoxChannel','firefoxLanguage','dotnetType','dotnetChannel','dotnetRuntime','dotnetDesktop'];
  function pick(input,keys){const s=C.defaults();for(const k of keys)if(Object.hasOwn(input,k))s[k]=input[k];return s;}
- function baseState(input){return {...pick({moduleVersion:'current',...input},baseKeys),baseOnly:true};}
+ function baseState(input){return {...pick({moduleVersion:'current',logPath:'%ProgramData%\\OSDStage\\Logs\\Runtime.log',resultPath:'%ProgramData%\\OSDStage\\Results\\Latest.json',...input},baseKeys),baseOnly:true};}
  function appState(input){return pick(input,appKeys);}
- function validateBase(input){const s=baseState(input),errors=C.validate({...s,source:'builtin'},[]);if(!['builtin','both','repository'].includes(s.source))errors.push({step:0,message:'Choose a supported repository setting.'});if(s.source!=='builtin')try{C.url(s.catalog)}catch{errors.push({step:0,message:'Enter the HTTPS catalog URL used by your repository components.'})}return errors;}
+ function validateBase(input){const s=baseState(input),errors=C.validate({...s,source:'builtin'},[]);if(typeof s.enableBuiltIns!=='boolean')errors.push({step:0,message:'Choose whether built-in apps are enabled.'});if(!s.enableBuiltIns&&s.source==='builtin')errors.push({step:0,message:'Keep at least one app source enabled: built-in apps or your own repository.'});if(!['builtin','both','repository'].includes(s.source))errors.push({step:0,message:'Choose a supported repository setting.'});if(s.source!=='builtin')try{C.url(s.catalog)}catch{errors.push({step:0,message:'Enter the HTTPS catalog URL used by your repository components.'})}return errors;}
  function validateApps(input,apps){const s=appState(input);return C.validate(s.mode==='offline'?{...s,moduleSource:'local',modulePath:'Files\\OSDStage\\OSDStage.psd1'}:s,apps);}
  function checked(errors){if(errors.length)throw Error(errors.map(e=>e.message).join('\n'));}
  function baseCode(input,phase='stage'){const s=baseState(input);checked(validateBase(s));return C.renderScript(s,[],phase);}
