@@ -18,6 +18,7 @@ function setup(saved=null,search=''){
 const tick=()=>new Promise(r=>setImmediate(r));
 (async()=>{
  const {node,requests,store,run}=setup();await tick();const count=builtin.Packages.length;
+ assert.equal(run("state.builtins.find(x=>x.id==='WindowsUpdate').displayName"),'Windows Update');assert.equal(builtin.Packages.find(x=>x.Id==='WindowsUpdate').DisplayName,'Windows Update (experimental)');
  assert.deepEqual(requests,[builtinUrl]);assert.equal(run('state.repository.length'),0);assert.equal(run('state.filtered.length'),count);
  assert.equal(node('resultSummary').textContent,`1–12 of ${count} components`);
  run('changePage(1)');assert.equal(node('resultSummary').textContent,`13–${Math.min(24,count)} of ${count} components`);assert.equal(node('nextPage').disabled,count<=24);
