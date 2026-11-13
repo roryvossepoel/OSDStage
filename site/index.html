@@ -4,7 +4,7 @@
     <div class="hero-copy">
       <p class="home-kicker"><span aria-hidden="true"></span>From Windows deployment to ready</p>
       <h1 id="hero-title">Windows deployed.<br><span>Make it yours.<br>Before OOBE.</span></h1>
-      <p class="home-lead">Stage the apps, Windows updates and device configuration you choose after Windows deployment. OSDStage applies those choices during SetupComplete, before OOBE begins.</p>
+      <p class="home-lead">Stage the apps, Windows updates and device configuration you choose after Windows deployment. Get Microsoft 365 Apps and Windows updates installed during SetupComplete, before OOBE begins. Choose either or both, then add any other apps and settings you need.</p>
       <div class="actions"><a class="button primary" href="get-started.html">Get started</a><a class="button secondary" href="catalog/index.html">Explore the catalog</a></div>
       <ul class="home-facts" aria-label="Project highlights"><li>PowerShell</li><li>Optional USB cache</li><li>Offline delivery report</li><li>Open source</li></ul>
       <a class="home-gallery" href="https://www.powershellgallery.com/packages/OSDStage/1.0.0">PowerShell Gallery <span>1.0.0 stable</span></a>
@@ -14,11 +14,11 @@
       <div class="preview-body">
         <div class="preview-code"><div><span class="terminal-dots" aria-hidden="true">● ● ●</span><span>PowerShell</span></div><pre><code># Choose what this device needs
 Add-OSDStageMicrosoft365Apps
-Add-OSDStageAdobeAcrobatUnified
+Add-OSDStageWindowsUpdate
 
 # Check before the first boot
 Test-OSDStageDeployment -ThrowOnFailure</code></pre></div>
-        <div class="preview-packages"><p class="preview-label">Your choices</p><div><span class="preview-check" aria-hidden="true">✓</span><span>Microsoft 365 Apps<small>Built-in app</small></span><span class="preview-status">Staged</span></div><div><span class="preview-check" aria-hidden="true">✓</span><span>Adobe Acrobat<small>Built-in app</small></span><span class="preview-status">Staged</span></div></div>
+        <div class="preview-packages"><p class="preview-label">Your choices</p><div><span class="preview-check" aria-hidden="true">✓</span><span>Microsoft 365 Apps<small>Built-in app</small></span><span class="preview-status">Staged</span></div><div><span class="preview-check" aria-hidden="true">✓</span><span>Windows Update<small>Updates before OOBE</small></span><span class="preview-status">Staged</span></div></div>
       </div>
     </div>
   </section>
@@ -43,7 +43,7 @@ Test-OSDStageDeployment -ThrowOnFailure</code></pre></div>
     </div>
   </section>
 
-<section class="home-section report-showcase" aria-labelledby="report-title"><div class="report-showcase-copy"><p class="eyebrow">Included in RC4 · Delivery report</p><h2 id="report-title">You staged it.<br><span>Now see what happened.</span></h2><p>Every deployment leaves a clear record. Open the offline HTML report to see what succeeded, what changed and what needs your attention.</p><ul class="report-benefits"><li><strong>Apps, with their source.</strong> See which apps came from built-in integrations and which came from your own repository.</li><li><strong>Details behind the result.</strong> Expand fonts, certificates, settings and file operations.</li><li><strong>An honest handover.</strong> See update results, restart requirements and evidence checks together.</li><li><strong>A result you can act on.</strong> Quickly spot what succeeded, what needs attention and what to check next.</li></ul><div class="actions"><a class="button primary" href="report.html">Discover the report</a><a class="text-link" href="examples/DeliveryReport.html">View example</a></div><p class="report-format-note">Generated automatically · Offline HTML + structured JSON</p></div><div class="report-preview" aria-label="Illustrative delivery report, fictional data">
+<section class="home-section report-showcase" aria-labelledby="report-title"><div class="report-showcase-copy"><p class="eyebrow">Included in OSDStage · Delivery report</p><h2 id="report-title">You staged it.<br><span>Now see what happened.</span></h2><p>Every deployment leaves a clear record. Open the offline HTML report to see what succeeded, what changed and what needs your attention.</p><ul class="report-benefits"><li><strong>Apps, with their source.</strong> See which apps came from built-in integrations and which came from your own repository.</li><li><strong>Details behind the result.</strong> Expand fonts, certificates, settings and file operations.</li><li><strong>An honest handover.</strong> See update results, restart requirements and evidence checks together.</li><li><strong>A result you can act on.</strong> Quickly spot what succeeded, what needs attention and what to check next.</li></ul><div class="actions"><a class="button primary" href="report.html">Discover the report</a><a class="text-link" href="examples/DeliveryReport.html">View example</a></div><p class="report-format-note">Generated automatically · Offline HTML + structured JSON</p></div><div class="report-preview" aria-label="Illustrative delivery report, fictional data">
  <div class="report-preview-heading"><span><span class="brand-mark" aria-hidden="true"></span>Delivery report</span><span class="report-pill attention">Attention</span></div>
  <div class="report-preview-body"><p class="preview-label">Illustrative example · fictional data</p><h3>Deployment complete.<br><span>Your results.</span></h3><p class="report-preview-note">Execution succeeded. Restart required.</p>
  <div class="report-preview-metrics"><div><strong>7 / 7</strong><span>Packages succeeded</span></div><div><strong>6 min 23 sec</strong><span>Execution time</span></div></div>

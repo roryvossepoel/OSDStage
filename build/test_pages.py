@@ -25,7 +25,7 @@ class PagesTests(unittest.TestCase):
         build()
         cls.docs={p:Document(p.read_text()) for p in OUT.rglob('*.html')}
     def test_navigation_and_local_links_under_project_subpath(self):
-        self.assertEqual(len(self.docs),10)
+        self.assertEqual(len(self.docs),11)
         for p,d in self.docs.items():
             with self.subTest(page=p.name):
                 self.assertEqual(d.lang,'en');self.assertEqual(d.h1,1);self.assertEqual(d.main,1)
@@ -41,12 +41,19 @@ class PagesTests(unittest.TestCase):
                     self.assertTrue(target.is_file(),f'{p.name}: {link}')
                     if u.fragment and target in self.docs:self.assertIn(unquote(u.fragment),self.docs[target].ids)
     def test_builders_are_direct_link_previews(self):
-        for name in ['index.html','deployment.html','component.html']:
+        for name in ['index.html','deployment.html','apps-builder.html','component.html']:
             html=(OUT/'builders'/name).read_text()
             self.assertIn('noindex,nofollow', html)
         for name in ['index.html','get-started.html','guides.html','faq.html','catalog/index.html']:
             self.assertNotIn('builders/', (OUT/name).read_text())
         self.assertIn('Choose what you need.', (OUT/'builders/index.html').read_text())
+
+    def test_homepage_features_office_and_windows_update(self):
+        html=(OUT/'index.html').read_text()
+        self.assertIn('Add-OSDStageMicrosoft365Apps',html)
+        self.assertIn('Add-OSDStageWindowsUpdate',html)
+        self.assertNotIn('Add-OSDStageAdobeAcrobatUnified',html)
+        self.assertIn('Choose either or both',html)
 
     def test_report_example_is_fictional_offline_and_linked(self):
         example=OUT/'examples/DeliveryReport.html'

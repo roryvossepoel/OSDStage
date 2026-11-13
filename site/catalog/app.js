@@ -100,7 +100,7 @@ function normalizeBuiltIn(x){
       ?"Evergreen built-in integration. Prepare supported vendor content in full Windows, then reuse the verified cache during staging."
       :"Evergreen built-in integration. During an online deployment, OSDStage resolves supported vendor content when acquisition runs; valid cached content can be reused.";
   return {
-    id:x.Id,displayName:text(x.DisplayName,x.Id),source:"BuiltIn",vendor:text(x.Vendor),
+    id:x.Id,displayName:x.Id==="WindowsUpdate"?"Windows Update":text(x.DisplayName,x.Id),source:"BuiltIn",vendor:text(x.Vendor),
     version:bundled?"Included with module":x.DefaultChannel?`Evergreen · ${x.DefaultChannel}`:"Evergreen",
     architectures:strings(x.Architectures).map(a=>a.toLowerCase()),packageType:packageType(x.PackageType),
     commands:[text(x.AddCommand),...strings(x.AdditionalAddCommands)],

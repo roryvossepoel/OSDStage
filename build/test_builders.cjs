@@ -90,5 +90,46 @@ test('conflicting or invalid configuration values cannot generate executable out
   ['filesystem',{files:[{action:'Copy',source:'Files\\..\\secret.txt',path:'C:\\target.txt'}]}]
  ])assert.throws(()=>B.generate(type,input),type);
 });
-if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});for(const [type,input]of Object.entries(componentExamples))fs.writeFileSync(path.join(dir,'component-'+type+'.ps1'),B.generate(type,input));fs.writeFileSync(path.join(dir,'commands.json'),JSON.stringify(Object.entries(componentExamples).flatMap(([type,input])=>B.commands(type,input))));let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{certificates:[{path:'Files\\root.cer',store:'Root'}]})];code=code.replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
+
+const S=require('../site/builders/scopes.js');
+test('foundation configures module and repository without requiring or emitting workloads',()=>{
+ const input={...C.defaults(),source:'both',catalog:'https://example.org/catalog.json',selected:['Microsoft365Apps'],updates:true,final:'Reboot'};
+ assert.deepEqual(S.validateBase(input),[]);assert.match(S.baseCode({}),/-FinalAction 'None'/);
+ const code=S.baseCode(input);assert.match(code,/Install-Module/);assert.match(code,/-CatalogUri 'https:\/\/example.org\/catalog.json'/);assert.match(code,/-FinalAction 'Reboot'/);
+ assert.doesNotMatch(code,/Add-OSDStage|Sync-OSDStage|Test-OSDStageRepositoryAvailability|AllowPrerelease/);
+ assert.ok(code.indexOf('ADD YOUR CONFIGURATION COMPONENTS HERE')<code.indexOf('Test-OSDStageDeployment'));
+});
+test('an updates-only deployment needs no app selection',()=>{
+ const input={final:'Reboot'};const code=S.baseCode(input).replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',B.generate('updates',{}));
+ assert.match(code,/Add-OSDStageWindowsUpdate/);assert.doesNotMatch(code,/Add-OSDStageMicrosoft|Office/);
+ assert.ok(code.indexOf('Add-OSDStageWindowsUpdate')<code.indexOf('Test-OSDStageDeployment'));
+});
+test('offline base loads the supplied module and provides an independent preparation marker',()=>{
+ assert.throws(()=>S.baseCode({mode:'offline'}));const input={mode:'offline',moduleSource:'local',modulePath:'Files\\OSDStage\\OSDStage.psd1'};
+ assert.match(S.baseCode(input),/Import-Module \(Join-Path \$PSScriptRoot 'Files\\OSDStage\\OSDStage.psd1'\)/);
+ assert.match(S.baseCode(input),/-RequireOfflineReady/);
+ assert.match(S.baseCode(input,'prepare'),/ADD YOUR CACHE PREPARATION COMPONENTS HERE/);
+ assert.doesNotMatch(S.baseCode(input,'prepare'),/Test-OSDStageDeployment|FinalAction|Add-OSDStage/);
+});
+test('apps output is a component with independent preparation and no module settings or updates',()=>{
+ const input={selected:['7Zip'],final:'Shutdown',updates:true,cache:'Other',moduleVersion:'invalid'};
+ assert.match(S.appCode(input,apps),/^Add-OSDStage7Zip/);
+ for(const phase of ['stage','prepare'])assert.doesNotMatch(S.appCode(input,apps,phase),/Import-Module|Install-Module|Set-OSDStageConfiguration|FinalAction|WindowsUpdate|Test-OSDStageDeployment/);
+ assert.match(S.appCode(input,apps,'prepare'),/^Sync-OSDStage7Zip/);assert.throws(()=>S.appCode({},apps));
+});
+test('Office component preserves generated XML, languages and target-language behavior',()=>{
+ const input={selected:['Microsoft365Apps'],officeLanguages:['de-de','nl-nl']};
+ for(const phase of ['stage','prepare']){const code=S.appCode(input,apps,phase);assert.match(code,/WriteAllText/);assert.match(code,/Language ID="de-de"/);assert.match(code,/Language ID="nl-nl"/);assert.match(code,/-ConfigurationXml \$officeXmlPath/);}
+ const match={...input,officeMode:'matchos'};assert.match(S.appCode(match,apps),/Language ID="MatchOS"/);assert.doesNotMatch(S.appCode(match,apps,'prepare'),/Sync-OSDStageMicrosoft365Apps|WriteAllText/);assert.throws(()=>S.appCode({...match,mode:'offline'},apps));
+ const custom={...input,officeMode:'xml',officeXmlPath:'Files\\Office.xml'};assert.deepEqual(S.appFiles(custom,apps).map(f=>f.path),['Files\\Office.xml']);
+});
+test('repository app components retain availability checks before staging',()=>{
+ const input={source:'repository',catalog:'https://example.org/catalog.json',repoSelected:['App'],repoItems:[{id:'App',name:'App',architecture:'x64',status:'index',blocked:false}]};
+ const code=S.appCode(input,apps);assert.ok(code.indexOf('Test-OSDStageRepositoryAvailability')<code.indexOf('\r\nAdd-OSDStage -Name'));
+ assert.doesNotMatch(code,/CatalogUri|Set-OSDStageConfiguration/);assert.match(S.appCode(input,apps,'prepare'),/^Sync-OSDStageRepository/);
+});
+test('application export has component filenames and instructions, not duplicate base scripts',()=>{
+ const files=S.appPackage({selected:['7Zip']},apps);assert.deepEqual(Object.keys(files),['Apps-Stage.ps1','Apps-Prepare.ps1','README.txt']);assert.match(files['README.txt'],/not standalone scripts/);
+});
+if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'base-only.ps1'),S.baseCode({source:'both',catalog:'https://example.org/catalog.json'}));fs.writeFileSync(path.join(dir,'updates-only.ps1'),S.baseCode({}).replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',B.generate('updates',{})));for(const phase of ['stage','prepare'])fs.writeFileSync(path.join(dir,'apps-'+phase+'.ps1'),S.appCode({selected:['Microsoft365Apps','7Zip','DotNetRuntime'],dotnetRuntime:true,dotnetDesktop:true},apps,phase));for(const [type,input]of Object.entries(componentExamples))fs.writeFileSync(path.join(dir,'component-'+type+'.ps1'),B.generate(type,input));fs.writeFileSync(path.join(dir,'commands.json'),JSON.stringify(Object.entries(componentExamples).flatMap(([type,input])=>B.commands(type,input))));let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{certificates:[{path:'Files\\root.cer',store:'Root'}]})];code=code.replace('# === ADD YOUR CONFIGURATION COMPONENTS HERE ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
 console.log(tests+' builder checks passed.');
