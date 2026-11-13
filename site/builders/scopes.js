@@ -19,6 +19,6 @@ const BuilderScopes=(()=>{
   return a.join('\r\n')+'\r\n';
  }
  function appFiles(input,apps){return C.requiredFiles(appState(input),apps);}
- function appPackage(input,apps){return {'Apps-Stage.ps1':appCode(input,apps,'stage'),'Apps-Prepare.ps1':appCode(input,apps,'prepare'),'README.txt':'These are components, not standalone scripts.\r\nPaste Apps-Stage.ps1 into your base staging script before Test-OSDStageDeployment.\r\nFor cache preparation, paste Apps-Prepare.ps1 after module import and configuration in your preparation base. Run preparation on full Windows.\r\nConfigure the same repository catalog and cache label in your base.\r\nFiles you supply yourself (not included):\r\n'+appFiles(input,apps).map(f=>f.path+' — '+f.purpose).join('\r\n')};}
+ function appPackage(input,apps){return {'Apps-Stage.ps1':appCode(input,apps,'stage'),'Apps-Prepare.ps1':appCode(input,apps,'prepare'),'README.txt':'These are components, not standalone scripts.\r\nPaste Apps-Stage.ps1 into your base staging script before Test-OSDStageDeployment.\r\nFor cache preparation, paste Apps-Prepare.ps1 after importing and configuring OSDStage in your own preparation script. Run preparation on full Windows.\r\nConfigure the same repository catalog and cache label in your base.\r\nFiles you supply yourself (not included):\r\n'+appFiles(input,apps).map(f=>f.path+' — '+f.purpose).join('\r\n')};}
  return {baseState,appState,validateBase,validateApps,baseCode,appCode,appFiles,appPackage};
 })();if(typeof module!=='undefined'&&module.exports)module.exports=BuilderScopes;
