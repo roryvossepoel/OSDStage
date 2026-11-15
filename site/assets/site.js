@@ -216,7 +216,7 @@ if (existingGithubLink && !siteHeader.querySelector('.header-actions')) {
 // Build one shared two-level footer on every page.
 const siteFooter = document.querySelector('.site-footer');
 if (siteFooter) {
-  const pathPrefix = document.body.classList.contains('catalog-page') ? '../' : '';
+  const pathPrefix = document.body.matches('.catalog-page, .builder-page') ? '../' : '';
   siteFooter.innerHTML = `
     <div class="footer-main">
       <div class="footer-brand">
