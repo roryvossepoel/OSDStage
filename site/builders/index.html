@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="Choose the OSDStage builders you need. Create a base deployment script and add focused configuration components."><title>Configuration builders · OSDStage</title><link rel="icon" href="../favicon.ico"><meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="../assets/site.css">
-<link rel="stylesheet" href="builders-home.css?v=20261116-2">
+<link rel="stylesheet" href="builders-home.css?v=20261116-3">
 <script defer src="../assets/site.js"></script></head><body class="builder-page builders-home-page"><a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="nav-wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▰</span>OSDStage</a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open menu" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="nav-icon-menu" d="M4 6h16M4 12h16M4 18h16"/><path class="nav-icon-close" d="m6 6 12 12M6 18 18 6"/></svg></button><div class="nav-panel" id="site-navigation"><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="../get-started.html">Get started</a><a href="../catalog/index.html">Catalog</a><a href="../guides.html">Guides</a><a href="../report.html">Report</a><a href="../faq.html">FAQ</a></nav><a class="github-link" href="https://github.com/roryvossepoel/OSDStage">GitHub</a></div></div></header><main id="main" class="builders-home">
   <div class="page-intro builders-intro">
@@ -12,7 +12,6 @@
   <section class="builder-foundation" aria-labelledby="foundation-title">
     <span class="builder-step" aria-hidden="true">01</span>
     <div class="builder-foundation-copy">
-      <p class="builders-label">Start here</p>
       <h2 id="foundation-title">Create your base block.</h2>
       <p>Use the Deployment Builder to install OSDStage and set your module options. This is the starting point for your script.</p>
     </div>
@@ -21,23 +20,26 @@
 
   <section class="builder-components" aria-labelledby="components-title">
     <div class="builder-section-intro">
-      <span class="builder-step builder-step-muted" aria-hidden="true">02</span>
+      <span class="builder-step" aria-hidden="true">02</span>
       <div><h2 id="components-title">Add your components.</h2><p>Choose what you need below. Copy each code block into the configuration section of your base script. Every component is optional.</p></div>
     </div>
+    <div class="builder-component-groups">
     <div class="builder-workloads">
       <section class="builder-group" aria-labelledby="apps-title">
         <h3 id="apps-title" class="builder-group-title">Apps</h3>
+        <p class="builder-group-description">Choose the applications to install.</p>
         <a class="builder-card" href="apps-builder.html">
           <span class="builder-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
-          <div><h4>Apps Builder</h4><p>Select built-in apps or apps from your own repository.</p></div>
+          <div><h4>Select your apps</h4><p>Select built-in apps or apps from your own repository.</p></div>
           <svg class="builder-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
         </a>
       </section>
       <section class="builder-group" aria-labelledby="updates-title">
         <h3 id="updates-title" class="builder-group-title">Windows Updates</h3>
+        <p class="builder-group-description">Choose what Windows Update should do.</p>
         <a class="builder-card" href="component.html?type=updates">
           <span class="builder-icon"><img src="../metadata/icons/windowsupdate.svg" alt="" width="28" height="28"></span>
-          <div><h4>Windows Update Builder</h4><p>Install Windows updates, drivers and firmware, or scan only.</p></div>
+          <div><h4>Configure updates</h4><p>Install Windows updates, drivers and firmware, or scan only.</p></div>
           <svg class="builder-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
         </a>
       </section>
@@ -126,6 +128,7 @@
         </a>
       </div>
     </section>
+    </div>
   </section>
 </main>
 <footer class="site-footer">
