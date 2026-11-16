@@ -4,7 +4,7 @@ const BuilderComponents=(()=>{
  const definitions={
   wifi:{title:'Wi-Fi',icon:'wifi',catalogId:'WiFiProfiles',description:'Use your XML profile or enter network settings.',keys:['wifi','wifiMode','wifiPath','wifiSSID','wifiSecurity','wifiConnection','wifiHidden','wifiProfileName']},
   registry:{title:'Registry',icon:'registry',catalogId:'RegistrySettings',description:'Machine keys and typed values, always under HKLM.',keys:['registry']},
-  certificates:{title:'Certificates',icon:'certificates',catalogId:'Certificates',description:'Public CA certificates from files or your repository.',keys:['certificates','certificateSource','repositoryIds','repositorySkipRefresh']},
+  certificates:{title:'Certificates',icon:'certificates',catalogId:'Certificates',repositoryType:'Certificate',description:'Stage certificate packages from your own catalog.',keys:['repositoryIds','repositorySkipRefresh']},
   variables:{title:'Environment variables',icon:'variables',catalogId:'EnvironmentVariables',description:'Set machine variables or append directories to PATH.',keys:['variables','appendPath']},
   filesystem:{title:'Files & folders',icon:'filesystem',catalogId:'FileSystem',description:'Copy or write files. Create or remove folders.',keys:['files','directories']},
   services:{title:'Services',icon:'services',catalogId:'Services',description:'Choose service startup types and running states.',keys:['services']},
@@ -20,17 +20,16 @@ const BuilderComponents=(()=>{
  };
  function state(type,input){
   if(!Object.hasOwn(definitions,type))throw Error('Unknown configuration builder.');
-  const s={...C.defaults(),certificateSource:'files',repositoryIds:'',repositorySkipRefresh:false};
+  const s={...C.defaults(),repositoryIds:'',repositorySkipRefresh:false};
   for(const k of definitions[type].keys)if(Object.hasOwn(input,k))s[k]=input[k];
   if(type==='wifi')s.wifi=true;if(type==='updates')s.updates=true;if(type==='inbox')s.inboxEnabled=true;
   if(isRepository(type,s)){s.baseOnly=true;s.certificates=[];}
   return s;
  }
- function isRepository(type,s){return !!definitions[type]?.repositoryType||(type==='certificates'&&s.certificateSource==='repository');}
+ function isRepository(type,s){return !!definitions[type]?.repositoryType;}
  function validate(type,input){
   const s=state(type,input),e=C.validate(s,[]).map(x=>x.message==='Select at least one app, update or setting.'?{step:3,message:'Add at least one configuration item.'}:x);
   const add=message=>e.push({step:3,message});
-  if(type==='certificates'&&!['files','repository'].includes(s.certificateSource))add('Choose certificate files or repository packages.');
   if(isRepository(type,s)){
    const ids=C.list(s.repositoryIds);
    if(!ids.length||ids.some(id=>!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id)))add('Enter package IDs from your catalog, one per line (letters, numbers, dots, underscores and hyphens).');
