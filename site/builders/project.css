@@ -1,0 +1,45 @@
+body.builders-home-page{background:var(--paper)}
+.builders-home-page main.builders-home{max-width:1480px;padding-top:48px}
+.project-columns,.builder-page .component-layout.project-columns{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}
+.project-catalog .builder-components{margin-top:0}
+.project-catalog{margin-top:36px}
+.project-catalog .builder-component-groups{margin-right:0}
+.project-aside{position:sticky;top:24px;min-width:0}
+.project-summary{background:var(--paper);border:1px solid var(--edge);border-radius:13px;padding:22px;overflow-wrap:anywhere}
+.project-summary h3{margin:0;color:var(--ink);font-size:1.04rem;letter-spacing:-.025em}
+.project-summary p,.project-summary small{color:var(--soft);font-size:.82rem;line-height:1.55}
+.project-summary .summary-count{margin:3px 0 16px}
+.project-list{border-top:1px solid var(--edge);margin:0 0 14px;padding:0;list-style:none}
+.project-list li{border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:10px;padding:10px 0}
+.project-list a{flex:1;min-width:0;display:block;text-decoration:none}
+.project-list a:hover strong{text-decoration:underline}
+.project-list strong{font-size:.87rem;font-weight:650;color:var(--ink);display:block}
+.project-list small{display:block}
+.project-list .part-remove{border:0;background:transparent;color:var(--soft);border-radius:6px;min-width:30px;min-height:32px;font-size:1.2rem;cursor:pointer}
+.project-list .part-remove:hover{background:var(--wash);color:var(--ink)}
+.project-summary .action-link,.project-action{border:1px solid var(--edge);display:inline-flex;align-items:center;justify-content:center;text-align:center;border-radius:7px;padding:9px 14px;font:inherit;font-weight:650;font-size:.81rem;line-height:1.4;background:var(--paper);color:var(--ink);text-decoration:none}
+.project-summary .action-link{width:100%}
+.project-summary .action-link:hover,.project-action:hover{text-decoration:none;border-color:var(--accent)}
+.project-action.primary{background:var(--accent);border-color:var(--accent);color:white}
+.project-badge{display:inline-block;background:var(--wash);color:var(--accent);font-weight:650;font-size:.7rem;line-height:1.3;border-radius:20px;padding:4px 8px;margin-top:8px}
+.project-savebar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;padding:16px 24px;border-top:1px solid var(--edge);background:var(--wash)}
+.project-savebar a{color:var(--soft);font-size:.85rem}
+.project-columns .panel{min-width:0}
+.project-review .content{min-height:0}
+.project-review .codebox pre{max-height:62vh}
+.project-review .codebar{flex-wrap:wrap}
+.project-review .review-note{margin-top:14px}
+.project-review .validation a{font-size:inherit}
+.project-summary .current strong{color:var(--accent)}
+#project-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:90;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:8px;box-shadow:0 5px 25px #0002;font-size:.9rem;max-width:90vw}
+#project-notice:empty{display:none}
+@media(min-width:1151px){.shell .right{top:24px}}
+@media(max-width:1100px){.project-columns,.builder-page .component-layout.project-columns{grid-template-columns:minmax(0,1fr) 235px}.project-catalog .builder-component-groups{margin-left:0}.project-catalog .builder-section-intro{padding-left:0}.project-aside{position:static}}
+@media(max-width:800px){.project-columns,.builder-page .component-layout.project-columns{grid-template-columns:1fr}.project-catalog .project-aside{grid-row:1}.project-summary{padding:16px 18px}.builders-home-page main.builders-home{padding-top:30px}.project-catalog .builder-component-groups{margin:18px 0 0}.project-catalog .builder-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.project-catalog .builder-grid{grid-template-columns:1fr}.project-savebar{padding:14px 16px}.builders-home-page main.builders-home{padding-inline:18px}.project-catalog .builder-component-groups{margin-inline:0}.project-catalog{margin-top:24px}}
+.draft-app-summary{border-top:1px solid var(--edge);margin:14px 0;padding-top:12px}
+.draft-app-summary strong{font-size:.85rem;color:var(--ink)}
+.draft-app-summary p{margin:4px 0}
+.project-messages:not(:empty){padding:0 22px 18px}
+.project-messages .validation{margin:0}
+main:focus:not(:focus-visible){outline:none}

@@ -1,8 +1,8 @@
+function mountComponent(type){
 'use strict';
 const $=id=>document.getElementById(id),escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const type=new URLSearchParams(location.search).get('type')||'wifi';
 const definition=Object.hasOwn(BuilderComponents.definitions,type)?BuilderComponents.definitions[type]:null;
-let state={...BuilderCore.defaults(),repositoryIds:'',repositorySkipRefresh:false},generated='',associationMode='rules';
+let state={...BuilderCore.defaults(),repositoryIds:'',repositorySkipRefresh:false,...clone(project.parts[type] || {})},associationMode=state.associationXml?'xml':'rules';
 function get(p){return p.split('.').reduce((o,k)=>o[k],state)}
 function set(p,v){let a=p.split('.'),k=a.pop(),o=a.reduce((o,k)=>o[k],state);o[k]=v;}
 function field(label,path,hint='',placeholder='',multiline=false){const attrs=`data-field="${path}" aria-label="${escapeHTML(label)}" placeholder="${escapeHTML(placeholder)}"`;return `<label class="field">${label}${multiline?`<textarea ${attrs}>${escapeHTML(get(path))}</textarea>`:`<input type="text" ${attrs} value="${escapeHTML(get(path))}">`}${hint?`<small>${hint}</small>`:''}</label>`}
@@ -30,7 +30,7 @@ function form(){switch(type){
 }}
 function render(){
  if(!definition){$('component-title').textContent='Builder not found';$('component-form').textContent='Choose a component from All builders.';$('component-copy').disabled=true;$('component-download').disabled=true;return;}
- $('component-title').textContent=definition.title+' Builder';$('component-description').textContent=definition.description;document.title=definition.title+' Builder · OSDStage';
+ $('component-title').textContent=definition.title;$('component-description').textContent=definition.description;document.title=definition.title+' Builder · OSDStage';
  $('component-icon').src='../metadata/icons/'+definition.icon+'.svg';$('component-icon').hidden=false;
  $('component-form').innerHTML=form();
  document.querySelectorAll('[data-field]').forEach(el=>{const change=el.tagName==='SELECT'||el.type==='checkbox';el[change?'onchange':'oninput']=()=>{
@@ -44,12 +44,14 @@ function render(){
  if($('association-mode'))$('association-mode').onchange=e=>{associationMode=e.target.value;state.associationXml='';state.associations=[];render()};
  updateOutput();
 }
+
 function updateOutput(){
- const s=BuilderComponents.state(type,state),files=BuilderCore.requiredFiles(s,[]),errors=BuilderComponents.validate(type,state);
- $('component-files').innerHTML=files.length?notice(`<strong>Files you supply yourself</strong><ul>${files.map(f=>`<li>${escapeHTML(f.path||'Set a file path')} · ${escapeHTML(f.purpose)}</li>`).join('')}</ul>Supply these files at the paths you entered. Relative Files paths belong beside the saved base script. They are not included in this download.`):'';
- $('component-errors').innerHTML=errors.length?`<div class="validation">${errors.map(e=>`<p>${escapeHTML(e.message)}</p>`).join('')}</div>`:'';
- generated=errors.length?'':BuilderComponents.generate(type,state);$('component-code').textContent=generated||'# Complete the fields to create your component.';
- $('component-copy').disabled=!!errors.length;$('component-download').disabled=!!errors.length;$('component-filename').textContent='Component-'+type+'.ps1';
+ const errors=BuilderComponents.validate(type,state);
+ $('component-errors').innerHTML=errors.length?'<div class="validation">'+errors.map(e=>'<p>'+escapeHTML(e.message)+'</p>').join('')+'</div>':'';
+ $('commit').textContent=project.parts[type]?'Save changes':'Add to deployment';
+ $('commit').disabled=!!errors.length;
+ $('commit').onclick=()=>{if(!BuilderComponents.validate(type,state).length)commit(type,Object.fromEntries(definition.keys.map(k=>[k,state[k]])))};
 }
-$('component-copy').onclick=async()=>{try{await navigator.clipboard.writeText(generated);$('component-copy').textContent='Copied ✓';setTimeout(()=>$('component-copy').textContent='Copy code',1800)}catch{const r=document.createRange();r.selectNodeContents($('component-code'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$('component-copy').textContent='Press Ctrl+C'}};
-$('component-download').onclick=()=>{if(!generated)return;const u=URL.createObjectURL(new Blob(['\uFEFF'+generated],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download=$('component-filename').textContent;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};render();
+render();
+
+}

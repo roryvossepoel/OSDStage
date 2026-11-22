@@ -131,5 +131,19 @@ test('repository app components retain availability checks before staging',()=>{
 test('application export has component filenames and instructions, not duplicate base scripts',()=>{
  const files=S.appPackage({selected:['7Zip']},apps);assert.deepEqual(Object.keys(files),['Apps-Stage.ps1','Apps-Prepare.ps1','README.txt']);assert.match(files['README.txt'],/not standalone scripts/);
 });
+test('one deployment combines the chosen apps and components before a single final check',()=>{
+ const context={BuilderCore:C,BuilderComponents:B,BuilderScopes:S,APPS:apps};
+ const model=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../site/builders/project-model.js'),'utf8')+';Deployment',context);
+ const wifi={wifiMode:'xml',wifiPath:'Files\\OfficeWiFi.xml'};
+ const result=model.build({base:{final:'Reboot'},parts:{updates:{scanOnly:true},apps:S.appState({selected:['7Zip']}),wifi}});
+ assert.equal(result.issues.length,0);
+ assert.equal((result.code.match(/^Set-OSDStageConfiguration/gm)||[]).length,1);
+ assert.equal((result.code.match(/^Test-OSDStageDeployment/gm)||[]).length,1);
+ const actions=result.code.match(/^(?:Add|Test)-OSDStage\w+/gm);
+ assert.deepEqual(actions,['Add-OSDStage7Zip','Add-OSDStageWiFiProfile','Add-OSDStageWindowsUpdate','Test-OSDStageDeployment']);
+ assert.match(result.code,/Join-Path \$stageFilesRoot/);
+ assert.match(B.generate('wifi',wifi),/Join-Path \$PSScriptRoot/);
+ assert.equal(model.build({base:{},parts:{certificates:{repositoryIds:'ExampleCA'}}}).code,'');
+});
 if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'base-only.ps1'),S.baseCode({source:'both',catalog:'https://example.org/catalog.json'}));fs.writeFileSync(path.join(dir,'updates-only.ps1'),S.baseCode({}).replace('# === BEGIN CONFIGURATION COMPONENTS ===',B.generate('updates',{})));for(const phase of ['stage','prepare'])fs.writeFileSync(path.join(dir,'apps-'+phase+'.ps1'),S.appCode({selected:['Microsoft365Apps','7Zip','DotNetRuntime'],dotnetRuntime:true,dotnetDesktop:true},apps,phase));for(const [type,input]of Object.entries(componentExamples))fs.writeFileSync(path.join(dir,'component-'+type+'.ps1'),B.generate(type,input));fs.writeFileSync(path.join(dir,'commands.json'),JSON.stringify(Object.entries(componentExamples).flatMap(([type,input])=>B.commands(type,input))));let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{repositoryIds:'RootCA'})];code=code.replace('# === BEGIN CONFIGURATION COMPONENTS ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
 console.log(tests+' builder checks passed.');
