@@ -1,8 +1,10 @@
-function mountApps(){
-'use strict';
-const C=BuilderCore,S=BuilderScopes, $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let renderedStep=-1;let s=S.appState(project.parts.apps?clone(project.parts.apps):{catalog:project.base?.catalog || ''}),step=project.parts.apps?1:0,query='',filter='all',status='',loading=false,catalogController,requestId=0,toastTimer;
-const flow=[0,1,5];const titles=['Sources','Applications','','','','Review apps'],subs=['Content & connectivity','Select and customise','','','','Add to deployment'];
+function mountApps() {
+ const C = BuilderCore, S = BuilderScopes, $ = byId, esc = h;
+ const base = S.baseState(project.base || {});
+ const catalog = base.source !== 'builtin' ? base.catalog.trim() : '';
+ let s = D.appsForBase(project.parts.apps || {}, base);
+ let catalogRows = s.repoItems.slice(), activeRequest, closed = false, importVersion = 0;
+ let status = '';
 const categories={Microsoft365Apps:'Productivity',MicrosoftTeams:'Productivity',AdobeAcrobatUnified:'Productivity',GoogleChromeEnterprise:'Browsers',MozillaFirefoxEnterprise:'Browsers',CiscoWebex:'Productivity',ZoomWorkplace:'Productivity',MicrosoftCompanyPortal:'Utilities',VisualStudioCode:'Utilities',CMTraceOpen:'Utilities','7Zip':'Utilities',VisualCRedist:'Runtimes',DotNetRuntime:'Runtimes'};
 const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work and school',AdobeAcrobatUnified:'PDF reader & licensed Acrobat',GoogleChromeEnterprise:'Enterprise browser',MozillaFirefoxEnterprise:'Rapid or ESR channel',CiscoWebex:'Meetings & collaboration',ZoomWorkplace:'Meetings & collaboration',MicrosoftCompanyPortal:'Company Portal',VisualStudioCode:'System-wide code editor',CMTraceOpen:'Deployment log viewer','7Zip':'File compression',VisualCRedist:'Visual C++ v14 prerequisites',DotNetRuntime:'Runtime, Desktop Runtime or both'};
 function get(path){return path.split('.').reduce((o,k)=>o[k],s)}function set(path,value){let p=path.split('.'),k=p.pop(),o=p.reduce((o,k)=>o[k],s);o[k]=value}
@@ -10,36 +12,19 @@ function field(label,path,type='text',hint='',placeholder=''){const id='f-'+path
 function area(label,path,hint=''){const id='f-'+path.replaceAll('.','-');return `<label class="field" for="${id}">${label}<textarea id="${id}" data-field="${path}" rows="2">${esc(get(path))}</textarea>${hint?`<small>${hint}</small>`:''}</label>`}
 function select(label,path,options){return `<label class="field">${label}<select data-field="${path}" aria-label="${label}">${options.map(x=>{const [v,t]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}" ${String(get(path))===String(v)?'selected':''}>${esc(t)}</option>`}).join('')}</select></label>`}
 function toggle(path,title,text='',disabled=false){return `<label class="option ${disabled?'disabled':''}"><input type="checkbox" data-field="${path}" ${get(path)?'checked':''} ${disabled?'disabled':''}><div><strong>${title}</strong>${text?`<p>${text}</p>`:''}</div></label>`}
-function radio(path,value,title,text){return `<label class="option"><input type="radio" data-field="${path}" name="${path}" value="${value}" ${get(path)===value?'checked':''}><div><strong>${title}</strong><p>${text}</p></div></label>`}
-function heading(title,desc,pill=''){return `<div class="sectiontop"><h2>${title}</h2>${pill?`<span class="pill">${pill}</span>`:''}</div><p class="desc">${desc}</p>`}
-function go(n){step=flow.includes(n)?n:n===3?1:0;render();$('content').focus({preventScroll:true})}
-function notify(message){clearTimeout(toastTimer);$('toast').textContent=message;$('toast').classList.remove('hide');toastTimer=setTimeout(()=>$('toast').classList.add('hide'),4500)}
-function cancelCatalog(){catalogController?.abort();requestId++;loading=false;s.repoItems=[];status='Catalog changed. Reload it; existing selections are retained for review.'}
-function render(){const opened=renderedStep===step?Array.from(document.querySelectorAll('#content details[open]')).map(d=>d.querySelector('summary')?.textContent):[];renderedStep=step;
-$('steps').innerHTML=titles.map((t,i)=>!flow.includes(i)?'':`<button class="step ${step===i?'active':''}" data-step="${i}" ${step===i?'aria-current="step"':''}><span class="num">${flow.indexOf(i)+1}</span><span class="label">${t}<small>${subs[i]}</small></span></button>`).join('');$('steps').querySelectorAll('button').forEach(b=>b.onclick=()=>go(+b.dataset.step));$('back').disabled=step===flow[0];$('position').textContent=`Step ${flow.indexOf(step)+1} of ${flow.length}`;$('next').textContent=step===5?(project.parts.apps?'Save changes':'Add to deployment'):'Continue →';
-let h='';
-if(step===0){h=heading('Choose your app sources.','Choose where to find packages for this deployment.','01 / Sources')+`<div class="subheading">Content source</div><div class="sourcegrid">${radio('source','builtin','Built-in collection','Apps included with OSDStage.')}${radio('source','both','Built-in + repository','Combine both sources.')}${radio('source','repository','Your repository','Your own managed packages.')}</div>`;
-if(s.source!=='builtin')h+=`<div class="sectionbox"><h3>Your catalog</h3><p class="muted small">Load a schema 2 catalog. Package metadata is checked for x64; archives are not downloaded.</p>${field('Catalog URL','catalog','url','Required at deployment time, including when importing JSON.','https://example.org/catalog.json')}<div class="actions"><button class="btn primary" id="loadCatalog" ${loading?'disabled':''}>${loading?'Loading catalog…':'Load catalog'}</button><button class="btn" id="importCatalog">Import catalog JSON</button>${loading?'<button class="btn" id="cancelCatalog">Cancel</button>':''}</div><div class="loadstatus" role="status">${esc(status||'No catalog loaded yet.')}</div><input type="file" accept=".json,application/json" id="catalogFile" hidden>${s.repoItems.length?`<div class="pill">${s.repoItems.filter(p=>p.status==='ready'||p.status==='index').length} compatible entries · select them in Applications</div>`:''}</div>`;
-h+=`<div class="sectionbox"><h3>Target connectivity</h3><div class="twocol">${radio('mode','online','Internet available','Cache preparation is optional.')}${radio('mode','offline','Offline target','Prepare all app content before staging.')}</div></div>${s.source!=='builtin'?toggle('skipRefresh','Use the prepared repository cache','Skip catalog refresh when staging; matching validated archives must already be available.'):''}<div class="notice">Your choices are added together when you select <strong>Add to deployment</strong> in Review apps.</div>`;}
-if(step===1){h=heading('Make it your workspace.','Select the apps and packages for this deployment.',`${C.selected(s,APPS).length+C.repos(s).length} selected`)+`<div class="notice">Start with the apps you need. <button class="textbutton" id="sourceSettings">App sources & connectivity →</button></div><div class="toolbar"><input id="search" aria-label="Search apps and packages" type="search" placeholder="Search apps, vendors or package IDs…" value="${esc(query)}"><label class="sr-only" for="filter">Filter applications</label><select id="filter"><option value="all">All applications</option><option value="selected">Selected only</option>${['Productivity','Browsers','Utilities','Runtimes','Repository'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select></div><div id="appcards"></div><div id="appsettings"></div>`;}
-if(step===5){
- const errors=S.validateApps(s,APPS), selected=[...C.selected(s,APPS).map(a=>a.DisplayName), ...C.repos(s).map(a=>a.name)];
- h=heading('Review your apps.','These packages will be staged together.')+'<div class="sectionbox"><h3>Selected packages</h3>'+(selected.length?'<ul>'+selected.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<p>No apps selected.</p>')+'</div>'+reviewDetails();
- if(S.appFiles(s,APPS).length)h+=fileChecklist();
- if(errors.length)h+='<div class="validation">'+errors.map(e=>'<button data-error-step="'+e.step+'">'+esc(e.message)+'</button>').join('')+'</div>';
- if(s.mode==='offline' && !errors.length)h+='<details class="sectionbox"><summary>Prepare the app cache on full Windows</summary><p>Run after importing and configuring OSDStage on the preparation PC.</p><pre>'+esc(S.appCode(s,APPS,'prepare'))+'</pre></details>';
-}
-$('content').innerHTML=h;document.querySelectorAll('#content details').forEach(d=>{if(opened.includes(d.querySelector('summary')?.textContent))d.open=true});bind();summary();$('next').disabled=step===5&&S.validateApps(s,APPS).length>0;
-if(step===1){$('filter').value=filter;renderApps();renderAppSettings();$('search').oninput=e=>{query=e.target.value;renderApps()};$('filter').onchange=e=>{filter=e.target.value;renderApps()};}
-if(step===5){document.querySelectorAll('[data-error-step]').forEach(b=>b.onclick=()=>go(+b.dataset.errorStep))}
-if($('sourceSettings'))$('sourceSettings').onclick=()=>go(0);if($('loadCatalog'))$('loadCatalog').onclick=loadCatalog;if($('cancelCatalog'))$('cancelCatalog').onclick=()=>{cancelCatalog();status='Loading cancelled.';render()};if($('importCatalog'))$('importCatalog').onclick=()=>$('catalogFile').click();if($('catalogFile'))$('catalogFile').onchange=importCatalog;
-}
-function bind(root=$('content')){root.querySelectorAll('[data-field]').forEach(el=>{const change=el.tagName==='SELECT'||['checkbox','radio'].includes(el.type);el[change?'onchange':'oninput']=()=>{const p=el.dataset.field;if(p==='catalog')cancelCatalog();set(p,el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value);if(['source','mode','officeMode','officeVisio','officeProject'].includes(p))render();else{summary();if(p==='catalog'){const statusNode=document.querySelector('.loadstatus');if(statusNode)statusNode.textContent=status;const button=$('loadCatalog');if(button)button.disabled=false}}};});}
-function renderApps(){const q=query.toLowerCase();let html='';if(s.source!=='repository'&&filter!=='Repository'){const a=APPS.filter(a=>(filter==='all'||filter==='selected'&&s.selected.includes(a.Id)||categories[a.Id]===filter)&&(a.DisplayName+' '+a.Vendor+' '+a.Id).toLowerCase().includes(q));if(a.length)html+=`<div class="grouphead"><h3>Built-in collection</h3><span>${a.length} apps</span></div><div class="cards">${a.map(a=>`<label class="app ${s.selected.includes(a.Id)?'selected':''}"><img class="realicon" src="${a.IconData}" alt=""><span><strong>${esc(a.Id==='DotNetRuntime'?'.NET runtimes':a.DisplayName)}</strong><small>${esc(descriptions[a.Id]||a.Vendor)}</small></span><input type="checkbox" data-app="${a.Id}" aria-label="${esc(a.Id==='DotNetRuntime'?'Select .NET runtimes':a.DisplayName)}" ${s.selected.includes(a.Id)?'checked':''}></label>`).join('')}</div>`;}
-if(s.source!=='builtin'&&['all','selected','Repository'].includes(filter)){const a=s.repoItems.filter(p=>(filter!=='selected'||s.repoSelected.includes(p.id))&&(p.name+' '+p.id+' '+p.type).toLowerCase().includes(q));if(a.length)html+=`<div class="grouphead"><h3>Your repository</h3><span>${a.length} packages</span></div><div class="cards">${a.map(p=>{let disabled=p.blocked||!['ready','index'].includes(p.status);return `<label class="app ${s.repoSelected.includes(p.id)?'selected':''} ${disabled?'unavailable':''}"><span class="repoicon" aria-hidden="true">▦</span><span><strong>${esc(p.name)}</strong><small>${esc(p.blocked?'Reserved built-in ID':p.error||`${p.type} · ${p.version||'Index only'} · ${p.architecture}`)}</small>${p.name!==p.id?`<small>${esc(p.id)}</small>`:''}</span><input type="checkbox" data-repo="${esc(p.id)}" aria-label="${esc(p.name)}" ${s.repoSelected.includes(p.id)?'checked':''} ${disabled?'disabled':''}></label>`}).join('')}</div>`;else if(!s.repoItems.length)html+='<div class="notice">Load your catalog in Sources to choose repository packages.</div>';}
-const missing=[...s.selected.filter(id=>!APPS.some(a=>a.Id===id)).map(id=>({id,key:'selected'})),...s.repoSelected.filter(id=>!s.repoItems.some(p=>p.id===id&&['ready','index'].includes(p.status)&&!p.blocked)).map(id=>({id,key:'repoSelected'}))];if(missing.length)html+=`<div class="validation"><strong>Retained selections that need attention</strong>${missing.map(x=>`<button data-missing="${esc(x.id)}" data-list="${x.key}">${esc(x.id)} · unavailable; remove selection ×</button>`).join('')}</div>`;
-$('appcards').innerHTML=html||'<div class="empty">No apps match this filter.</div>';$('appcards').querySelectorAll('[data-missing]').forEach(el=>el.onclick=()=>{s[el.dataset.list]=s[el.dataset.list].filter(id=>id!==el.dataset.missing);renderApps();summary()});$('appcards').querySelectorAll('[data-app]').forEach(el=>el.onchange=()=>{s.selected=el.checked?[...s.selected,el.dataset.app]:s.selected.filter(x=>x!==el.dataset.app);renderApps();renderAppSettings();summary();document.querySelector('.sectiontop .pill').textContent=`${C.selected(s,APPS).length+C.repos(s).length} selected`});$('appcards').querySelectorAll('[data-repo]').forEach(el=>el.onchange=()=>{s.repoSelected=el.checked?[...s.repoSelected,el.dataset.repo]:s.repoSelected.filter(x=>x!==el.dataset.repo);renderApps();summary();document.querySelector('.sectiontop .pill').textContent=`${C.selected(s,APPS).length+C.repos(s).length} selected`});}
-function renderAppSettings(){const ids=C.selected(s,APPS).map(a=>a.Id);let h='';
+
+ function bind(root) {
+   for (const el of root.querySelectorAll('[data-field]')) {
+     const change = el.tagName === 'SELECT' || el.type === 'checkbox';
+     el[change ? 'onchange' : 'oninput'] = () => {
+       const key = el.dataset.field;
+       set(key, el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value);
+       if (['officeMode','officeVisio','officeProject'].includes(key)) renderAppSettings();
+       saveSelection();
+     };
+   }
+ }
+function renderAppSettings(){const ids=APPS.filter(a=>s.selected.includes(a.Id)).map(a=>a.Id);let h='';
  if(ids.includes('Microsoft365Apps'))h+=`<details class="appdetail" open><summary><img src="${APPS.find(a=>a.Id==='Microsoft365Apps').IconData}" alt="">Microsoft 365 preferences</summary>
  ${select('Language configuration','officeMode',[['manual','Choose Office languages'],['matchos','Follow target Windows language'],['xml','Use my own Office XML']])}
  ${s.officeMode==='xml'?field('Office configuration XML','officeXmlPath','text','Supply this file yourself; its settings replace the Office options below.','Files\\Office.xml'):`<div class="fields">${select('Update channel','officeChannel',['MonthlyEnterprise','Current','SemiAnnual','CurrentPreview','SemiAnnualPreview','BetaChannel'])}${select('Product','officeProduct',[['O365ProPlusRetail','Microsoft 365 Apps for enterprise'],['O365BusinessRetail','Microsoft 365 Apps for business']])}${select('Office architecture','officeArchitecture',['x64','x86'])}</div>
@@ -49,31 +34,149 @@ function renderAppSettings(){const ids=C.selected(s,APPS).map(a=>a.Id);let h='';
  <details class="advanced"><summary>Exclude individual Office apps</summary><div class="chips">${['Access','Excel','Groove','Lync','OneDrive','OneNote','Outlook','OutlookForWindows','PowerPoint','Publisher','Teams','Word'].map(v=>`<label><input type="checkbox" data-exclude="${v}" ${s.officeExclude.includes(v)?'checked':''}>${esc(v)}</label>`).join('')}</div></details><p class="small muted">The generated Office XML accepts the Office licence terms.</p>`}</details>`;
  if(ids.includes('MozillaFirefoxEnterprise'))h+=`<details class="appdetail"><summary>Firefox preferences</summary><div class="fields">${select('Firefox channel','firefoxChannel',[['ESR','Extended Support Release'],['Rapid','Rapid release']])}${field('Firefox language','firefoxLanguage')}</div></details>`;
  if(ids.includes('DotNetRuntime'))h+=`<details class="appdetail" open><summary>.NET preferences</summary><p class="small muted">Select either runtime or both. Each variant uses its own module cache and package ID.</p><div class="twocol">${toggle('dotnetRuntime','.NET Runtime')}${toggle('dotnetDesktop','.NET Desktop Runtime')}</div>${select('.NET channel','dotnetChannel',['10.0','9.0','8.0'])}</details>`;
- h+=C.selected(s,APPS).map(app=>appAdvanced(app)).join('');$('appsettings').innerHTML=h;bind($('appsettings'));bindLanguages();
+ h+=APPS.filter(a=>s.selected.includes(a.Id)).map(app=>appAdvanced(app)).join('');$('appsettings').innerHTML=h;bind($('appsettings'));bindLanguages();
  if($('languageSearch'))$('languageSearch').oninput=e=>{$('languageList').innerHTML=languageChoices(e.target.value);bindLanguages()};
- $('appsettings').querySelectorAll('[data-exclude]').forEach(el=>el.onchange=()=>{s.officeExclude=el.checked?[...s.officeExclude,el.dataset.exclude]:s.officeExclude.filter(x=>x!==el.dataset.exclude);summary()});
+ $('appsettings').querySelectorAll('[data-exclude]').forEach(el=>el.onchange=()=>{s.officeExclude=el.checked?[...s.officeExclude,el.dataset.exclude]:s.officeExclude.filter(x=>x!==el.dataset.exclude);saveSelection()});
 }
 function appAdvanced(app){const defs=C.APP_OPTIONS[app.Id]||[];if(!defs.length)return '';return `<details class="appdetail"><summary>${esc(app.DisplayName)} · advanced</summary><p class="small muted">Optional installation settings. Blank custom URLs use the module source. Target: x64 Windows.</p><div class="fields">${defs.map(d=>{const path='appOptions.'+app.Id+'.'+d.key;return d.kind==='boolean'?toggle(path,d.label):d.values?select(d.label,path,d.values.map(v=>[v,v||'Module default'])):['json','lines'].includes(d.kind)?area(d.label,path):field(d.label,path,d.kind==='number'?'number':d.kind==='url'?'url':'text')}).join('')}</div></details>`}
 function languageChoices(query){return C.LANGUAGES.filter(x=>x.join(' ').toLowerCase().includes(query.toLowerCase())).map(([id,name])=>`<label><input type="checkbox" data-lang="${id}" ${s.officeLanguages.includes(id)?'checked':''}><span>${esc(name)}<small>${id}</small></span></label>`).join('')||'<p class="muted">No matching languages.</p>'}
-function bindLanguages(){document.querySelectorAll('[data-lang]').forEach(el=>el.onchange=()=>{s.officeLanguages=el.checked?[...s.officeLanguages,el.dataset.lang]:s.officeLanguages.filter(x=>x!==el.dataset.lang);const search=$('languageSearch')?.value||'';renderAppSettings();$('languageSearch').value=search;$('languageList').innerHTML=languageChoices(search);bindLanguages();summary()});const primary=document.querySelector('[data-field="officePrimary"]');if(primary){primary.value=s.officeLanguages[0]||'';primary.onchange=()=>{s.officeLanguages=[primary.value,...s.officeLanguages.filter(x=>x!==primary.value)];summary()}}}
+function bindLanguages(){document.querySelectorAll('[data-lang]').forEach(el=>el.onchange=()=>{s.officeLanguages=el.checked?[...s.officeLanguages,el.dataset.lang]:s.officeLanguages.filter(x=>x!==el.dataset.lang);const search=$('languageSearch')?.value||'';renderAppSettings();$('languageSearch').value=search;$('languageList').innerHTML=languageChoices(search);bindLanguages();saveSelection()});const primary=document.querySelector('[data-field="officePrimary"]');if(primary){primary.value=s.officeLanguages[0]||'';primary.onchange=()=>{s.officeLanguages=[primary.value,...s.officeLanguages.filter(x=>x!==primary.value)];saveSelection()}}}
 
-function summary(){
- sidebar();
- const summaryEl=$('project-summary'), names=[...C.selected(s,APPS).map(a=>a.DisplayName), ...C.repos(s).map(p=>p.name)];
- if (step!==5) {
-  const section=document.createElement('div');section.className='draft-app-summary';
-  section.innerHTML='<strong>Current app selection</strong><p>'+ (names.length?names.map(esc).join(', '):'No apps selected.')+'</p>';
-  summaryEl.querySelector('.action-link').before(section);
+ function saveSelection() {
+   // The generator's source describes the selected workloads. The base controls which catalogs are shown.
+   s.source = s.repoSelected.length ? (s.selected.length ? 'both' : 'repository') : 'builtin';
+   const chosen = s.selected.length + s.repoSelected.length;
+   if (chosen) {
+     project.parts.apps = {...s, repoItems:catalogRows.filter(p => s.repoSelected.includes(p.id) && AppCatalog.selectable(p))};
+   } else {
+     delete project.parts.apps;
+   }
+   const unknown = s.selected.filter(id=>!APPS.some(a=>a.Id===id));
+   const errors = chosen ? S.validateApps(project.parts.apps, APPS) : [];
+   $('app-errors').innerHTML = errors.map(e => '<p class="validation">'+esc(e.message)+'</p>').join('');
+   for (const id of unknown) {
+     const button = document.createElement('button');
+     button.type='button'; button.className='btn'; button.textContent='Remove unavailable app · '+id;
+     button.onclick=()=>{s.selected=s.selected.filter(value=>value!==id);saveSelection();};
+     $('app-errors').append(button);
+   }
+   const cache = $('cache-guidance');
+   cache.replaceChildren();
+   if (s.mode === 'offline' && chosen && !errors.length) {
+     const note=document.createElement('p'), code=document.createElement('pre');
+     note.textContent='Prepare the app cache on full Windows after importing and configuring OSDStage.';
+     code.textContent=S.appCode(project.parts.apps,APPS,'prepare'); cache.append(note,code);
+   }
+   persist(); sidebar();
+   if (current() === 'review') renderReview();
  }
-}
-async function readJson(response){if(!response.ok)throw Error('HTTP '+response.status);const text=await response.text();if(text.length>5_000_000)throw Error('JSON exceeds the 5 MB preview limit.');try{return JSON.parse(text)}catch{throw Error('The response is not valid JSON.')}}
-async function fetchJson(u,signal){const c=new AbortController;const abort=()=>c.abort();signal.addEventListener('abort',abort,{once:true});if(signal.aborted)c.abort();const timer=setTimeout(abort,15000);try{return await readJson(await fetch(C.url(u),{credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store',signal:c.signal}))}catch(e){if(signal.aborted)throw Error('Cancelled.');if(c.signal.aborted)throw Error('Request timed out after 15 seconds.');if(e instanceof TypeError)throw Error('Browser request failed. Check HTTPS, network and CORS, or import catalog JSON.');throw e}finally{clearTimeout(timer);signal.removeEventListener('abort',abort)}}
-async function loadCatalog(){let base;try{base=C.url(s.catalog)}catch(e){status=e.message;render();return}catalogController?.abort();const req=++requestId;catalogController=new AbortController;const signal=catalogController.signal;loading=true;s.repoItems=[];status='Loading catalog…';render();try{const items=C.parseCatalog(await fetchJson(base,signal));if(req!==requestId)return;s.repoItems=items;let index=0,done=0;await Promise.all(Array.from({length:Math.min(4,items.length)},async()=>{while(index<items.length&&!signal.aborted){let i=index++;const p=items[i];if(p.status==='incompatible'||p.blocked){done++;continue}try{items[i]=C.manifest(p,await fetchJson(C.url(p.manifest,base),signal))}catch(e){items[i]={...p,status:'error',error:e.message}}done++;if(req===requestId){status=`Reading manifests · ${done} of ${items.length}`;if(step===0&&document.querySelector('.loadstatus'))document.querySelector('.loadstatus').textContent=status}}}));if(req!==requestId)return;s.repoItems=items;const n=items.filter(x=>x.status==='ready'&&!x.blocked).length;status=`${n} selectable packages. ${items.length-n} unavailable or reserved. Metadata checked; archives are validated by OSDStage at runtime.`;}catch(e){if(req===requestId){status=e.message;s.repoItems=[]}}finally{if(req===requestId){loading=false;render()}}}
-async function importCatalog(e){const f=e.target.files[0];if(!f)return;catalogController?.abort();requestId++;loading=false;try{if(f.size>5_000_000)throw Error('Choose a catalog smaller than 5 MB.');const rows=C.parseCatalog(JSON.parse(await f.text()));s.repoItems=rows;status=`Imported ${rows.length} catalog entries. Index only: manifests and payloads have not been read. Set the catalog URL above for deployment.`;}catch(err){s.repoItems=[];status=err.message}render()}
-function save(content,name,type){const u=URL.createObjectURL(new Blob([content],{type}));let a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-function saveSettings(){save(JSON.stringify({builder:'apps',settings:s},null,2),'OSDStage-builder-settings.json','application/json');notify('Selections saved. No Wi-Fi password is included.')}
-function fileChecklist(){const rows=S.appFiles(s,APPS);return `<div class="sectionbox files-review"><h3>Files you need to supply</h3>${rows.length?`<p class="small muted">These files are <strong>not included</strong> in the download. Add them yourself before running the scripts.</p><ul>${rows.map(f=>`<li><strong>${esc(f.purpose)}</strong><code>${esc(f.path||'Path not set')}</code></li>`).join('')}</ul>`:'<p class="small muted">No external configuration files are required for these selections.</p>'}<p class="small muted">Relative <code>Files\\…</code> paths follow the script folder across USB drive letters.</p></div>`}
-function reviewDetails(){return `<details class="sectionbox"><summary>Review all selected actions · ${C.review(s,APPS).length}</summary><dl class="action-review">${C.review(s,APPS).map(r=>`<dt>${esc(r.title)}</dt><dd>${esc(r.details)}</dd>`).join('')}</dl></details>`}
-$('back').onclick=()=>go(flow[flow.indexOf(step)-1]);$('next').onclick=()=>step===5?commit('apps',S.appState(s)):go(flow[flow.indexOf(step)+1]);$('reset').onclick=()=>{if(!confirm('Reset your app selections in this editor?'))return;catalogController?.abort();requestId++;s=S.appState({});step=0;status='';loading=false;query='';filter='all';render()};$('saveSettings').onclick=saveSettings;$('loadSettings').onclick=()=>$('settingsFile').click();$('settingsFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>5_000_000)throw Error('Configuration exceeds 5 MB.');const data=JSON.parse(await f.text());if(data.builder!=='apps')throw Error('Choose an Apps Builder selections file. Keep older deployment selections in their original file.');const next=S.appState(C.importSettings(data.settings,APPS));if(C.configCount(next))throw Error('This file contains configuration components. Keep your original file; use a separate Configuration Builder for those settings.');catalogController?.abort();requestId++;s=next;step=0;status=s.repoItems.length?'Restored selections. Repository metadata needs revalidation; the staging script performs a preflight.':'';loading=false;render();notify('Selections restored.')}catch(err){notify('Could not import: '+err.message)}finally{e.target.value=''}};render();
-return ()=>{catalogController?.abort();requestId++;clearTimeout(toastTimer)};
+
+ function card(id, name, subtitle, icon, selected, source) {
+   const image = icon ? '<img class="realicon" src="'+esc(icon)+'" alt="">' : '<span class="repoicon" aria-hidden="true">▦</span>';
+   return '<label class="app'+(selected ? ' selected' : '')+'">'+image+'<span><strong>'+esc(name)+'</strong><small>'+
+     esc(subtitle)+'</small></span><input type="checkbox" data-source="'+source+'" value="'+esc(id)+'" aria-label="'+esc(name)+'"'+(selected?' checked':'')+'></label>';
+ }
+ function builtins() {
+   $('builtin-section').hidden = !base.enableBuiltIns;
+   if (!base.enableBuiltIns) return;
+   builtinCards();
+   renderAppSettings();
+ }
+ function builtinCards() {
+   const query = $('builtin-search').value.toLowerCase().trim(), filter = $('builtin-filter').value;
+   const matched = APPS.filter(a => {
+     const inCategory = !filter || (filter === 'selected' ? s.selected.includes(a.Id) : categories[a.Id] === filter);
+     return inCategory && [a.Id,a.DisplayName,a.Vendor].join(' ').toLowerCase().includes(query);
+   });
+   $('builtin-cards').innerHTML = matched.map(a=>card(a.Id,a.DisplayName,descriptions[a.Id]||a.Vendor,a.IconData,s.selected.includes(a.Id),'builtin')).join('') || '<p class="small muted">No matching built-in apps.</p>';
+ }
+ function repository() {
+   const query = $('repo-search').value.toLowerCase().trim();
+   const selectable = catalogRows.filter(AppCatalog.selectable);
+   const matched = selectable.filter(p=>(p.id+' '+p.name).toLowerCase().includes(query));
+   $('repo-search').hidden = !selectable.length && !query;
+   $('repo-cards').innerHTML = matched.map(p=>card(p.id,p.name,p.status==='index' ? p.id+' · Catalog ID (type unverified)' : [p.id,p.version,p.architecture].join(' · '),'',s.repoSelected.includes(p.id),'repository')).join('');
+   $('repo-status').textContent = status || (query && !matched.length ? 'No matching repository apps.' : selectable.length ? selectable.length+' available' : 'No selectable apps in this catalog.');
+   const missing = s.repoSelected.filter(id=>!selectable.some(p=>p.id===id));
+   const failed = catalogRows.filter(p=>p.blocked || ['error','incompatible'].includes(p.status));
+   $('repo-unavailable').innerHTML = missing.map(id=>'<button class="btn" type="button" data-forget="'+esc(id)+'">Remove unavailable selection · '+esc(id)+'</button>').join('')+
+     (failed.length ? '<details><summary>Unavailable packages ('+failed.length+')</summary><ul>'+failed.map(p=>'<li>'+esc(p.id)+' · '+esc(p.blocked?'Reserved built-in ID':p.error)+'</li>').join('')+'</ul></details>' : '');
+   $('repo-unavailable').querySelectorAll('[data-forget]').forEach(b=>b.onclick=()=>{
+     s.repoSelected=s.repoSelected.filter(id=>id!==b.dataset.forget); repository(); saveSelection();
+   });
+ }
+ function selectApp(event) {
+   const input=event.target;
+   if (!input.matches('input[data-source]')) return;
+   const builtIn=input.dataset.source==='builtin', key=builtIn?'selected':'repoSelected';
+   s[key]=s[key].filter(id=>id!==input.value);
+   if (input.checked) s[key].push(input.value);
+   input.closest('label').classList.toggle('selected',input.checked);
+   if (builtIn) {
+     if ($('builtin-filter').value === 'selected') builtinCards();
+     renderAppSettings();
+   }
+   saveSelection();
+ }
+ async function loadCatalog(file) {
+   activeRequest?.abort();
+   const request=new AbortController(); activeRequest=request;
+   status='Loading repository apps…'; repository();
+   try {
+     if (file && file.size>5000000) throw Error('Choose a catalog smaller than 5 MB.');
+     const index=file ? JSON.parse(await file.text()) : null;
+     const rows=await AppCatalog.load(catalog,request.signal,undefined,index);
+     if (request.signal.aborted) return;
+     catalogRows=rows; status='';
+   } catch (error) {
+     if (request.signal.aborted) return;
+     status='Could not load catalog. '+error.message+' Refresh or open the catalog JSON from your computer.';
+     // A previous result must not silently authorize packages from a failed refresh.
+     catalogRows=[];
+   } finally {
+     if (!request.signal.aborted) {
+        repository(); saveSelection();
+     }
+   }
+ }
+ function render() {
+   builtins();
+   $('repo-section').hidden=!catalog;
+   $('skip-refresh-field').hidden=!catalog;
+   $('app-mode').value=s.mode; $('skip-refresh').checked=s.skipRefresh;
+   if (catalog) repository();
+   saveSelection();
+ }
+ $('builtin-cards').onchange=selectApp; $('repo-cards').onchange=selectApp;
+ $('builtin-search').oninput=builtinCards; $('builtin-filter').onchange=builtinCards;
+ $('repo-search').oninput=repository;
+ $('refresh-repo').onclick=()=>loadCatalog();
+ $('import-repo').onclick=()=>$('catalog-file').click();
+ $('catalog-file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)loadCatalog(f);};
+ $('app-mode').onchange=e=>{s.mode=e.target.value;saveSelection();};
+ $('skip-refresh').onchange=e=>{s.skipRefresh=e.target.checked;saveSelection();};
+ $('saveSettings').onclick=()=>{
+   const value=JSON.stringify({builder:'apps',settings:{...s,repoItems:catalogRows.filter(p=>s.repoSelected.includes(p.id))}},null,2);
+   const url=URL.createObjectURL(new Blob([value],{type:'application/json'})), a=document.createElement('a');
+   a.href=url;a.download='OSDStage-builder-settings.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1200);
+ };
+ $('loadSettings').onclick=()=>$('settingsFile').click();
+ $('settingsFile').onchange=async e=>{
+   const f=e.target.files[0], version=++importVersion; e.target.value=''; if(!f)return;
+   try {
+     if(f.size>5000000)throw Error('Choose a file smaller than 5 MB.');
+     const data=JSON.parse(await f.text());
+     if(closed || version!==importVersion)return;
+     if(data.builder!=='apps')throw Error('Choose an Apps Builder selections file.');
+     const imported=C.importSettings(data.settings,APPS);
+     if(C.configCount(imported))throw Error('Choose a selections file containing only app settings.');
+     const incoming=S.appState(imported);
+     if(incoming.repoSelected.length && (!catalog || incoming.catalog.trim()!==catalog)) throw Error('Set the matching repository URL in Base settings first.');
+     if(incoming.selected.length && !base.enableBuiltIns) throw Error('Enable built-in apps in Base settings first.');
+     s=D.appsForBase(incoming,base); render(); say('App selections restored.');
+   } catch (error) {if(!closed)say(error.message);}
+ };
+ render();
+ if(catalog)loadCatalog();
+ return ()=>{ closed=true;activeRequest?.abort(); };
 }

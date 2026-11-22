@@ -2,6 +2,18 @@ const Deployment = (() => {
   const B = BuilderComponents, C = BuilderCore, S = BuilderScopes;
   const types = Object.keys(B.definitions);
   const title = key => key === 'apps' ? 'Apps' : B.definitions[key].title;
+  function appsForBase(saved, base) {
+    const apps = S.appState(saved);
+    const catalog = base.source === 'builtin' ? '' : base.catalog.trim();
+    if (!base.enableBuiltIns) apps.selected = [];
+    if (!catalog || apps.catalog.trim() !== catalog) {
+      apps.repoSelected = [];
+      apps.repoItems = [];
+    }
+    apps.catalog = catalog;
+    apps.source = apps.repoSelected.length ? (apps.selected.length ? 'both' : 'repository') : 'builtin';
+    return apps;
+  }
   function rows(project) {
     // Match the staging flow in the module's builder. Check updates after the other workloads.
     return Object.entries(project.parts).sort(([a],[b]) => Number(a === 'updates') - Number(b === 'updates'));
@@ -46,5 +58,5 @@ const Deployment = (() => {
     if (needsFilesRoot) header.push('$stageFilesRoot = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }');
     return {issues, files, code:header.join('\r\n')+'\r\n\r\n'+script.replace(/^#requires[^\r\n]*\r?\n/gmi,'').trimEnd()+'\r\n}\r\n'};
   }
-  return {types, title, rows, detail, build: project => C.withDeploymentFiles(() => build(project))};
+  return {types, title, rows, detail, appsForBase, build: project => C.withDeploymentFiles(() => build(project))};
 })();

@@ -145,5 +145,45 @@ test('one deployment combines the chosen apps and components before a single fin
  assert.match(B.generate('wifi',wifi),/Join-Path \$PSScriptRoot/);
  assert.equal(model.build({base:{},parts:{certificates:{repositoryIds:'ExampleCA'}}}).code,'');
 });
+test('changing app sources keeps only selections from enabled matching sources',()=>{
+ const context={BuilderCore:C,BuilderComponents:B,BuilderScopes:S,APPS:apps};
+ const model=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../site/builders/project-model.js'),'utf8')+';Deployment',context);
+ const base=S.baseState({source:'both',catalog:'https://example.org/catalog.json'});
+ const saved={catalog:base.catalog,selected:['7Zip'],repoSelected:['Editor'],repoItems:[{id:'Editor',name:'Editor',status:'ready',type:'App',architecture:'x64'}]};
+ const onlyRepo=model.appsForBase(saved,{...base,enableBuiltIns:false});
+ assert.equal(onlyRepo.selected.length,0);
+ assert.equal(onlyRepo.source,'repository');
+ assert.ok(model.build({base:{...base,enableBuiltIns:false},parts:{apps:onlyRepo}}).code.includes("Add-OSDStage -Name @('Editor')"));
+ for (const changed of [{...base,source:'builtin'},{...base,catalog:'https://other.example/catalog.json'}]) {
+  const builtIn=model.appsForBase(saved,changed);
+  assert.equal(builtIn.repoSelected.length,0);
+  assert.equal(builtIn.repoItems.length,0);
+  const result=model.build({base:changed,parts:{apps:builtIn}});
+  assert.equal(result.issues.length,0); assert.match(result.code,/Add-OSDStage7Zip/); assert.doesNotMatch(result.code,/Editor/);
+ }
+});
+
+async function testCatalogLoading() {
+ const api=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../site/builders/app-catalog.js'),'utf8')+';AppCatalog',{BuilderCore:C});
+ const catalog='https://example.org/packages/catalog.json', ids=['Editor','Fonts','BadApp','SevenOther','ReservedArm'];
+ const index={SchemaVersion:2,Packages:ids.map(id=>({Id:id,Architectures:[{Architecture:id==='ReservedArm'?'arm64':'x64',Manifest:id+'/package.json'}]}))};
+ const read=async url=>{
+  if(url===catalog)return index;
+  const id=new URL(url).pathname.split('/')[2];
+  assert.ok(ids.includes(id)); assert.equal(url,'https://example.org/packages/'+id+'/package.json');
+  if(id==='BadApp')throw Error('Missing manifest');
+  return {SchemaVersion:2,Id:id,Architecture:'x64',PackageType:id==='Fonts'?'Font':'App',DisplayName:id+' display name',Version:'1.0',Payload:{Sha256:'f'.repeat(64)}};
+ };
+ const signal=new AbortController().signal;
+ const rows=await api.load(catalog,signal,read);
+ assert.deepEqual(Array.from(rows.filter(api.selectable),p=>p.name),['Editor display name','SevenOther display name']);
+ assert.equal(rows.find(p=>p.id==='BadApp').status,'error');
+ const controller=new AbortController();
+ controller.abort();
+ await assert.rejects(api.load(catalog,controller.signal,read));
+ console.log('PASS repository loads relative manifests and exposes compatible apps');
+ tests++;
+}
+
 if(process.env.BUILDER_FIXTURE_DIR){const dir=process.env.BUILDER_FIXTURE_DIR;fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'base-only.ps1'),S.baseCode({source:'both',catalog:'https://example.org/catalog.json'}));fs.writeFileSync(path.join(dir,'updates-only.ps1'),S.baseCode({}).replace('# === BEGIN CONFIGURATION COMPONENTS ===',B.generate('updates',{})));for(const phase of ['stage','prepare'])fs.writeFileSync(path.join(dir,'apps-'+phase+'.ps1'),S.appCode({selected:['Microsoft365Apps','7Zip','DotNetRuntime'],dotnetRuntime:true,dotnetDesktop:true},apps,phase));for(const [type,input]of Object.entries(componentExamples))fs.writeFileSync(path.join(dir,'component-'+type+'.ps1'),B.generate(type,input));fs.writeFileSync(path.join(dir,'commands.json'),JSON.stringify(Object.entries(componentExamples).flatMap(([type,input])=>B.commands(type,input))));let code=C.generate(base(),apps,'stage');const blocks=[B.generate('wifi',{wifiMode:'xml',wifiPath:'Files\\WiFi.xml'}),B.generate('registry',{registry:[{path:'HKLM:\\SOFTWARE\\X',name:'A',type:'DWord',value:'1',view:'Registry64'}]}),B.generate('certificates',{repositoryIds:'RootCA'})];code=code.replace('# === BEGIN CONFIGURATION COMPONENTS ===',blocks.join('\r\n'));fs.writeFileSync(path.join(dir,'combined-stage.ps1'),code);fs.writeFileSync(path.join(dir,'prepare.ps1'),C.generate(base(),apps,'prepare'));}
-console.log(tests+' builder checks passed.');
+testCatalogLoading().then(()=>console.log(tests+' builder checks passed.')).catch(error=>{console.error(error);process.exitCode=1;});

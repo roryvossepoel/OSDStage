@@ -43,3 +43,32 @@ body.builders-home-page{background:var(--paper)}
 .project-messages:not(:empty){padding:0 22px 18px}
 .project-messages .validation{margin:0}
 main:focus:not(:focus-visible){outline:none}
+.builders-home-page [hidden]{display:none!important}
+#inline-apps{scroll-margin:20px;min-width:0}
+#inline-apps>section+section:not([hidden]){margin-top:30px}
+#inline-apps .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
+#inline-apps .app{min-width:0;background:var(--paper);min-height:64px;padding:11px 13px}
+#inline-apps .app.selected{border-color:var(--accent);background:var(--wash)}
+#inline-apps .app>span{min-width:0;overflow-wrap:anywhere}
+#inline-apps .app .realicon{width:26px;height:26px;object-fit:contain}
+#inline-apps .app input{margin-left:auto;flex-shrink:0;accent-color:var(--accent)}
+.app-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.repo-actions{display:flex;gap:8px;flex-wrap:wrap}
+#repo-search{width:min(100%,22rem);margin:10px 0 0}
+#repo-unavailable:not(:empty),#appsettings:not(:empty),#app-tools{margin:14px 0 0}
+#app-tools>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.86rem}
+#app-tools .field{max-width:23rem}
+#cache-guidance pre{overflow:auto;max-height:250px;white-space:pre-wrap;overflow-wrap:anywhere}
+.inline-editor{grid-column:1/-1;min-width:0;scroll-margin:16px;background:var(--paper)}
+.inline-editor .content{min-height:0;padding:24px}
+.inline-editor .content .field{margin:14px 0}
+.inline-editor .content .inlinecheck{margin:12px 0}
+.inline-editor .content p{overflow-wrap:anywhere}
+.inline-editor .component-title-line{display:flex;align-items:center;gap:10px}
+.builder-foundation+.inline-editor{margin-top:12px}
+#inline-editor.project-review{margin-top:32px}
+.builder-card[aria-expanded=true]{border-color:var(--accent)}
+
+.builtin-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.builtin-tools input{width:min(100%,22rem)}
+.builtin-tools select{width:auto;max-width:100%}
