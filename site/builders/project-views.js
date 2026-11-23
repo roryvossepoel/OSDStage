@@ -1,11 +1,15 @@
 for (const link of document.querySelectorAll('main [data-route]')) {
   link.setAttribute('href', '#/' + link.dataset.route);
+  link.setAttribute('aria-haspopup', 'dialog');
 }
 
-const saveBar = '<div class="project-savebar"><a href="#/home">Cancel</a><button type="button" class="btn primary" id="commit"></button></div>';
+const closeEditor = '<button type="button" class="dialog-close" aria-label="Close settings">×</button></div>';
+const saveBar = '<div class="dialog-actions"><a class="btn" href="#/home">Cancel</a><button type="button" class="btn primary" id="commit"></button></div>';
 const inlineEditors = {
-  base: '<div class="content" id="base-form"></div><div class="project-messages" id="base-errors"></div>' + saveBar,
-  component: '<div class="content"><div class="component-title-line"><img id="component-icon" alt="" width="28" height="28"><h3 id="component-title"></h3></div><p id="component-description"></p><div id="component-form"></div></div><div class="project-messages" id="component-errors"></div>' + saveBar,
+  base: '<div class="dialog-head"><h2 tabindex="-1" id="editor-title">Base settings</h2>'+closeEditor+
+    '<div class="dialog-body"><div id="base-form"></div><div class="project-messages" id="base-errors"></div></div>' + saveBar,
+  component: '<div class="dialog-head"><img id="component-icon" alt="" width="32" height="32"><h2 tabindex="-1" id="component-title"></h2>'+closeEditor+
+    '<div class="dialog-body"><p id="component-description"></p><div id="component-form"></div><div class="project-messages" id="component-errors"></div></div>' + saveBar,
   review: `<div class="content"><h2>Review your WinPE script.</h2>
     <p>Run this script in WinPE after Windows has been applied and before the first reboot.</p>
     <div id="review-help"></div><div id="review-output">

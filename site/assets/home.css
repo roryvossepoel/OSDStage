@@ -1,6 +1,6 @@
 /* Homepage: a shared visual family with Intune Inventory, in OSDStage green. */
 .home-page{background:linear-gradient(145deg,#eaf5ef 0%,#f1f8f7 34%,#f7fafb 68%,#fff 100%)}
-.home-main{max-width:1328px;padding:0 32px}
+.home-main{max-width:var(--site-width,1328px);padding:0 var(--site-gutter,32px)}
 .home-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:54px;padding:78px 0 84px}
 .home-kicker{display:inline-flex;align-items:center;gap:9px;margin:0 0 24px;padding:5px 12px;background:#ffffffc9;border:1px solid #e0ede6;border-radius:999px;box-shadow:0 2px 8px #1e695108;font-size:.65rem;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:#22765b}
 .home-kicker>span{width:6px;height:6px;background:#21a783;border-radius:50%;box-shadow:0 0 0 4px #ddf4eb;flex-shrink:0}

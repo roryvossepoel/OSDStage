@@ -23,7 +23,7 @@ a.textbutton{border:0;background:none;font:inherit;color:var(--green);text-decor
 
 /* Share the site's navigation, typography, surfaces and theme preference.
    Keep the wider workspace for editing and reading generated PowerShell. */
-.builder-page .nav-wrap{max-width:1600px;padding-inline:36px}
+.builder-page:not(.builders-home-page) .nav-wrap{max-width:1600px;padding-inline:36px}
 .builder-context{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;font-size:13px;color:var(--muted)}
 .builder-context a{font-weight:600}
 .builder-context .badge{background:var(--paper);border-color:var(--line);color:var(--accent)}
@@ -44,8 +44,8 @@ a.textbutton{border:0;background:none;font:inherit;color:var(--green);text-decor
 .builder-page .localnote strong{color:var(--ink)}
 .builder-page main .foundation{border-color:var(--line);background:var(--paper)}
 .builder-page main .component-card:hover{text-decoration:none}
-@media(max-width:850px){.builder-page .nav-wrap{padding-inline:24px}}
-@media(max-width:600px){.builder-page .nav-wrap{padding-inline:16px}.builder-context{margin-bottom:22px}.builder-page main{padding-top:20px}}
+@media(max-width:850px){.builder-page:not(.builders-home-page) .nav-wrap{padding-inline:24px}}
+@media(max-width:600px){.builder-page:not(.builders-home-page) .nav-wrap{padding-inline:16px}.builder-context{margin-bottom:22px}.builder-page main{padding-top:20px}}
 
 .builder-page main .codebox pre{font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;overflow-x:hidden}
 .builder-page main .codebar{font-size:14px}

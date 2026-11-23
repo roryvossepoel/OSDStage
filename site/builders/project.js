@@ -86,30 +86,38 @@ function renderReview() {
 function show(scroll = true) {
   const k=current();
   const previous = byId('inline-editor');
+  if (previous?.open) previous.close();
   previous?.remove();
-  document.querySelectorAll('[data-route][aria-expanded]').forEach(a=>a.setAttribute('aria-expanded','false'));
+  if (byId('app-dialog').open) byId('app-dialog').close();
   updateCards(); sidebar();
   let focusTarget;
   if (k === 'apps') {
     focusTarget=byId('inline-apps');
-  } else if (k === 'base' || k === 'review' || D.types.includes(k)) {
-    const editor=document.createElement('section');
+  } else if (k === 'review') {
+    const review=document.createElement('section');
+    review.id='inline-editor';
+    review.className='panel inline-editor project-review';
+    review.tabIndex=-1;
+    review.innerHTML=inlineEditors.review;
+    document.querySelector('.builder-component-groups').append(review);
+    renderReview();
+    focusTarget=review;
+    lastEditorLink=byId('inline-apps');
+  } else if (k === 'base' || D.types.includes(k)) {
+    const isBase=k==='base', titleId=isBase?'editor-title':'component-title';
+    const editor=document.createElement('dialog');
     editor.id='inline-editor';
-    editor.className='panel inline-editor '+(k==='review'?'project-review':k==='base'?'deployment-builder':'');
-    editor.tabIndex=-1;
-    const trigger=document.querySelector('[data-route="'+k+'"]');
-    if (k === 'base') trigger.closest('.builder-foundation').after(editor);
-    else if (k === 'review') document.querySelector('.builder-component-groups').append(editor);
-    else {
-      const rowTop = trigger.offsetTop;
-      const row = Array.from(trigger.parentElement.children).filter(card => card.offsetTop === rowTop);
-      row.at(-1).after(editor);
-    }
-    trigger?.setAttribute('aria-expanded','true');
-    editor.innerHTML=inlineEditors[k==='base'||k==='review'?k:'component'];
-    if (k==='base') mountBase(); else if(k==='review') renderReview(); else mountComponent(k);
-    lastEditorLink=trigger || document.querySelector('.project-summary .action-link');
-    focusTarget=editor;
+    editor.className='builder-dialog'+(isBase?' deployment-builder':'');
+    editor.setAttribute('aria-labelledby',titleId);
+    editor.innerHTML=inlineEditors[isBase?'base':'component'];
+    byId('main').append(editor);
+    if (isBase) mountBase(); else mountComponent(k);
+    const cancel=()=>{location.hash=link('home');};
+    editor.oncancel=event=>{event.preventDefault();cancel();};
+    editor.querySelector('.dialog-close').onclick=cancel;
+    lastEditorLink=document.querySelector('[data-route="'+k+'"]');
+    editor.showModal();
+    byId(titleId).focus();
   } else {
     focusTarget=lastEditorLink?.isConnected ? lastEditorLink : null;
     lastEditorLink=null;
