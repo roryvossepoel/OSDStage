@@ -3,10 +3,10 @@ const h = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','
 const byId = id => document.getElementById(id);
 const storageKey = 'osdstage.deployment.preview.1';
 const empty = () => ({base:null, parts:{}});
-let project = empty(), unmountApps, noticeTimer, lastEditorLink;
+let project = empty(), appPicker, noticeTimer, lastEditorLink, pendingAddition;
 try {
   const saved = JSON.parse(sessionStorage.getItem(storageKey));
-  if (saved && saved.parts && Object.keys(saved.parts).every(k => k === 'apps' || D.types.includes(k))) project = saved;
+  if (saved && saved.parts && Object.keys(saved.parts).every(k => k === 'apps' || D.types.includes(k))) project = D.onlineProject(saved);
 } catch {}
 const link = key => '#/' + key;
 const clone = data => JSON.parse(JSON.stringify(data));
@@ -16,34 +16,96 @@ function say(text) {
   noticeTimer = setTimeout(() => byId('project-notice').textContent = '', 3300);
 }
 function commit(key, state) {
+  const before = new Set(D.selections(project).map(item=>item.key));
   if (key === 'base') {
     project.base = clone(state);
     rebuildApps();
   } else project.parts[key] = clone(state);
   persist();
+  const added = D.selections(project).filter(item=>!before.has(item.key));
+  if (added.length) pendingAddition = {added, trigger:document.querySelector('[data-route="'+key+'"]')};
+  else say((key === 'base' ? 'Deployment settings' : D.title(key))+' saved.');
   location.hash = link('home');
-  say((key === 'base' ? 'Base settings' : D.title(key)) + ' saved to your deployment.');
 }
 function rebuildApps() {
-  unmountApps?.();
-  unmountApps = mountApps();
+  appPicker?.close();
+  appPicker = mountApps();
 }
 function current() { return location.hash.startsWith('#/') ? location.hash.slice(2) : 'home'; }
-function countParts() { const n = Object.keys(project.parts).length; return n + (n === 1 ? ' component' : ' components'); }
+
+function announceAddition(added, trigger) {
+  const first = added[0];
+  const message = added.length === 1 ? first.name : added.length+' items';
+  say(message+' added to your deployment.');
+  const list=byId('selection-list');
+  const addedKeys=new Set(added.map(item=>item.key));
+  const targets=Array.from(list.children).filter(row=>addedKeys.has(row.dataset.selection));
+  if (!targets.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // If the summary is outside the viewport, animate the originating card instead.
+  const row=targets[0], listBox=list.getBoundingClientRect();
+  const summaryVisible = listBox.bottom>0 && listBox.top<innerHeight;
+  const highlight = element => element.animate([
+    {backgroundColor:'var(--wash)',boxShadow:'inset 3px 0 var(--accent)'},
+    {backgroundColor:'transparent',boxShadow:'inset 0 0 transparent'}
+  ],{duration:900,easing:'ease-out'});
+  if (!summaryVisible) { if (trigger?.isConnected) highlight(trigger); return; }
+  const oldBox=row.getBoundingClientRect();
+  if (oldBox.top<listBox.top || oldBox.bottom>listBox.bottom) list.scrollTop+=oldBox.top-listBox.top;
+  targets.forEach(highlight);
+  const end=row.getBoundingClientRect(), start=trigger?.getBoundingClientRect();
+  if (!start || start.bottom<0 || start.top>innerHeight || end.top<0 || end.top>innerHeight) return;
+  const x=start.right-22, y=start.top+start.height/2;
+  const dx=end.left+12-x, dy=end.top+end.height/2-y;
+  const mark=document.createElement('span');
+  mark.className='selection-flight'; mark.textContent='✓'; mark.setAttribute('aria-hidden','true');
+  mark.style.left=x+'px'; mark.style.top=y+'px'; document.body.append(mark);
+  const flight=mark.animate([
+    {transform:'translate(-50%, -50%) scale(.8)',opacity:0},
+    {offset:.18,opacity:1},
+    {transform:'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px)) scale(.55)',opacity:0}
+  ],{duration:480,easing:'ease-in-out'});
+  flight.finished.then(()=>mark.remove(),()=>mark.remove());
+}
+let lastSelections='';
 function sidebar() {
-  const el = byId('project-summary'); if (!el) return;
-  const b = BuilderScopes.baseState(project.base || {}), rows = D.rows(project);
-  const row = (key, name, desc, removable) => '<li><a href="'+link(key)+'" class="'+(current() === key ? 'current' : '')+'" aria-label="Edit '+h(name)+'"><strong>'+h(name)+'</strong><small>'+h(desc)+'</small></a>'+(removable ? '<button class="part-remove" data-drop="'+key+'" title="Remove '+h(name)+'" aria-label="Remove '+h(name)+'">×</button>' : '')+'</li>';
-  el.innerHTML = '<h3>Your deployment</h3><p class="summary-count">'+countParts()+'</p><ul class="project-list">'+row('base','Base settings', (b.moduleSource === 'local' ? 'Local module' : b.moduleVersion === 'current' ? 'Latest stable' : 'v'+b.moduleVersion)+' · '+(b.final === 'None' ? 'Leave running' : b.final),false)+rows.map(([k,v])=>row(k,D.title(k),D.detail(k,v),true)).join('')+'</ul>'+
-  (!rows.length?'<p>Choose a component to add it here.</p>':'')+
-  (current() === 'review' ? '<a class="action-link" href="#/home">Choose components</a>' : '<a class="action-link" href="#/review">Review deployment →</a>');
-  el.querySelectorAll('[data-drop]').forEach(btn=>btn.onclick=()=>{
-    const k=btn.dataset.drop; delete project.parts[k]; persist();
-    if (k === 'apps') rebuildApps();
-    if (k === current() && k !== 'apps') location.hash=link('home');
-    sidebar(); updateCards(); renderReview();
-    say(D.title(k)+' removed.');
-  });
+  const items=D.selections(project), list=byId('selection-list');
+  const review=byId('selection-review'), reviewing=current()==='review';
+  review.href=link(reviewing?'home':'review');
+  review.textContent=reviewing?'Choose components':'Review deployment';
+  const signature=JSON.stringify(items);
+  if (lastSelections===signature) return;
+  lastSelections=signature;
+  byId('selection-count').textContent=items.length+' '+(items.length===1?'item':'items');
+  list.hidden=!items.length;
+  byId('selection-empty').hidden=!!items.length;
+  const scrollTop=list.scrollTop;
+  list.innerHTML=items.map((item,i)=>{
+    const label='<strong>'+h(item.name)+'</strong><small>'+h(item.detail)+'</small>';
+    const edit=item.editable ? '<button type="button" class="selection-edit" data-edit="'+i+'" aria-haspopup="dialog" aria-label="Edit '+h(item.name)+'">'+label+'</button>' : '<div class="selection-label">'+label+'</div>';
+    return '<li data-selection="'+h(item.key)+'">'+edit+'<button type="button" class="part-remove" data-remove-item="'+i+'" aria-label="Remove '+h(item.name)+'" title="Remove '+h(item.name)+'">×</button></li>';
+  }).join('');
+  list.scrollTop=scrollTop;
+  list.onclick=event=>{
+    const button=event.target.closest('button');
+    if (!button) return;
+    const editing=button.hasAttribute('data-edit');
+    const index=Number(editing?button.dataset.edit:button.dataset.removeItem), item=items[index];
+    const isApp=item.type==='builtin' || item.type==='repo';
+    if (editing) {
+      if (isApp) appPicker.open(item.type,item.id,button);
+      else location.hash=link(item.type);
+      return;
+    }
+    if (isApp) appPicker.remove(item.type,item.id);
+    else {
+      D.removeComponent(project.parts,item);
+      persist(); sidebar(); updateCards(); renderReview();
+    }
+    say(item.name+' removed.');
+    const next=list.children[Math.min(index,list.children.length-1)]?.querySelector('.part-remove');
+    (next || review).focus({preventScroll:true});
+  };
 }
 function updateCards() {
   for (const card of document.querySelectorAll('.builder-card[data-route]')) {
@@ -68,7 +130,6 @@ function renderReview() {
   if(files.length) {
     feedback.innerHTML='<div class="notice"><strong>Files to supply</strong><ul>'+files.map(f=>'<li>'+h(f.purpose)+' · <code>'+h(f.path)+'</code></li>').join('')+'</ul><p>For relative paths, paste from the folder containing Files, or save the script beside that folder.</p></div>';
   }
-  if (project.parts.apps?.mode === 'offline') feedback.insertAdjacentHTML('beforeend','<div class="notice">Prepare the matching USB content on a full Windows PC before offline staging.</div>');
   BuilderCodeView.render(byId('review-code'),out.code);
   byId('copy-script').onclick=async()=>{
     try { await navigator.clipboard.writeText(out.code); say('WinPE script copied.'); }
@@ -121,6 +182,10 @@ function show(scroll = true) {
   } else {
     focusTarget=lastEditorLink?.isConnected ? lastEditorLink : null;
     lastEditorLink=null;
+  }
+  if (pendingAddition && k==='home') {
+    const {added,trigger}=pendingAddition; pendingAddition=null;
+    requestAnimationFrame(()=>announceAddition(added,trigger));
   }
   if (k !== 'base' && !D.types.includes(k)) document.title='Configuration builders · OSDStage';
   if (scroll && focusTarget) {

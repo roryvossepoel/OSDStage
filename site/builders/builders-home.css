@@ -28,11 +28,11 @@
 .builder-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:var(--wash);color:#317d6d}
 .builder-icon img{display:block;width:28px;height:28px;object-fit:contain}
 .builder-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.builder-card h4{margin:0;font-size:.95rem;line-height:1.4;letter-spacing:-.02em;font-weight:650}
+.builder-card h3{margin:0;font-size:.95rem;line-height:1.4;letter-spacing:-.02em;font-weight:650}
 .builder-card p{margin:7px 0 0;font-size:.8rem;line-height:1.65}
 .builder-arrow{width:15px;height:15px;margin-top:4px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
 .builder-card:hover{border-color:var(--accent);box-shadow:0 3px 12px #17394b0a;text-decoration:none}
-.builder-card:hover h4{color:var(--accent)}
+.builder-card:hover h3{color:var(--accent)}
 .builder-card:hover .builder-arrow{transform:translateX(2px)}
 .builder-card:focus-visible,.builder-start:focus-visible{outline:3px solid var(--accent);outline-offset:4px;text-decoration:none}
 html[data-theme="dark"] .builder-icon img{filter:brightness(1.25)}

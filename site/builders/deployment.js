@@ -25,13 +25,6 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
      button.onclick=()=>{s.selected=s.selected.filter(value=>value!==id);saveSelection();};
      $('app-errors').append(button);
    }
-   const cache = $('cache-guidance');
-   cache.replaceChildren();
-   if (s.mode === 'offline' && chosen && !errors.length) {
-     const note=document.createElement('p'), code=document.createElement('pre');
-     note.textContent='Prepare the app cache on full Windows after importing and configuring OSDStage.';
-     code.textContent=S.appCode(project.parts.apps,APPS,'prepare'); cache.append(note,code);
-   }
    persist(); sidebar();
    if (current() === 'review') renderReview();
  }
@@ -93,10 +86,8 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
    $('app-dialog-errors').textContent=errors.map(e=>e.message).join(' ');
    $('app-save').disabled=errors.length>0;
  }
- function openApp(event) {
-   const trigger=event.target.closest('button[data-source]');
-   if (!trigger || dialog.open) return;
-   const source=trigger.dataset.source, id=trigger.value;
+ function openApp(source,id,trigger) {
+   if (dialog.open) return;
    const builtin=source==='builtin';
    const item=builtin ? APPS.find(a=>a.Id===id) : catalogRows.find(p=>p.id===id && AppCatalog.selectable(p));
    if (!item) return;
@@ -118,19 +109,35 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
    dialog.showModal();
    $('app-dialog-title').focus();
  }
+ function drawSelection(source) {
+   if (source==='builtin') builtinCards(); else repository();
+   saveSelection();
+ }
+ function removeApp(source,id) {
+   const key=fields[source];
+   s[key]=s[key].filter(value=>value!==id);
+   drawSelection(source);
+ }
  function finishApp(remove) {
-   const {source,id,options} = activeApp;
-   if (!remove) {
+   const {source,id,options,trigger} = activeApp;
+   const name=$('app-dialog-title').textContent;
+   const key=fields[source], adding=!s[key].includes(id);
+   if (remove) {
+     removeApp(source,id);
+     say(name+' removed.');
+   } else {
      validateDialog();
      if ($('app-save').disabled) return;
      options?.apply(s);
+     if (adding) s[key]=[...s[key],id];
+     drawSelection(source);
+     if (!adding) say(name+' saved.');
    }
-   const key=fields[source];
-   if (remove) s[key]=s[key].filter(value=>value!==id);
-   else if (!s[key].includes(id)) s[key]=[...s[key],id];
-   if (source==='builtin') builtinCards(); else repository();
-   saveSelection();
    dialog.close();
+   if (adding && !remove) {
+     const card=Array.from($(source+'-cards').children).find(el=>el.value===id);
+     requestAnimationFrame(()=>announceAddition([{key:source+':'+id,name}],card || trigger));
+   }
  }
  dialog.onclose=()=>{
    if (!activeApp) return;
@@ -168,13 +175,14 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
  function render() {
    builtins();
    $('repo-section').hidden=!catalog;
-   $('skip-refresh-field').hidden=!catalog;
-   $('app-mode').value=s.mode; $('skip-refresh').checked=s.skipRefresh;
    if (catalog) repository();
    saveSelection();
  }
  for (const [source,draw] of [['builtin',builtinCards],['repo',repository]]) {
-   $(source+'-cards').onclick=openApp;
+   $(source+'-cards').onclick=event=>{
+     const card=event.target.closest('button[data-source]');
+     if (card) openApp(source,card.value,card);
+   };
    $(source+'-more').onclick=()=>{
      expanded[source]=!expanded[source];
      draw();
@@ -186,8 +194,6 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
  $('refresh-repo').onclick=()=>loadCatalog();
  $('import-repo').onclick=()=>$('catalog-file').click();
  $('catalog-file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)loadCatalog(f);};
- $('app-mode').onchange=e=>{s.mode=e.target.value;saveSelection();};
- $('skip-refresh').onchange=e=>{s.skipRefresh=e.target.checked;saveSelection();};
  $('saveSettings').onclick=()=>{
    const value=JSON.stringify({builder:'apps',settings:{...s,repoItems:catalogRows.filter(p=>s.repoSelected.includes(p.id))}},null,2);
    const url=URL.createObjectURL(new Blob([value],{type:'application/json'})), a=document.createElement('a');
@@ -204,12 +210,12 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
      const imported=C.importSettings(data.settings,APPS);
      if(C.configCount(imported))throw Error('Choose a selections file containing only app settings.');
      const incoming=S.appState(imported);
-     if(incoming.repoSelected.length && (!catalog || incoming.catalog.trim()!==catalog)) throw Error('Set the matching repository URL in Base settings first.');
-     if(incoming.selected.length && !base.enableBuiltIns) throw Error('Enable built-in apps in Base settings first.');
+     if(incoming.repoSelected.length && (!catalog || incoming.catalog.trim()!==catalog)) throw Error('Set the matching repository URL in Deployment settings first.');
+     if(incoming.selected.length && !base.enableBuiltIns) throw Error('Enable built-in apps in Deployment settings first.');
      s=D.appsForBase(incoming,base); render(); say('App selections restored.');
    } catch (error) {if(!closed)say(error.message);}
  };
  render();
  if(catalog)loadCatalog();
- return ()=>{ closed=true;activeRequest?.abort(); if (dialog.open) dialog.close(); };
+ return {open:openApp, remove:removeApp, close(){closed=true;activeRequest?.abort();if (dialog.open) dialog.close();}};
 }

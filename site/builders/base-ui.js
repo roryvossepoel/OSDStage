@@ -11,7 +11,7 @@ function select(label,key,options,hint=''){return fieldShell(label,key,`<select 
 function versionField(){return fieldShell('Module version','version-choice',`<select id="base-version-choice"><option value="current" ${s.moduleVersion==='current'?'selected':''}>Current — latest stable (default)</option><option value="specific" ${s.moduleVersion!=='current'?'selected':''}>Specific version</option></select>`,'Current installs the latest stable Gallery release when the script runs.')+(s.moduleVersion==='current'?'':field('Exact module version','moduleVersion','Use a published version.','1.0.0'));}
 function render(){
  const openHelp=new Set([...$('base-form').querySelectorAll('.field-help-toggle[aria-expanded="true"]')].map(el=>el.getAttribute('aria-controls')));
- $('base-form').innerHTML=select('Module source','moduleSource',[['gallery','PowerShell Gallery'],['local','Local module']])+(s.moduleSource==='gallery'?versionField():field('Module manifest','modulePath','Use the OSDStage.psd1 path on your prepared USB drive.','Files\\OSDStage\\OSDStage.psd1'))+
+ $('base-form').innerHTML=select('Module source','moduleSource',[['gallery','PowerShell Gallery'],['local','Local module']])+(s.moduleSource==='gallery'?versionField():field('Module manifest','modulePath','Enter the path to the OSDStage.psd1 module manifest.','Files\\OSDStage\\OSDStage.psd1'))+
  select('Built-in apps','enableBuiltIns',[['true','Enabled (default)'],['false','Disabled']],'Show the built-in collection in the deployment builder.')+
  select('Own repository','source',[['builtin','Disabled (builder default)'],['both','Enabled']],'Add packages from your own catalog. The module default is enabled; this builder starts with it disabled until you provide a catalog. '+helpLink('../guides.html#repository','Repository setup guide'))+
  (s.source!=='builtin'?field('Catalog URL','catalog','Configure once here. Repository components use this catalog.','https://example.org/catalog.json'):'')+
@@ -36,7 +36,7 @@ function output(){
  $('advanced-status').textContent=changed?changed+' changed':'Defaults';
  const errors=S.validateBase(s);
  $('base-errors').innerHTML=errors.map(e=>'<p class="validation">'+esc(e.message)+'</p>').join('');
- $('commit').disabled=!!errors.length;$('commit').textContent='Save base settings';
+ $('commit').disabled=!!errors.length;$('commit').textContent='Save settings';
  $('commit').onclick=()=>{if(!S.validateBase(s).length)commit('base',s)};
 }
 render();

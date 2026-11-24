@@ -163,6 +163,33 @@ test('changing app sources keeps only selections from enabled matching sources',
  }
 });
 
+test('online builder preserves old selections and removes packages independently',()=>{
+ const context={BuilderCore:C,BuilderComponents:B,BuilderScopes:S,APPS:apps};
+ const model=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../site/builders/project-model.js'),'utf8')+';Deployment',context);
+ const base=S.baseState({source:'both',catalog:'https://example.org/catalog.json',mode:'offline',final:'Reboot'});
+ const saved=S.appState({mode:'offline',skipRefresh:true,source:'both',catalog:base.catalog,selected:['7Zip','MicrosoftTeams'],repoSelected:['Editor'],repoItems:[{id:'Editor',name:'Example editor',status:'ready',architecture:'x64',type:'App'}]});
+ const old={base,parts:{apps:saved,fonts:{repositoryIds:'OfficeFont, SignageFont',repositorySkipRefresh:true},updates:{scanOnly:true}}};
+ const current=model.onlineProject(old);
+ assert.equal(current.base.final,'Reboot');
+ assert.equal(current.base.mode,'online');
+ assert.equal(model.appsForBase(saved,base).mode,'online');
+ assert.equal(current.parts.apps.skipRefresh,false);
+ assert.equal(old.parts.apps.mode,'offline');
+ const items=model.selections(current);
+ assert.deepEqual(Array.from(items,i=>i.key),['builtin:7Zip','builtin:MicrosoftTeams','repo:Editor','fonts:OfficeFont','fonts:SignageFont','updates']);
+ model.removeComponent(current.parts,items[3]);
+ const output=model.build(current);
+ assert.equal(output.issues.length,0);
+ assert.match(output.code,/Add-OSDStageFont -Id 'SignageFont'/);
+ assert.match(output.code,/Add-OSDStage7Zip/);
+ assert.match(output.code,/Add-OSDStageWindowsUpdate/);
+ assert.doesNotMatch(output.code,/OfficeFont|-SkipCacheRefresh|-RequireOfflineReady/);
+ model.removeComponent(current.parts,items[4]);
+ model.removeComponent(current.parts,items[5]);
+ assert.equal(model.selections(current).length,3);
+ assert.equal(Object.hasOwn(current.parts,'fonts'),false);
+});
+
 async function testCatalogLoading() {
  const api=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../site/builders/app-catalog.js'),'utf8')+';AppCatalog',{BuilderCore:C});
  const catalog='https://example.org/packages/catalog.json', ids=['Editor','Fonts','BadApp','SevenOther','ReservedArm'];
