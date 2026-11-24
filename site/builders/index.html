@@ -2,12 +2,13 @@
 <link rel="stylesheet" href="../assets/site.css">
 <link id="editor-style" rel="stylesheet" href="builder.css?v=layout-2">
 <link id="home-style" rel="stylesheet" href="builders-home.css?v=selection-3">
-<link rel="stylesheet" href="project.css?v=selection-3">
+<link rel="stylesheet" href="project.css?v=layout-4">
 <script defer src="../assets/site.js"></script></head><body class="builder-page builders-home-page"><a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header"><div class="nav-wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▰</span>OSDStage</a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open menu" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="nav-icon-menu" d="M4 6h16M4 12h16M4 18h16"/><path class="nav-icon-close" d="m6 6 12 12M6 18 18 6"/></svg></button><div class="nav-panel" id="site-navigation"><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="../get-started.html">Get started</a><a href="../catalog/index.html">Catalog</a><a href="../guides.html">Guides</a><a href="../report.html">Report</a><a href="../faq.html">FAQ</a></nav><a class="github-link" href="https://github.com/roryvossepoel/OSDStage">GitHub</a></div></div></header><main id="main" class="builders-home" tabindex="-1"><div class="page-intro builders-intro">
     <div class="builders-kicker"><p class="eyebrow">Configuration builders</p><span class="builders-preview">Deployment preview</span></div>
     <div class="deployment-intro">
-      <div><h1>Choose what you need.</h1><p>Select apps and settings for an online deployment. Review your selection to copy one WinPE script.</p></div>
+      <h1>Choose what you need.</h1>
+      <p>Choose apps and settings for your online deployment, then copy the WinPE script.</p>
       <a class="button secondary deployment-settings" href="deployment.html" data-route="base">Deployment settings</a>
     </div>
   </div>
@@ -18,7 +19,7 @@
         <section id="builtin-section" aria-labelledby="builtin-title">
           <h2 id="builtin-title" class="builder-group-title">Built-in apps</h2>
           <div class="builtin-tools">
-            <input id="builtin-search" type="search" aria-label="Search built-in apps" placeholder="Search built-in apps…">
+            <input id="builtin-search" type="search" aria-label="Search built-in apps" placeholder="Search apps…">
             <select id="builtin-filter" aria-label="Filter built-in apps"><option value="">All categories</option><option value="selected">Selected only</option><option>Productivity</option><option>Browsers</option><option>Utilities</option><option>Runtimes</option></select>
           </div>
           <div class="cards" id="builtin-cards"></div>
@@ -132,10 +133,16 @@
     </div>
   </section>
 <aside class="project-aside"><section id="project-summary" class="project-summary" aria-labelledby="summary-title">
-  <div class="selection-heading"><h2 id="summary-title">Your deployment</h2><span id="selection-count" class="selection-count">0 items</span></div>
-  <ul id="selection-list" class="project-list" aria-label="Selected items" hidden></ul>
-  <p id="selection-empty">Your apps and settings will appear here.</p>
-  <a id="selection-review" class="action-link">Review deployment</a>
+  <div class="selection-heading">
+    <h2 id="summary-title">Your deployment</h2>
+    <span id="selection-count" class="selection-count">0 items</span>
+    <button id="selection-toggle" type="button" aria-labelledby="summary-title selection-count" aria-controls="selection-panel" aria-expanded="false" hidden></button>
+  </div>
+  <div id="selection-panel" class="selection-panel">
+    <ul id="selection-list" class="project-list" aria-label="Selected items" hidden></ul>
+    <p id="selection-empty">Your apps and settings will appear here.</p>
+    <a id="selection-review" class="action-link">Review deployment</a>
+  </div>
 </section></aside></div>
 <dialog id="app-dialog" class="builder-dialog" aria-labelledby="app-dialog-title">
   <div class="dialog-head">
@@ -167,5 +174,5 @@
 <script defer src="app-catalog.js?v=inline-1"></script>
 <script defer src="app-options-ui.js?v=selection-3"></script>
 <script defer src="deployment.js?v=selection-3"></script>
-<script defer src="project.js?v=selection-3"></script>
+<script defer src="project.js?v=layout-4"></script>
 </body></html>

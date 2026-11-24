@@ -197,6 +197,12 @@ document.querySelector('.skip-link').addEventListener('click', event => {
   event.preventDefault();
   byId('main').focus();
 });
+const selectionToggle = byId('selection-toggle');
+selectionToggle.hidden = false;
+selectionToggle.addEventListener('click', () => {
+  const expanded = selectionToggle.getAttribute('aria-expanded') === 'true';
+  selectionToggle.setAttribute('aria-expanded', String(!expanded));
+});
 window.addEventListener('hashchange',()=>show());
 rebuildApps();
 show(!!location.hash);
