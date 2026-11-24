@@ -1,25 +1,43 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="Choose apps, updates and settings and generate a single OSDStage deployment script for WinPE."><title>Configuration builders · OSDStage</title><link rel="icon" href="../favicon.ico"><meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="../assets/site.css">
-<link id="editor-style" rel="stylesheet" href="builder.css?v=layout-2">
+<link id="editor-style" rel="stylesheet" href="builder.css?v=site-5">
 <link id="home-style" rel="stylesheet" href="builders-home.css?v=selection-3">
-<link rel="stylesheet" href="project.css?v=layout-4">
+<link rel="stylesheet" href="project.css?v=site-5">
+<link rel="stylesheet" href="../assets/catalog-ui.css">
 <script defer src="../assets/site.js"></script></head><body class="builder-page builders-home-page"><a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header"><div class="nav-wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▰</span>OSDStage</a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open menu" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="nav-icon-menu" d="M4 6h16M4 12h16M4 18h16"/><path class="nav-icon-close" d="m6 6 12 12M6 18 18 6"/></svg></button><div class="nav-panel" id="site-navigation"><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="../get-started.html">Get started</a><a href="../catalog/index.html">Catalog</a><a href="../guides.html">Guides</a><a href="../report.html">Report</a><a href="../faq.html">FAQ</a></nav><a class="github-link" href="https://github.com/roryvossepoel/OSDStage">GitHub</a></div></div></header><main id="main" class="builders-home" tabindex="-1"><div class="page-intro builders-intro">
-    <div class="builders-kicker"><p class="eyebrow">Configuration builders</p><span class="builders-preview">Deployment preview</span></div>
-    <div class="deployment-intro">
-      <h1>Choose what you need.</h1>
-      <p>Choose apps and settings for your online deployment, then copy the WinPE script.</p>
-      <a class="button secondary deployment-settings" href="deployment.html" data-route="base">Deployment settings</a>
-    </div>
+<header class="site-header"><div class="nav-wrap"><a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▰</span>OSDStage</a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open menu" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="nav-icon-menu" d="M4 6h16M4 12h16M4 18h16"/><path class="nav-icon-close" d="m6 6 12 12M6 18 18 6"/></svg></button><div class="nav-panel" id="site-navigation"><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">Home</a><a href="../get-started.html">Get started</a><a href="../catalog/index.html">Catalog</a><a href="../guides.html">Guides</a><a href="../report.html">Report</a><a href="../faq.html">FAQ</a></nav><a class="github-link" href="https://github.com/roryvossepoel/OSDStage">GitHub</a></div></div></header><main id="main" tabindex="-1">
+  <div class="page-intro">
+    <p class="eyebrow">Deployment builder · Preview</p>
+    <h1>Choose what you need.</h1>
+    <p class="lead">Choose apps and settings for your online deployment, then copy the WinPE script.</p>
   </div>
-
-  <div class="project-catalog project-columns"><section class="builder-components" aria-label="Available components">
+  <div class="project-catalog project-columns">
+    <div class="settings-row">
+      <a class="builder-card deployment-card" href="deployment.html" data-route="base" aria-labelledby="settings-title" aria-describedby="settings-description">
+        <span class="builder-icon catalog-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h8m4 0h6M3 17h3m4 0h11"/><circle cx="13" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>
+        <span><strong id="settings-title">Deployment settings</strong><small id="settings-description">Sources and final action.</small></span>
+        <svg class="builder-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+      </a>
+      <details id="app-tools">
+        <summary class="builder-card deployment-card">
+          <span class="builder-icon catalog-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8V5a1 1 0 0 1 1-1h5l2 3h8a2 2 0 0 1 2 2v1M3 8v11a1 1 0 0 0 1 1h14l3-10H7l-3 9"/></svg></span>
+          <span><strong>App selections</strong><small>Open or save your app list.</small></span>
+          <svg class="builder-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="actions"><button type="button" class="btn" id="loadSettings">Open selections</button><button type="button" class="btn" id="saveSettings">Save selections</button></div>
+        <input type="file" id="settingsFile" accept=".json,application/json" hidden>
+      </details>
+    </div>
+    <section class="builder-components" aria-label="Available components">
     <div class="builder-component-groups">
       <div id="inline-apps" tabindex="-1">
         <section id="builtin-section" aria-labelledby="builtin-title">
           <h2 id="builtin-title" class="builder-group-title">Built-in apps</h2>
-          <div class="builtin-tools">
-            <input id="builtin-search" type="search" aria-label="Search built-in apps" placeholder="Search apps…">
+          <div class="builtin-tools catalog-filterbar">
+            <label class="builder-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="builtin-search" type="search" aria-label="Search built-in apps" placeholder="Search…">
+            </label>
             <select id="builtin-filter" aria-label="Filter built-in apps"><option value="">All categories</option><option value="selected">Selected only</option><option>Productivity</option><option>Browsers</option><option>Utilities</option><option>Runtimes</option></select>
           </div>
           <div class="cards" id="builtin-cards"></div>
@@ -36,68 +54,64 @@
           <button type="button" class="apps-more" id="repo-more" aria-controls="repo-cards" aria-expanded="false" hidden></button>
           <div id="repo-unavailable"></div>
         </section>
-        <details id="app-tools"><summary>Open or save app selections</summary>
-          <div class="actions"><button type="button" class="btn" id="loadSettings">Open selections</button><button type="button" class="btn" id="saveSettings">Save selections</button></div>
-          <input type="file" id="settingsFile" accept=".json,application/json" hidden>
-        </details>
         <div id="app-errors" role="status"></div>
       </div>
     <section class="builder-group" aria-labelledby="configuration-title">
       <h2 id="configuration-title" class="builder-group-title">Configuration</h2>
       <p class="builder-group-description">Choose Windows Update and the device settings to apply.</p>
       <div class="builder-grid">
-        <a class="builder-card" href="component.html?type=updates" data-route="updates">
-          <span class="builder-icon"><img src="../metadata/icons/windowsupdate.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=updates" data-route="updates">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/windowsupdate.svg" alt="" width="28" height="28"></span>
           <div><h3>Windows Update</h3><p>Install Windows updates, drivers and firmware, or scan only.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=wifi" data-route="wifi">
-          <span class="builder-icon"><img src="../metadata/icons/wifi.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=wifi" data-route="wifi">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/wifi.svg" alt="" width="28" height="28"></span>
           <div><h3>Wi-Fi</h3><p>Use your XML profile or enter network settings.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=registry" data-route="registry">
-          <span class="builder-icon"><img src="../metadata/icons/registry.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=registry" data-route="registry">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/registry.svg" alt="" width="28" height="28"></span>
           <div><h3>Registry</h3><p>Machine keys and typed values, always under HKLM.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=variables" data-route="variables">
-          <span class="builder-icon"><img src="../metadata/icons/variables.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=variables" data-route="variables">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/variables.svg" alt="" width="28" height="28"></span>
           <div><h3>Environment variables</h3><p>Set machine variables or append directories to PATH.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=filesystem" data-route="filesystem">
-          <span class="builder-icon"><img src="../metadata/icons/filesystem.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=filesystem" data-route="filesystem">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/filesystem.svg" alt="" width="28" height="28"></span>
           <div><h3>Files &amp; folders</h3><p>Copy or write files. Create or remove folders.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=services" data-route="services">
-          <span class="builder-icon"><img src="../metadata/icons/services.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=services" data-route="services">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/services.svg" alt="" width="28" height="28"></span>
           <div><h3>Services</h3><p>Choose service startup types and running states.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=desktop" data-route="desktop">
-          <span class="builder-icon"><img src="../metadata/icons/desktop.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=desktop" data-route="desktop">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/desktop.svg" alt="" width="28" height="28"></span>
           <div><h3>Start &amp; taskbar</h3><p>Set your Start menu and taskbar pins.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=associations" data-route="associations">
-          <span class="builder-icon"><img src="../metadata/icons/associations.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=associations" data-route="associations">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/associations.svg" alt="" width="28" height="28"></span>
           <div><h3>Default associations</h3><p>Associate file types and protocols with your apps.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=features" data-route="features">
-          <span class="builder-icon"><img src="../metadata/icons/windowsfeatures.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=features" data-route="features">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/windowsfeatures.svg" alt="" width="28" height="28"></span>
           <div><h3>Windows features</h3><p>Enable or disable optional Windows features.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=capabilities" data-route="capabilities">
-          <span class="builder-icon"><img src="../metadata/icons/capabilities.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=capabilities" data-route="capabilities">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/capabilities.svg" alt="" width="28" height="28"></span>
           <div><h3>Windows capabilities</h3><p>Add or remove Features on Demand by capability name.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=inbox" data-route="inbox">
-          <span class="builder-icon"><img src="../metadata/icons/inboxcleanup.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=inbox" data-route="inbox">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/inboxcleanup.svg" alt="" width="28" height="28"></span>
           <div><h3>Inbox app cleanup</h3><p>Remove selected inbox apps or inspect the cleanup plan.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
@@ -108,23 +122,23 @@
       <h2 id="repository-title" class="builder-group-title">Repository packages</h2>
       <p class="builder-group-description">Add certificates, fonts, drivers and scripts from your own package catalog.</p>
       <div class="builder-grid">
-        <a class="builder-card" href="component.html?type=certificates" data-route="certificates">
-          <span class="builder-icon"><img src="../metadata/icons/certificates.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=certificates" data-route="certificates">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/certificates.svg" alt="" width="28" height="28"></span>
           <div><h3>Certificates</h3><p>Stage certificate packages from your own catalog.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=fonts" data-route="fonts">
-          <span class="builder-icon"><img src="../metadata/icons/fonts.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=fonts" data-route="fonts">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/fonts.svg" alt="" width="28" height="28"></span>
           <div><h3>Fonts</h3><p>Stage font packages from your own catalog.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=drivers" data-route="drivers">
-          <span class="builder-icon"><img src="../metadata/icons/drivers.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=drivers" data-route="drivers">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/drivers.svg" alt="" width="28" height="28"></span>
           <div><h3>Driver packages</h3><p>Stage driver packages from your own catalog.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
-        <a class="builder-card" href="component.html?type=scripts" data-route="scripts">
-          <span class="builder-icon"><img src="../metadata/icons/script.svg" alt="" width="28" height="28"></span>
+        <a class="builder-card deployment-card" href="component.html?type=scripts" data-route="scripts">
+          <span class="builder-icon catalog-icon"><img src="../metadata/icons/script.svg" alt="" width="28" height="28"></span>
           <div><h3>Scripts</h3><p>Stage script packages from your own catalog.</p></div>
           <svg class="builder-arrow" viewbox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
         </a>
@@ -173,6 +187,6 @@
 <script defer src="component-ui.js?v=selection-3"></script>
 <script defer src="app-catalog.js?v=inline-1"></script>
 <script defer src="app-options-ui.js?v=selection-3"></script>
-<script defer src="deployment.js?v=selection-3"></script>
+<script defer src="deployment.js?v=site-5"></script>
 <script defer src="project.js?v=layout-4"></script>
 </body></html>

@@ -1,0 +1,43 @@
+/* Browsing and selecting a package use the same surfaces in both views. */
+:where(.catalog-page, .builders-home-page) {
+  --tile-fill: light-dark(#fff, #142328);
+  --tile-edge: light-dark(#dce8e7, #35505a);
+  --tile-icon-fill: light-dark(#f6f8f9, #182a30);
+  --tile-icon-edge: light-dark(#dce5e8, #294047);
+  --filter-fill: light-dark(#f1f7f6, #142328);
+  --filter-edge: light-dark(#dce5e8, #35505a);
+}
+
+.catalog-page .card.panel, .deployment-card {
+  padding: 19px;
+  background-color: var(--tile-fill);
+  border: 1px solid var(--tile-edge);
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.catalog-page .card .app-icon, .deployment-card .catalog-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--tile-icon-edge);
+  border-radius: 12px;
+  background: var(--tile-icon-fill);
+}
+
+.catalog-page .card .app-icon img, .deployment-card .catalog-icon :is(img, svg) {
+  display: block;
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+}
+
+.catalog-page .toolbar, .catalog-filterbar {
+  padding: 12px;
+  gap: 10px;
+  border: 1px solid var(--filter-edge);
+  border-radius: 9px;
+  background-color: var(--filter-fill);
+  box-shadow: none;
+}

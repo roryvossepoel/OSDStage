@@ -45,8 +45,8 @@ const descriptions={Microsoft365Apps:'Office applications',MicrosoftTeams:'Work 
  }
  function card(id, name, subtitle, icon, selected, source) {
    const image = icon ? '<img class="realicon" src="'+esc(icon)+'" alt="">' : '<span class="repoicon" aria-hidden="true">▦</span>';
-   return '<button type="button" class="app'+(selected ? ' selected' : '')+'" data-source="'+source+'" value="'+esc(id)+'" aria-haspopup="dialog" aria-label="'+
-     esc((selected ? 'Edit ' : 'Configure ')+name)+'">'+image+'<span><strong>'+esc(name)+'</strong><small>'+
+   return '<button type="button" class="app deployment-card'+(selected ? ' selected' : '')+'" data-source="'+source+'" value="'+esc(id)+'" aria-haspopup="dialog" aria-label="'+
+     esc((selected ? 'Edit ' : 'Configure ')+name)+'"><span class="catalog-icon" aria-hidden="true">'+image+'</span><span><strong>'+esc(name)+'</strong><small>'+
      esc(subtitle)+'</small></span><span class="app-mark" aria-hidden="true">'+(selected?'✓':'+')+'</span></button>';
  }
  function builtins() {
